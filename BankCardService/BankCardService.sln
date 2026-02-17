@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankCardService.API", "src\BankCardService.API\BankCardService.API.csproj", "{C816E419-CC98-FBD9-00BB-1C7CC5E8108A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankCardService.Application", "src\BankCardService.Application\BankCardService.Application.csproj", "{4C560164-266C-9792-1CBD-5C3F0379DA94}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankCardService.Domain", "src\BankCardService.Domain\BankCardService.Domain.csproj", "{9A44911E-5078-7226-948B-C818192854B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankCardService.Infrastructure", "src\BankCardService.Infrastructure\BankCardService.Infrastructure.csproj", "{C7049380-29F1-B6D8-2481-DEFB7C4ADD07}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C816E419-CC98-FBD9-00BB-1C7CC5E8108A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C816E419-CC98-FBD9-00BB-1C7CC5E8108A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C816E419-CC98-FBD9-00BB-1C7CC5E8108A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C816E419-CC98-FBD9-00BB-1C7CC5E8108A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C560164-266C-9792-1CBD-5C3F0379DA94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C560164-266C-9792-1CBD-5C3F0379DA94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C560164-266C-9792-1CBD-5C3F0379DA94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C560164-266C-9792-1CBD-5C3F0379DA94}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A44911E-5078-7226-948B-C818192854B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A44911E-5078-7226-948B-C818192854B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A44911E-5078-7226-948B-C818192854B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A44911E-5078-7226-948B-C818192854B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7049380-29F1-B6D8-2481-DEFB7C4ADD07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7049380-29F1-B6D8-2481-DEFB7C4ADD07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7049380-29F1-B6D8-2481-DEFB7C4ADD07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7049380-29F1-B6D8-2481-DEFB7C4ADD07}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
