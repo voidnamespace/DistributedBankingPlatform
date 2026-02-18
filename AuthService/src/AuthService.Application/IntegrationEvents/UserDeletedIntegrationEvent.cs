@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace AuthService.Application.IntegrationEvents;
 
-namespace AuthService.Application.IntegrationEvents
-{
-    internal class UserDeletedIntegrationEvent
-    {
-    }
-}
+public record UserDeletedIntegrationEvent(Guid UserId);
+

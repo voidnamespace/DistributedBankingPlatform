@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace AccountService.Application.IntegrationEvents;
 
-namespace AccountService.Application.IntegrationEvents
-{
-    internal class UserDeletedIntegrationEvent
-    {
-    }
-}
+public record UserDeletedIntegrationEvent(Guid UserId);
+
