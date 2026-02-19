@@ -2,5 +2,6 @@
 
 public record UserCreatedIntegrationEvent(
     Guid UserId,
-    string Email
+    string Email,
+    string Currency
 );

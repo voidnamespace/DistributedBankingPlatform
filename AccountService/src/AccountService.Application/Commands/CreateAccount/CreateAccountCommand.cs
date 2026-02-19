@@ -1,6 +1,10 @@
-﻿using AccountService.Application.DTOs;
+﻿using AccountService.Domain.Enums;
 using MediatR;
 namespace AccountService.Application.Commands.CreateAccount;
 
-public record CreateAccountCommand (CreateAccountRequest request) : IRequest<ReadAccountDTO>;
+public record CreateAccountCommand(
+    Guid UserId,
+    Currency Currency
+) : IRequest;
+
 

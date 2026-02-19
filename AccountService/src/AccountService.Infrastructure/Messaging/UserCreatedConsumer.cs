@@ -1,15 +1,14 @@
-﻿using System.Text;
-using System.Text.Json;
+﻿using AccountService.Application.Commands.CreateAccount;
 using AccountService.Application.IntegrationEvents;
-using AccountService.Application.Interfaces;
-using AccountService.Domain.Entity;
 using AccountService.Domain.Enums;
-using AccountService.Domain.ValueObjects;
+using MediatR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Text;
+using System.Text.Json;
 namespace AccountService.Infrastructure.Messaging;
 
 public class UserCreatedConsumer : BackgroundService
@@ -26,7 +25,8 @@ public class UserCreatedConsumer : BackgroundService
 
     public UserCreatedConsumer(
         IServiceScopeFactory scopeFactory,
-        IConfiguration config)
+        IConfiguration config,
+        IMediator mediator)
     {
         _scopeFactory = scopeFactory;
         _config = config;
@@ -77,7 +77,7 @@ public class UserCreatedConsumer : BackgroundService
             exchange: ExchangeName,
             routingKey: RoutingKey);
 
-        var consumer = new EventingBasicConsumer(_channel);
+        var consumer = new AsyncEventingBasicConsumer(_channel);
 
         consumer.Received += async (_, ea) =>
         {
@@ -91,41 +91,33 @@ public class UserCreatedConsumer : BackgroundService
                 if (message is null)
                     return;
 
+                if (!Enum.TryParse<Currency>(
+                        message.Currency,
+                        ignoreCase: true,
+                        out var currency))
+                {
+                    throw new Exception($"Invalid currency: {message.Currency}");
+                }
+
                 using var scope = _scopeFactory.CreateScope();
 
-                var repo = scope.ServiceProvider
-                    .GetRequiredService<IAccountRepository>();
+                var mediator =
+                    scope.ServiceProvider.GetRequiredService<IMediator>();
 
-                var unitOfWork = scope.ServiceProvider
-                    .GetRequiredService<IUnitOfWork>();
-
-                AccountNumberVO accNumber;
-                do
-                {
-                    accNumber = AccountNumberVO.Generate();
-                }
-                while (await repo.ExistsByAccountNumberAsync(
-                    accNumber,
-                    stoppingToken));
-
-                var account = new Account(
-                    message.UserId,
-                    accNumber,
-                    Currency.Copper);
-
-                await repo.AddAsync(account, stoppingToken);
-                await unitOfWork.SaveChangesAsync(stoppingToken);
+                await mediator.Send(
+                    new CreateAccountCommand(
+                        message.UserId,
+                        currency),
+                    stoppingToken);
 
                 _channel.BasicAck(ea.DeliveryTag, false);
             }
             catch
             {
-                _channel.BasicNack(
-                    ea.DeliveryTag,
-                    multiple: false,
-                    requeue: true);
+                _channel.BasicNack(ea.DeliveryTag, false, true);
             }
         };
+
 
         _channel.BasicConsume(
             queue: QueueName,

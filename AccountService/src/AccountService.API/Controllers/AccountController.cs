@@ -27,7 +27,9 @@ public class AccountController : ControllerBase
     CreateAccountRequest request,
     CancellationToken ct)
     {
-        await _mediator.Send(new CreateAccountCommand(request), ct);
+        await _mediator.Send(new CreateAccountCommand(
+        request.UserId,
+        request.Currency), ct);
         return Accepted();
     }
 
