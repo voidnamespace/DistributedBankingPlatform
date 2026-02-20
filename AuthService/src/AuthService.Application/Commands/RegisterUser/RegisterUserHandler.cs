@@ -1,6 +1,5 @@
 ﻿using AuthService.Application.Commands.RegisterUser;
 using AuthService.Application.DTOs;
-using AuthService.Application.IntegrationEvents;
 using AuthService.Application.Interfaces;
 using AuthService.Application.Interfaces.Messaging;
 using AuthService.Domain.Entities;
@@ -24,8 +23,8 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
     }
 
     public async Task<RegisterResponse> Handle(
-        RegisterUserCommand command,
-        CancellationToken cancellationToken)
+    RegisterUserCommand command,
+    CancellationToken cancellationToken)
     {
         if (command.Password != command.ConfirmPassword)
             throw new ArgumentException("The passwords don't match");
@@ -37,13 +36,6 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
         await _userRepository.CreateAsync(user, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        await _eventPublisher.PublishAsync(
-            new UserCreatedIntegrationEvent(
-                user.Id,
-                user.Email.Value),
-            "user.created",
-            cancellationToken);
 
         return new RegisterResponse
         {
