@@ -14,18 +14,21 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle (WithdrawMoneyCommand command, CancellationToken ct)
-    {  
+    public async Task Handle(WithdrawMoneyCommand command, CancellationToken ct)
+    {
         var accNum = new AccountNumberVO(command.AccountNumber);
 
         var acc = await _accountRepository.GetByAccountNumberAsync(accNum, ct)
             ?? throw new KeyNotFoundException("No such acc");
 
-        var money = new MoneyVO(command.request.Amount, command.request.Currency);
+        var money = new MoneyVO(
+            command.Amount,
+            command.Currency
+        );
 
-            acc.Withdraw(money);
-            await _unitOfWork.SaveChangesAsync(ct);
+        acc.Withdraw(money);
 
+        await _unitOfWork.SaveChangesAsync(ct);
     }
 
 }

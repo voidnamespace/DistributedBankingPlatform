@@ -15,16 +15,21 @@ public class DepositMoneyHandler : IRequestHandler<DepositMoneyCommand>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle (DepositMoneyCommand command, CancellationToken ct)
+    public async Task Handle(DepositMoneyCommand command, CancellationToken ct)
     {
         var accNum = new AccountNumberVO(command.AccountNumber);
 
         var acc = await _accountRepository.GetByAccountNumberAsync(accNum, ct)
             ?? throw new KeyNotFoundException("No such acc");
-        var money = new MoneyVO(command.request.Amount, command.request.Currency);
-        acc.Deposit(money);
-        await _unitOfWork.SaveChangesAsync(ct);
 
+        var money = new MoneyVO(
+            command.Amount,
+            command.Currency
+        );
+
+        acc.Deposit(money);
+
+        await _unitOfWork.SaveChangesAsync(ct);
     }
 
 }

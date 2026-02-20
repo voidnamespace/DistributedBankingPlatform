@@ -62,22 +62,36 @@ public class AccountController : ControllerBase
     public async Task <IActionResult> Deposit(string accountNumber,
     [FromBody] DepositRequest request, CancellationToken ct)
     {
-        await _mediator.Send(new DepositMoneyCommand(request, accountNumber),ct);
+        var command = new DepositMoneyCommand(
+            request.Amount,
+            request.Currency,
+            accountNumber);
+        await _mediator.Send(command,ct);
         return Ok();
     }
 
     [HttpPatch("{accountNumber}/withdraw")]
-    public async Task <IActionResult> Withdraw (string accountNumber,
-    [FromBody] WithdrawRequest request, CancellationToken ct)
+    public async Task<IActionResult> Withdraw(
+    string accountNumber,
+    [FromBody] WithdrawRequest request,
+    CancellationToken ct)
     {
-        await _mediator.Send(new WithdrawMoneyCommand(request, accountNumber), ct);
+        var command = new WithdrawMoneyCommand(
+            request.Amount,
+            request.Currency,
+            accountNumber
+        );
+
+        await _mediator.Send(command, ct);
+
         return Ok();
     }
 
     [HttpDelete("{accountId:guid}")]
     public async Task <IActionResult> DeleteAccount(Guid accountId, CancellationToken ct)
     {
-        await _mediator.Send(new DeleteAccountCommand(accountId));
+        var command = new DeleteAccountCommand(accountId);
+        await _mediator.Send(command);
         return NoContent();
     }
 
