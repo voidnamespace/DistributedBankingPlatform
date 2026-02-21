@@ -10,7 +10,6 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
 {
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IEventPublisher _eventPublisher;
 
     public RegisterUserHandler(
         IUserRepository userRepository,
@@ -19,7 +18,6 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
     {
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
-        _eventPublisher = eventPublisher;
     }
 
     public async Task<RegisterResponse> Handle(
