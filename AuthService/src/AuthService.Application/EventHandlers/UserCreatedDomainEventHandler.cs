@@ -4,15 +4,13 @@ using AuthService.Application.Interfaces.Messaging;
 using AuthService.Application.IntegrationEvents;
 
 public class UserCreatedDomainEventHandler
-    : INotificationHandler<
-        DomainEventNotification<UserCreatedDomainEvent>>
+    : INotificationHandler<DomainEventNotification<UserCreatedDomainEvent>>
 {
-    private readonly IEventPublisher _eventPublisher;
+    private readonly IOutboxWriter _outbox;
 
-    public UserCreatedDomainEventHandler(
-        IEventPublisher eventPublisher)
+    public UserCreatedDomainEventHandler(IOutboxWriter outbox)
     {
-        _eventPublisher = eventPublisher;
+        _outbox = outbox;
     }
 
     public async Task Handle(
@@ -21,11 +19,10 @@ public class UserCreatedDomainEventHandler
     {
         var domainEvent = notification.DomainEvent;
 
-        await _eventPublisher.PublishAsync(
-            new UserCreatedIntegrationEvent(
-                domainEvent.UserId,
-                domainEvent.Email),
-            "user.created",
-            ct);
+        var integrationEvent = new UserCreatedIntegrationEvent(
+            domainEvent.UserId,
+            domainEvent.Email);
+
+        await _outbox.EnqueueAsync(integrationEvent, "user.created", ct);
     }
 }

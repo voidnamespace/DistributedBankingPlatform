@@ -1,6 +1,7 @@
 ﻿using AuthService.Domain.Entities;
 using AuthService.Domain.Enums;
 using AuthService.Domain.ValueObjects;
+using AuthService.Infrastructure.Persistence.Outbox;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 namespace AuthService.Infrastructure.Data;
@@ -59,6 +60,8 @@ public class AuthDbContext : DbContext
     public DbSet<User> Users { get; set; }
 
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -124,6 +127,22 @@ public class AuthDbContext : DbContext
 
             entity.Property(e => e.UserId)
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<OutboxMessage>(b =>
+        {
+            b.ToTable("OutboxMessages");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Type).IsRequired().HasMaxLength(256);
+            b.Property(x => x.RoutingKey).IsRequired().HasMaxLength(256);
+            b.Property(x => x.Payload).IsRequired();
+
+            b.Property(x => x.CreatedAt).IsRequired();
+            b.Property(x => x.AttemptCount).IsRequired();
+
+            b.HasIndex(x => x.ProcessedAt);
+            b.HasIndex(x => x.CreatedAt);
         });
     }
 }

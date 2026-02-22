@@ -59,7 +59,27 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
         return Task.CompletedTask;
     }
+    public Task PublishRawAsync(
+    string payloadJson,
+    string routingKey,
+    CancellationToken ct)
+    {
+        var body = Encoding.UTF8.GetBytes(payloadJson);
 
+        var props = _channel.CreateBasicProperties();
+        props.Persistent = true;
+
+        _channel.BasicPublish(
+            exchange: ExchangeName,
+            routingKey: routingKey,
+            basicProperties: props,
+            body: body);
+
+        Console.WriteLine(
+            $"[RabbitMQ] Published RAW, routingKey={routingKey}");
+
+        return Task.CompletedTask;
+    }
     public void Dispose()
     {
         _channel?.Dispose();

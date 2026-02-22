@@ -3,7 +3,7 @@ using AuthService.Domain.Entities;
 using AuthService.Domain.Events;
 using AuthService.Infrastructure.Data;
 using MediatR;
-namespace AuthService.Infrastructure.Persistence;
+namespace AuthService.Infrastructure.Persistence.UnitOfWork;
 
 public class UnitOfWork : IUnitOfWork
 {
