@@ -50,6 +50,16 @@ public class UserRepository : IUserRepository
         }
     }
 
+    public async Task DeactivateAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var user = await _context.Users.FindAsync(userId);
+
+        if (user is null)
+            return;
+
+        user.Deactivate();
+    }
+
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken)
     {
         var normalizedEmail = email.Trim().ToLower();

@@ -68,8 +68,14 @@ public class User : Entity
     }
     public void Deactivate()
     {
+        if (!IsActive)
+            return;
+
         IsActive = false;
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(
+            new UserDeletedDomainEvent(Id));
     }
 
     public void Activate()

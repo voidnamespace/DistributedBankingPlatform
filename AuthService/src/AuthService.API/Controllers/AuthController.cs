@@ -100,6 +100,13 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
+    [HttpPatch]
+    [Authorize]
+    public async Task<IActionResult> Deactivate(Guid userId)
+    {
+        await _mediator.Send(new DeactivateUserCommand(userId));
+        return Ok();
+    }
 
     [ApiController]
     [Route("api/test")]
