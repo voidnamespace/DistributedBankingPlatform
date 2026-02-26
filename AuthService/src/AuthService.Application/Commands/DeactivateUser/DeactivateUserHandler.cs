@@ -8,13 +8,16 @@ public class DeactivateUserHandler : IRequestHandler<DeactivateUserCommand>
     private readonly IUserRepository _userRepository;
     private readonly ILogger<DeactivateUserHandler> _logger;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
     public DeactivateUserHandler(IUserRepository userRepository,
         ILogger<DeactivateUserHandler> logger,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IRefreshTokenRepository refreshTokenRepository)
     {
         _userRepository = userRepository;
         _logger = logger;
         _unitOfWork = unitOfWork;
+        _refreshTokenRepository = refreshTokenRepository;
     }
     public async Task Handle(DeactivateUserCommand request, CancellationToken cancellationToken)
     {
@@ -27,8 +30,9 @@ public class DeactivateUserHandler : IRequestHandler<DeactivateUserCommand>
         }
 
         await _userRepository.DeactivateAsync(request.userId, cancellationToken);
+        await _refreshTokenRepository.RevokeAllUserTokensAsync(request.userId, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-
+        
         _logger.LogInformation("User {UserId} successfully deactivated", request.userId);
     }
 

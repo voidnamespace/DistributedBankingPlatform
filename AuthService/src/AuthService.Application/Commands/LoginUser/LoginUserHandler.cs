@@ -43,6 +43,9 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
         if (user == null)
             throw new UnauthorizedAccessException("Incorrect email or password");
 
+        if (!user.IsActive)
+            throw new UnauthorizedAccessException("User is deactivated");
+
         if (!BCrypt.Net.BCrypt.Verify(command.Password, user.PasswordHash!.Hash))
             throw new UnauthorizedAccessException("Incorrect email or password");
 
@@ -69,7 +72,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
         {
             AccessToken = accessToken,
             RefreshToken = refreshTokenValue,
-            ExpiresAt = DateTime.UtcNow.AddHours(1),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
             UserId = user.Id,
             Email = user.Email.Value,
             Role = user.Role.ToString(),
