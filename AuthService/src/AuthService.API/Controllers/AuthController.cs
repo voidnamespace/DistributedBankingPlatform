@@ -107,6 +107,13 @@ public class AuthController : ControllerBase
         await _mediator.Send(new DeactivateUserCommand(userId));
         return Ok();
     }
+    [HttpPatch]
+    [Authorize]
+    public async Task<IActionResult> Activate(Guid userId)
+    {
+        await _mediator.Send(new ActivateUserCommand(userId));
+        return Ok();
+    }
 
     [ApiController]
     [Route("api/test")]

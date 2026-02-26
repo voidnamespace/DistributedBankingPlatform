@@ -75,13 +75,19 @@ public class User : Entity
         UpdatedAt = DateTime.UtcNow;
 
         AddDomainEvent(
-            new UserDeletedDomainEvent(Id));
+            new UserDeactivatedDomainEvent(Id));
     }
 
     public void Activate()
     {
+        if (IsActive)
+            return;
+
         IsActive = true;
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(
+            new UserActivatedDomainEvent(Id));
     }
 
 }
