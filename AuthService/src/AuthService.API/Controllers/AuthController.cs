@@ -100,15 +100,15 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch]
+    [HttpPatch("{userId}/deactivate")]
     [Authorize]
     public async Task<IActionResult> Deactivate(Guid userId)
     {
         await _mediator.Send(new DeactivateUserCommand(userId));
         return Ok();
     }
-    [HttpPatch]
-    [Authorize]
+    [HttpPatch("{userId}/activate")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Activate(Guid userId)
     {
         await _mediator.Send(new ActivateUserCommand(userId));
