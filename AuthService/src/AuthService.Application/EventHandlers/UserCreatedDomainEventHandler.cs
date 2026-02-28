@@ -1,16 +1,21 @@
-﻿using MediatR;
-using AuthService.Domain.Events;
+﻿using AuthService.Application.IntegrationEvents;
 using AuthService.Application.Interfaces.Messaging;
-using AuthService.Application.IntegrationEvents;
+using AuthService.Domain.Entities;
+using AuthService.Domain.Events;
+using MediatR;
+using Microsoft.Extensions.Logging;
 
 public class UserCreatedDomainEventHandler
     : INotificationHandler<DomainEventNotification<UserCreatedDomainEvent>>
 {
     private readonly IOutboxWriter _outbox;
+    private readonly ILogger<UserCreatedDomainEventHandler> _logger;
 
-    public UserCreatedDomainEventHandler(IOutboxWriter outbox)
+    public UserCreatedDomainEventHandler(IOutboxWriter outbox, 
+        ILogger<UserCreatedDomainEventHandler> logger)
     {
         _outbox = outbox;
+        _logger = logger;
     }
 
     public async Task Handle(
@@ -22,6 +27,8 @@ public class UserCreatedDomainEventHandler
         var integrationEvent = new UserCreatedIntegrationEvent(
             domainEvent.UserId,
             domainEvent.Email);
+
+        _logger.LogInformation("User created event");
 
         await _outbox.EnqueueAsync(integrationEvent, "user.created", ct);
     }

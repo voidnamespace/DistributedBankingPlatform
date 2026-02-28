@@ -20,8 +20,6 @@ public class UnitOfWork : IUnitOfWork
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken)
     {
-        await _context.SaveChangesAsync(cancellationToken);
-
         var entities = _context.ChangeTracker
             .Entries<Entity>()
             .Where(e => e.Entity.DomainEvents.Any())
@@ -32,6 +30,8 @@ public class UnitOfWork : IUnitOfWork
             .SelectMany(e => e.DomainEvents)
             .ToList();
 
+        await _context.SaveChangesAsync(cancellationToken);
+
         entities.ForEach(e => e.ClearDomainEvents());
 
         foreach (var domainEvent in domainEvents)
@@ -40,5 +40,6 @@ public class UnitOfWork : IUnitOfWork
                 new DomainEventNotification<IDomainEvent>(domainEvent),
                 cancellationToken);
         }
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }
