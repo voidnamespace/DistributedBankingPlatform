@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using AuthService.Application.Interfaces.Messaging;
 using AuthService.Infrastructure.Data;
-
 namespace AuthService.Infrastructure.Persistence.Outbox;
 
 public class OutboxWriter : IOutboxWriter

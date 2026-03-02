@@ -3,7 +3,6 @@ using AuthService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
 namespace AuthService.Infrastructure.Persistence.Outbox;
 
 public class OutboxProcessor : BackgroundService

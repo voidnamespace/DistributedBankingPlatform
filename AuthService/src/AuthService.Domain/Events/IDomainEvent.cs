@@ -1,6 +1,6 @@
 ﻿namespace AuthService.Domain.Events;
 
-public interface IDomainEvent
+public interface IDomainEvent 
 {
     DateTime OccurredOn { get; }
 }

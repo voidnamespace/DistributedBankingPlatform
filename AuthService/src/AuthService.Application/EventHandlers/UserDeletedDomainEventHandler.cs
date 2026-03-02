@@ -2,6 +2,8 @@
 using AuthService.Domain.Events;
 using AuthService.Application.Interfaces.Messaging;
 using AuthService.Application.IntegrationEvents;
+using AuthService.Application.Common.Events;
+namespace AuthService.Application.EventHandlers;
 
 public class UserDeletedDomainEventHandler
     : INotificationHandler<DomainEventNotification<UserDeletedDomainEvent>>

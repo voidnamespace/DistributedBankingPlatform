@@ -1,10 +1,10 @@
 ﻿using AuthService.Application.IntegrationEvents;
 using AuthService.Application.Interfaces.Messaging;
-using AuthService.Domain.Entities;
+using AuthService.Application.Common.Events;
 using AuthService.Domain.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
-
+namespace AuthService.Application.EventHandlers;
 public class UserCreatedDomainEventHandler
     : INotificationHandler<DomainEventNotification<UserCreatedDomainEvent>>
 {

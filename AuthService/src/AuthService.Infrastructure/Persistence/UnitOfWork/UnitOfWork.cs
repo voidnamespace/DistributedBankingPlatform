@@ -1,6 +1,7 @@
 ﻿using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
 using AuthService.Infrastructure.Data;
+using AuthService.Application.Common.Events;
 using MediatR;
 namespace AuthService.Infrastructure.Persistence.UnitOfWork;
 

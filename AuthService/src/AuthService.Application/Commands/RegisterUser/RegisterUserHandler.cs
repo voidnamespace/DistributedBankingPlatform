@@ -1,9 +1,9 @@
-﻿using AuthService.Application.Commands.RegisterUser;
-using AuthService.Application.DTOs;
+﻿using AuthService.Application.DTOs;
 using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
 using AuthService.Domain.ValueObjects;
 using MediatR;
+namespace AuthService.Application.Commands.RegisterUser;
 
 public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, RegisterResponse>
 {

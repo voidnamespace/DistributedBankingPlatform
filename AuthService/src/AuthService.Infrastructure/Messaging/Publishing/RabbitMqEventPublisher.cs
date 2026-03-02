@@ -4,7 +4,6 @@ using AuthService.Application.Interfaces.Messaging;
 using AuthService.Infrastructure.Messaging.Options;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
-
 namespace AuthService.Infrastructure.Messaging.Publishing;
 
 public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
