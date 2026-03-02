@@ -1,7 +1,6 @@
 ﻿using AuthService.Application.Commands.RegisterUser;
 using AuthService.Application.DTOs;
 using AuthService.Application.Interfaces;
-using AuthService.Application.Interfaces.Messaging;
 using AuthService.Domain.Entities;
 using AuthService.Domain.ValueObjects;
 using MediatR;
@@ -13,8 +12,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
 
     public RegisterUserHandler(
         IUserRepository userRepository,
-        IUnitOfWork unitOfWork,
-        IEventPublisher eventPublisher)
+        IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;

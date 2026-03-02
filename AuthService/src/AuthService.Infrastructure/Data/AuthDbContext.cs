@@ -2,61 +2,17 @@
 using AuthService.Domain.Enums;
 using AuthService.Domain.ValueObjects;
 using AuthService.Infrastructure.Persistence.Outbox;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 namespace AuthService.Infrastructure.Data;
 
 public class AuthDbContext : DbContext
 {
-    private readonly IMediator? _mediator;
-
     public AuthDbContext(
-    DbContextOptions<AuthDbContext> options,
-    IMediator? mediator = null)
-    : base(options)
+        DbContextOptions<AuthDbContext> options)
+        : base(options)
     {
-        _mediator = mediator;
     }
 
-    public override async Task<int> SaveChangesAsync(
-    CancellationToken cancellationToken = default)
-    {
-        var result = await base.SaveChangesAsync(cancellationToken);
-        await DispatchDomainEventsAsync(cancellationToken);
-        return result;
-    }
-
-    private async Task DispatchDomainEventsAsync(CancellationToken ct)
-    {
-        if (_mediator is null)
-            return;
-
-        var domainEvents = ChangeTracker
-            .Entries<Entity>()
-            .SelectMany(e => e.Entity.DomainEvents)
-            .ToList();
-
-        foreach (var entry in ChangeTracker.Entries<Entity>())
-        {
-            entry.Entity.ClearDomainEvents();
-        }
-
-        foreach (var domainEvent in domainEvents)
-        {
-            var notificationType = typeof(DomainEventNotification<>)
-                .MakeGenericType(domainEvent.GetType());
-
-            var notification = Activator.CreateInstance(
-                notificationType,
-                domainEvent
-            ) as INotification;
-
-            if (notification is not null)
-            {
-                await _mediator.Publish(notification, ct);
-            }
-        }
-    }
     public DbSet<User> Users { get; set; }
 
     public DbSet<RefreshToken> RefreshTokens { get; set; }
@@ -72,13 +28,12 @@ public class AuthDbContext : DbContext
             entity.HasKey(u => u.Id);
 
             entity.Property(u => u.Email)
-                 .HasConversion(
+                .HasConversion(
                     email => email.Value,
-                   str => new EmailVO(str))
-                  .HasColumnName("Email")
-                  .HasMaxLength(255)
-                  .IsRequired();
-
+                    str => new EmailVO(str))
+                .HasColumnName("Email")
+                .HasMaxLength(255)
+                .IsRequired();
 
             entity.HasIndex(u => u.Email)
                 .IsUnique();
@@ -115,18 +70,13 @@ public class AuthDbContext : DbContext
             entity.HasIndex(e => e.Token)
                 .IsUnique();
 
-            entity.Property(e => e.ExpiryDate)
-                .IsRequired();
-
-            entity.Property(e => e.CreatedAt)
-                .IsRequired();
-
+            entity.Property(e => e.ExpiryDate).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.IsRevoked)
                 .IsRequired()
                 .HasDefaultValue(false);
 
-            entity.Property(e => e.UserId)
-                .IsRequired();
+            entity.Property(e => e.UserId).IsRequired();
         });
 
         modelBuilder.Entity<OutboxMessage>(b =>

@@ -1,6 +1,5 @@
 ﻿using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
-using AuthService.Domain.Events;
 using AuthService.Infrastructure.Data;
 using MediatR;
 namespace AuthService.Infrastructure.Persistence.UnitOfWork;
@@ -36,10 +35,14 @@ public class UnitOfWork : IUnitOfWork
 
         foreach (var domainEvent in domainEvents)
         {
-            await _mediator.Publish(
-                new DomainEventNotification<IDomainEvent>(domainEvent),
-                cancellationToken);
+            var notificationType =
+                typeof(DomainEventNotification<>)
+                    .MakeGenericType(domainEvent.GetType());
+
+            var notification =
+                Activator.CreateInstance(notificationType, domainEvent);
+
+            await _mediator.Publish((INotification)notification!, cancellationToken);
         }
-        await _context.SaveChangesAsync(cancellationToken);
     }
 }

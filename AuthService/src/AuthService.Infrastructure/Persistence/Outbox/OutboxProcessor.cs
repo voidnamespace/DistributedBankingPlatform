@@ -9,6 +9,7 @@ namespace AuthService.Infrastructure.Persistence.Outbox;
 public class OutboxProcessor : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
+   
 
     public OutboxProcessor(IServiceScopeFactory scopeFactory)
     {
