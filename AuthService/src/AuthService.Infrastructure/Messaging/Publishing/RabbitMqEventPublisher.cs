@@ -34,6 +34,12 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
             exchange: ExchangeName,
             type: ExchangeType.Topic,
             durable: true);
+
+        _channel.BasicReturn += (sender, args) =>
+        {
+            Console.WriteLine(
+                $"MESSAGE RETURNED! RoutingKey={args.RoutingKey}");
+        };
     }
 
     public Task PublishAsync<T>(
@@ -71,6 +77,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
         _channel.BasicPublish(
             exchange: ExchangeName,
             routingKey: routingKey,
+            mandatory: true,
             basicProperties: props,
             body: body);
 

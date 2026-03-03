@@ -30,10 +30,6 @@ public class UnitOfWork : IUnitOfWork
             .SelectMany(e => e.DomainEvents)
             .ToList();
 
-        await _context.SaveChangesAsync(cancellationToken);
-
-        entities.ForEach(e => e.ClearDomainEvents());
-
         foreach (var domainEvent in domainEvents)
         {
             var notificationType =
@@ -45,5 +41,9 @@ public class UnitOfWork : IUnitOfWork
 
             await _mediator.Publish((INotification)notification!, cancellationToken);
         }
+
+        entities.ForEach(e => e.ClearDomainEvents());
+
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }
