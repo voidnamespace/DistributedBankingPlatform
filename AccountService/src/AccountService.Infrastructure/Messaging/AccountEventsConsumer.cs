@@ -1,18 +1,15 @@
-﻿using System.Text;
-using System.Text.Json;
-using AccountService.Application.IntegrationEvents;
-using AccountService.Application.Interfaces;
-using AccountService.Domain.Entity;
-using AccountService.Domain.Enums;
-using AccountService.Domain.ValueObjects;
+﻿using AccountService.Infrastructure.Data;
+using AccountService.Infrastructure.Persistence.Inbox;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Text;
+
 namespace AccountService.Infrastructure.Messaging;
 
-public class UserDeletedConsumer : BackgroundService
+public class AccountEventsConsumer : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _config;
@@ -21,10 +18,9 @@ public class UserDeletedConsumer : BackgroundService
     private IModel? _channel;
 
     private const string ExchangeName = "auth.events";
-    private const string QueueName = "account.user.deleted";
-    private const string RoutingKey = "user.deleted";
+    private const string QueueName = "account.events";
 
-    public UserDeletedConsumer(
+    public AccountEventsConsumer(
         IServiceScopeFactory scopeFactory,
         IConfiguration config)
     {
@@ -72,12 +68,18 @@ public class UserDeletedConsumer : BackgroundService
             exclusive: false,
             autoDelete: false);
 
+        // подписываемся на события auth
         _channel.QueueBind(
             queue: QueueName,
             exchange: ExchangeName,
-            routingKey: RoutingKey);
+            routingKey: "user.created");
 
-        var consumer = new EventingBasicConsumer(_channel);
+        _channel.QueueBind(
+            queue: QueueName,
+            exchange: ExchangeName,
+            routingKey: "user.deleted");
+
+        var consumer = new AsyncEventingBasicConsumer(_channel);
 
         consumer.Received += async (_, ea) =>
         {
@@ -85,34 +87,29 @@ public class UserDeletedConsumer : BackgroundService
             {
                 var json = Encoding.UTF8.GetString(ea.Body.ToArray());
 
-                var message =
-                    JsonSerializer.Deserialize<UserDeletedIntegrationEvent>(json);
-
-                if (message is null)
-                {
-                    _channel.BasicAck(ea.DeliveryTag, false);
-                    return;
-                }
-
                 using var scope = _scopeFactory.CreateScope();
 
-                var repo = scope.ServiceProvider
-                    .GetRequiredService<IAccountRepository>();
+                var db = scope.ServiceProvider
+                    .GetRequiredService<AccountDbContext>();
 
-                var unitOfWork = scope.ServiceProvider
-                    .GetRequiredService<IUnitOfWork>();
+                var messageId = Guid.NewGuid();
 
-                await repo.DeleteAsync(message.UserId, stoppingToken);
-                await unitOfWork.SaveChangesAsync(stoppingToken);
+                var inbox = new InboxMessage
+                {
+                    Id = messageId,
+                    Type = ea.RoutingKey,
+                    Payload = json
+                };
+
+                db.InboxMessages.Add(inbox);
+
+                await db.SaveChangesAsync();
 
                 _channel.BasicAck(ea.DeliveryTag, false);
             }
             catch
             {
-                _channel.BasicNack(
-                    ea.DeliveryTag,
-                    multiple: false,
-                    requeue: true);
+                _channel.BasicNack(ea.DeliveryTag, false, true);
             }
         };
 
@@ -121,7 +118,7 @@ public class UserDeletedConsumer : BackgroundService
             autoAck: false,
             consumer: consumer);
 
-        Console.WriteLine("UserDeletedConsumer started");
+        Console.WriteLine("AccountEventsConsumer started");
 
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }

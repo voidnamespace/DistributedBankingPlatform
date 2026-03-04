@@ -1,6 +1,7 @@
 ﻿using AccountService.Application.Interfaces;
 using AccountService.Infrastructure.Messaging;
 using AccountService.Infrastructure.Persistence;
+using AccountService.Infrastructure.Persistence.Inbox;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,8 +18,9 @@ public static class DI
         services.AddRepositories();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddHostedService<AccountEventsConsumer>();
+        services.AddHostedService<InboxProcessor>();
 
-        services.AddHostedService<UserCreatedConsumer>();
 
         return services;
     }
