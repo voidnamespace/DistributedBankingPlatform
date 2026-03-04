@@ -1,12 +1,15 @@
-﻿using AccountService.Infrastructure.Data;
+﻿using AccountService.Application.IntegrationEvents;
+using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Persistence.Inbox;
-using AccountService.Application.IntegrationEvents;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
+using System.Text.Json;
 
 namespace AccountService.Infrastructure.Messaging;
 
@@ -14,19 +17,28 @@ public class AccountEventsConsumer : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _config;
-
+    private readonly ILogger<AccountEventsConsumer> _logger;
     private IConnection? _connection;
     private IModel? _channel;
 
     private const string ExchangeName = "auth.events";
     private const string QueueName = "account.events";
 
+
+    private static readonly Dictionary<string, Type> EventTypes = new()
+{
+    { "UserCreatedIntegrationEvent", typeof(UserCreatedIntegrationEvent) },
+    { "UserDeletedIntegrationEvent", typeof(UserDeletedIntegrationEvent) }
+};
     public AccountEventsConsumer(
         IServiceScopeFactory scopeFactory,
-        IConfiguration config)
+        IConfiguration config,
+        ILogger<AccountEventsConsumer> logger
+        )
     {
         _scopeFactory = scopeFactory;
         _config = config;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -45,12 +57,12 @@ public class AccountEventsConsumer : BackgroundService
                 _connection = factory.CreateConnection();
                 _channel = _connection.CreateModel();
 
-                Console.WriteLine("RabbitMQ connected");
+                _logger.LogInformation("RabbitMQ connected");
                 break;
             }
             catch
             {
-                Console.WriteLine("Waiting RabbitMQ...");
+                _logger.LogInformation("Waiting RabbitMQ...");
                 await Task.Delay(3000, stoppingToken);
             }
         }
@@ -87,25 +99,58 @@ public class AccountEventsConsumer : BackgroundService
                 var db = scope.ServiceProvider
                     .GetRequiredService<AccountDbContext>();
 
-                var messageId = Guid.NewGuid();
+                if (string.IsNullOrEmpty(ea.BasicProperties.MessageId))
+                {
+                    _logger.LogWarning("Message without MessageId");
+                    _channel.BasicAck(ea.DeliveryTag, false);
+                    return;
+                }
+
+                var messageId = Guid.Parse(ea.BasicProperties.MessageId);
+
+
+                using var doc = JsonDocument.Parse(json);
+                var typeName = doc.RootElement
+                    .GetProperty("Type")
+                    .GetString();
+                if (typeName == null)
+                {
+                    _logger.LogWarning("Invalid type {Type}", typeName);
+                    _channel.BasicAck(ea.DeliveryTag, false);
+                    return;
+                }
+                if (!EventTypes.TryGetValue(typeName, out var type))
+                {
+                    _logger.LogWarning("Unknown event type {Type}", typeName);
+                    _channel.BasicAck(ea.DeliveryTag, false);
+                    return;
+                }
 
                 var inbox = new InboxMessage
                 {
                     Id = messageId,
-                    Type = nameof(UserCreatedIntegrationEvent),
+                    Type = typeName,
                     Payload = json,
+                    RoutingKey = ea.RoutingKey,
+                    Processed = false,
+                    AttemptCount = 0,
                     ReceivedAt = DateTime.UtcNow
                 };
-
+                if (await db.InboxMessages.AnyAsync(x => x.Id == messageId))
+                {
+                    _logger.LogInformation("Duplicate message {MessageId}", messageId);
+                    _channel.BasicAck(ea.DeliveryTag, false);
+                    return;
+                }
                 db.InboxMessages.Add(inbox);
-
+                
                 await db.SaveChangesAsync();
 
                 _channel.BasicAck(ea.DeliveryTag, false);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                _logger.LogError(ex, "Error processing message");
 
                 _channel.BasicNack(ea.DeliveryTag, false, true);
             }
@@ -116,7 +161,7 @@ public class AccountEventsConsumer : BackgroundService
             autoAck: false,
             consumer: consumer);
 
-        Console.WriteLine("AccountEventsConsumer started");
+        _logger.LogInformation("AccountEventsConsumer started");
 
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }

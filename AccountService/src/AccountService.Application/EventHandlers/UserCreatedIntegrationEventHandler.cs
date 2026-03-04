@@ -17,18 +17,11 @@ public class UserCreatedIntegrationEventHandler
         UserCreatedIntegrationEvent notification,
         CancellationToken ct)
     {
-        if (!Enum.TryParse<Currency>(
-            notification.Currency,
-            true,
-            out var currency))
-        {
-            throw new Exception($"Invalid currency: {notification.Currency}");
-        }
+        var command = new CreateAccountCommand(
+            notification.UserId,
+            Currency.Copper
+        );
 
-        await _mediator.Send(
-            new CreateAccountCommand(
-                notification.UserId,
-                currency),
-            ct);
+        await _mediator.Send(command, ct);
     }
 }
