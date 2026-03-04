@@ -68,7 +68,6 @@ public class AccountEventsConsumer : BackgroundService
             exclusive: false,
             autoDelete: false);
 
-        // подписываемся на события auth
         _channel.QueueBind(
             queue: QueueName,
             exchange: ExchangeName,

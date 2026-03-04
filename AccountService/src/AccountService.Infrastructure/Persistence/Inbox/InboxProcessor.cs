@@ -1,8 +1,5 @@
-﻿using AccountService.Infrastructure.Persistence.Inbox;
-using AccountService.Infrastructure.Data;
-using AccountService.Application.Commands.CreateAccount;
+﻿using AccountService.Infrastructure.Data;
 using AccountService.Application.IntegrationEvents;
-using AccountService.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,22 +44,10 @@ public class InboxProcessor : BackgroundService
                         var integrationEvent =
                             JsonSerializer.Deserialize<UserCreatedIntegrationEvent>(message.Payload);
 
-                        if (integrationEvent == null)
-                            continue;
-
-                        if (!Enum.TryParse<Currency>(
-                                integrationEvent.Currency,
-                                true,
-                                out var currency))
+                        if (integrationEvent != null)
                         {
-                            throw new Exception($"Invalid currency: {integrationEvent.Currency}");
+                            await mediator.Publish(integrationEvent, stoppingToken);
                         }
-
-                        await mediator.Send(
-                            new CreateAccountCommand(
-                                integrationEvent.UserId,
-                                currency),
-                            stoppingToken);
                     }
 
                     message.ProcessedAt = DateTime.UtcNow;
@@ -76,7 +61,7 @@ public class InboxProcessor : BackgroundService
 
             await db.SaveChangesAsync(stoppingToken);
 
-            await Task.Delay(5000, stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
         }
     }
 }
