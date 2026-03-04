@@ -20,6 +20,7 @@ public static class DI
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddHostedService<AccountEventsConsumer>();
         services.AddHostedService<InboxProcessor>();
+        services.AddScoped<IInboxWriter, InboxWriter>();
 
 
         return services;
