@@ -1,5 +1,6 @@
 ﻿using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Persistence.Inbox;
+using AccountService.Application.IntegrationEvents;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -73,11 +74,6 @@ public class AccountEventsConsumer : BackgroundService
             exchange: ExchangeName,
             routingKey: "user.created");
 
-        _channel.QueueBind(
-            queue: QueueName,
-            exchange: ExchangeName,
-            routingKey: "user.deleted");
-
         var consumer = new AsyncEventingBasicConsumer(_channel);
 
         consumer.Received += async (_, ea) =>
@@ -96,7 +92,7 @@ public class AccountEventsConsumer : BackgroundService
                 var inbox = new InboxMessage
                 {
                     Id = messageId,
-                    Type = ea.RoutingKey,
+                    Type = nameof(UserCreatedIntegrationEvent),
                     Payload = json
                 };
 

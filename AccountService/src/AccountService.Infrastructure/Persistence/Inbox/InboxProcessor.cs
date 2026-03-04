@@ -1,5 +1,4 @@
 ﻿using AccountService.Infrastructure.Data;
-using AccountService.Application.IntegrationEvents;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,15 +38,19 @@ public class InboxProcessor : BackgroundService
             {
                 try
                 {
-                    if (message.Type == nameof(UserCreatedIntegrationEvent))
-                    {
-                        var integrationEvent =
-                            JsonSerializer.Deserialize<UserCreatedIntegrationEvent>(message.Payload);
+                    var type = Type.GetType(
+                        $"AccountService.Application.IntegrationEvents.{message.Type}");
 
-                        if (integrationEvent != null)
-                        {
-                            await mediator.Publish(integrationEvent, stoppingToken);
-                        }
+                    if (type is null)
+                        continue;
+
+                    var integrationEvent = JsonSerializer.Deserialize(
+                        message.Payload,
+                        type);
+
+                    if (integrationEvent is INotification notification)
+                    {
+                        await mediator.Publish(notification, stoppingToken);
                     }
 
                     message.ProcessedAt = DateTime.UtcNow;
