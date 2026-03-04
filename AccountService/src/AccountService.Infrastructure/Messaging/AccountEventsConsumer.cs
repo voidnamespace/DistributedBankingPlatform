@@ -93,7 +93,8 @@ public class AccountEventsConsumer : BackgroundService
                 {
                     Id = messageId,
                     Type = nameof(UserCreatedIntegrationEvent),
-                    Payload = json
+                    Payload = json,
+                    ReceivedAt = DateTime.UtcNow
                 };
 
                 db.InboxMessages.Add(inbox);
@@ -102,8 +103,10 @@ public class AccountEventsConsumer : BackgroundService
 
                 _channel.BasicAck(ea.DeliveryTag, false);
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine(ex);
+
                 _channel.BasicNack(ea.DeliveryTag, false, true);
             }
         };

@@ -39,10 +39,14 @@ public class InboxProcessor : BackgroundService
                 try
                 {
                     var type = Type.GetType(
-                        $"AccountService.Application.IntegrationEvents.{message.Type}");
+    $"AccountService.Application.IntegrationEvents.{message.Type}, AccountService.Application");
 
                     if (type is null)
+                    {
+                        message.Error = "Type not found";
+                        message.AttemptCount++;
                         continue;
+                    }
 
                     var integrationEvent = JsonSerializer.Deserialize(
                         message.Payload,
