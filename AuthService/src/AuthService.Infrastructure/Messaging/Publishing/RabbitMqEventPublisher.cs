@@ -43,15 +43,18 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
     }
 
     public Task PublishAsync<T>(
-        T message,
-        string routingKey,
-        CancellationToken ct = default)
+     T message,
+     string routingKey,
+     CancellationToken ct = default)
     {
         var body = Encoding.UTF8.GetBytes(
             JsonSerializer.Serialize(message));
 
         var props = _channel.CreateBasicProperties();
         props.Persistent = true;
+
+        props.MessageId = Guid.NewGuid().ToString(); 
+        props.ContentType = "application/json";
 
         _channel.BasicPublish(
             exchange: ExchangeName,
@@ -73,6 +76,9 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
         var props = _channel.CreateBasicProperties();
         props.Persistent = true;
+
+        props.MessageId = Guid.NewGuid().ToString();
+        props.ContentType = "application/json";
 
         _channel.BasicPublish(
             exchange: ExchangeName,

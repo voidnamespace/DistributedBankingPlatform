@@ -49,12 +49,13 @@ public class AccountEventsConsumer : BackgroundService
                 {
                     HostName = _options.Host,
                     UserName = _options.Username,
-                    Password = _options.Password
+                    Password = _options.Password,
+                    DispatchConsumersAsync = true
                 };
 
                 _connection = factory.CreateConnection();
                 _channel = _connection.CreateModel();
-
+                _channel.BasicQos(0, 1, false);
                 _logger.LogInformation("RabbitMQ connected");
                 break;
             }
@@ -90,7 +91,12 @@ public class AccountEventsConsumer : BackgroundService
         {
             try
             {
+
+                Console.WriteLine("MESSAGE ARRIVED");
                 var json = Encoding.UTF8.GetString(ea.Body.ToArray());
+
+                Console.WriteLine("MESSAGE BODY:");
+                Console.WriteLine(json);
 
                 using var scope = _scopeFactory.CreateScope();
 
@@ -106,11 +112,12 @@ public class AccountEventsConsumer : BackgroundService
 
                 var messageId = Guid.Parse(ea.BasicProperties.MessageId);
 
-                using var doc = JsonDocument.Parse(json);
-
-                var typeName = doc.RootElement
-                    .GetProperty("Type")
-                    .GetString();
+                var typeName = ea.RoutingKey switch
+                {
+                    "user.created" => "UserCreatedIntegrationEvent",
+                    "user.deleted" => "UserDeletedIntegrationEvent",
+                    _ => null
+                };
 
                 if (typeName == null)
                 {
