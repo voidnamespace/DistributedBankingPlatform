@@ -3,6 +3,7 @@ using AuthService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Text.Json;
 namespace AuthService.Infrastructure.Persistence.Outbox;
 
 public class OutboxProcessor : BackgroundService
@@ -36,7 +37,15 @@ public class OutboxProcessor : BackgroundService
                 {
                     try
                     {
-                        await publisher.PublishRawAsync(msg.Payload, msg.RoutingKey, stoppingToken);
+                        var envelope = new
+                        {
+                            Type = msg.Type,
+                            Payload = JsonSerializer.Deserialize<object>(msg.Payload)
+                        };
+
+                        var json = JsonSerializer.Serialize(envelope);
+
+                        await publisher.PublishRawAsync(json, msg.RoutingKey, stoppingToken);
 
                         msg.ProcessedAt = DateTime.UtcNow;
                         msg.Error = null;

@@ -115,15 +115,4 @@ public class AuthController : ControllerBase
         return Ok();
     }
 
-    [ApiController]
-    [Route("api/test")]
-    public class TestController : ControllerBase
-    {
-        [HttpPost("publish")]
-        public async Task<IActionResult> Publish([FromServices] IEventPublisher publisher, CancellationToken ct)
-        {
-            await publisher.PublishAsync(new { msg = "hello", at = DateTime.UtcNow }, "auth.test", ct);
-            return Ok("published");
-        }
-    }
 }
