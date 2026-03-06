@@ -7,7 +7,10 @@ using AccountService.Application.Queries.GetAllAccounts;
 using AccountService.Application.Queries.GetByAccountNumberAccount;
 using AccountService.Application.Queries.GetByIdAccount;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.IdentityModel.JsonWebTokens;
 namespace AccountService.API.Controllers;
 
 [ApiController]
@@ -22,17 +25,24 @@ public class AccountController : ControllerBase
         _mediator = mediator; 
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> CreateAccount(
-    CreateAccountRequest request,
-    CancellationToken ct)
+        CreateAccountRequest request,
+        CancellationToken ct)
     {
-        await _mediator.Send(new CreateAccountCommand(
-        request.UserId,
-        request.Currency), ct);
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+
+        await _mediator.Send(
+            new CreateAccountCommand(
+                userId,
+                request.Currency),
+            ct);
+
         return Accepted();
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
@@ -40,6 +50,7 @@ public class AccountController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize]
     [HttpGet("{accountId:guid}")]
     public async Task<IActionResult> GetById(Guid accountId, CancellationToken ct)
     {
@@ -47,6 +58,7 @@ public class AccountController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize]
     [HttpGet("by-number/{accountNumber}")]
     public async Task<IActionResult> GetByAccountNumber(string accountNumber, CancellationToken ct)
     {
@@ -58,6 +70,7 @@ public class AccountController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize]
     [HttpPost("{accountNumber}/deposit")]
     public async Task <IActionResult> Deposit(string accountNumber,
     [FromBody] DepositRequest request, CancellationToken ct)
@@ -70,6 +83,7 @@ public class AccountController : ControllerBase
         return Ok();
     }
 
+    [Authorize]
     [HttpPatch("{accountNumber}/withdraw")]
     public async Task<IActionResult> Withdraw(
     string accountNumber,
@@ -87,6 +101,7 @@ public class AccountController : ControllerBase
         return Ok();
     }
 
+    [Authorize]
     [HttpDelete("{accountId:guid}")]
     public async Task <IActionResult> DeleteAccount(Guid accountId, CancellationToken ct)
     {

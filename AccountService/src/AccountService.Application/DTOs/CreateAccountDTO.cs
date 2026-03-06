@@ -1,14 +1,11 @@
 ﻿using AccountService.Domain.Enums;
-
 namespace AccountService.Application.DTOs;
 
-public class CreateAccountRequest
-{
-    public Guid UserId { get; set; }
-    public Currency Currency { get; set; }
-}
+public record CreateAccountRequest(
+    Currency Currency
+);
 
-public class CreateAccountResponse
+public record CreateAccountResponse
 {
     public Guid AccountId { get; init; }
     public string AccountNumber { get; init; } = default!;
