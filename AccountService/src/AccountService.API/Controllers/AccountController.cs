@@ -42,7 +42,7 @@ public class AccountController : ControllerBase
         return Accepted();
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
@@ -54,6 +54,7 @@ public class AccountController : ControllerBase
     [HttpGet("{accountId:guid}")]
     public async Task<IActionResult> GetById(Guid accountId, CancellationToken ct)
     {
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
         var result = await _mediator.Send(new GetByIdAccountQuery(accountId), ct);
         return Ok(result);
     }
@@ -62,6 +63,7 @@ public class AccountController : ControllerBase
     [HttpGet("by-number/{accountNumber}")]
     public async Task<IActionResult> GetByAccountNumber(string accountNumber, CancellationToken ct)
     {
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
         var result = await _mediator.Send(
             new GetByAccountNumberAccountQuery(accountNumber),
             ct
@@ -75,6 +77,7 @@ public class AccountController : ControllerBase
     public async Task <IActionResult> Deposit(string accountNumber,
     [FromBody] DepositRequest request, CancellationToken ct)
     {
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
         var command = new DepositMoneyCommand(
             request.Amount,
             request.Currency,
@@ -90,6 +93,7 @@ public class AccountController : ControllerBase
     [FromBody] WithdrawRequest request,
     CancellationToken ct)
     {
+        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
         var command = new WithdrawMoneyCommand(
             request.Amount,
             request.Currency,
@@ -101,7 +105,7 @@ public class AccountController : ControllerBase
         return Ok();
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{accountId:guid}")]
     public async Task <IActionResult> DeleteAccount(Guid accountId, CancellationToken ct)
     {
