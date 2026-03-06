@@ -2,5 +2,4 @@
 
 namespace AccountService.Application.IntegrationEvents;
 
-public record UserDeletedIntegrationEvent(Guid UserId) :INotification;
-
+public record UserDeactivatedIntegrationEvent(Guid UserId) : INotification;

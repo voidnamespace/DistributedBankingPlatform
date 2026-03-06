@@ -83,7 +83,7 @@ public class AccountEventsConsumer : BackgroundService
         _channel.QueueBind(
             queue: _options.Queue,
             exchange: _options.Exchange,
-            routingKey: "user.created");
+            routingKey: "user.*");
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
 
@@ -116,6 +116,8 @@ public class AccountEventsConsumer : BackgroundService
                 {
                     "user.created" => "UserCreatedIntegrationEvent",
                     "user.deleted" => "UserDeletedIntegrationEvent",
+                    "user.activated" => "UserActivatedIntegrationEvent",
+                    "user.deactivated" => "UserDeactivatedIntegrationEvent",
                     _ => null
                 };
 
