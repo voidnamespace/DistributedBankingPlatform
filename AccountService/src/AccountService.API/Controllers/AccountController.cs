@@ -9,8 +9,7 @@ using AccountService.Application.Queries.GetByIdAccount;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.IdentityModel.JsonWebTokens;
+using System.Security.Claims;
 namespace AccountService.API.Controllers;
 
 [ApiController]
@@ -31,7 +30,8 @@ public class AccountController : ControllerBase
         CreateAccountRequest request,
         CancellationToken ct)
     {
-        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var userId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         await _mediator.Send(
             new CreateAccountCommand(
@@ -54,7 +54,8 @@ public class AccountController : ControllerBase
     [HttpGet("{accountId:guid}")]
     public async Task<IActionResult> GetById(Guid accountId, CancellationToken ct)
     {
-        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var userId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var result = await _mediator.Send(new GetByIdAccountQuery(accountId), ct);
         return Ok(result);
     }
@@ -63,7 +64,8 @@ public class AccountController : ControllerBase
     [HttpGet("by-number/{accountNumber}")]
     public async Task<IActionResult> GetByAccountNumber(string accountNumber, CancellationToken ct)
     {
-        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var userId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var result = await _mediator.Send(
             new GetByAccountNumberAccountQuery(accountNumber),
             ct
@@ -77,7 +79,8 @@ public class AccountController : ControllerBase
     public async Task <IActionResult> Deposit(string accountNumber,
     [FromBody] DepositRequest request, CancellationToken ct)
     {
-        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var userId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var command = new DepositMoneyCommand(
             request.Amount,
             request.Currency,
@@ -93,7 +96,8 @@ public class AccountController : ControllerBase
     [FromBody] WithdrawRequest request,
     CancellationToken ct)
     {
-        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var userId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var command = new WithdrawMoneyCommand(
             request.Amount,
             request.Currency,
@@ -105,12 +109,14 @@ public class AccountController : ControllerBase
         return Ok();
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpDelete("{accountId:guid}")]
     public async Task <IActionResult> DeleteAccount(Guid accountId, CancellationToken ct)
     {
-        var command = new DeleteAccountCommand(accountId);
-        await _mediator.Send(command);
+        var userId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var command = new DeleteAccountCommand(accountId, userId);
+        await _mediator.Send(command, ct);
         return NoContent();
     }
 

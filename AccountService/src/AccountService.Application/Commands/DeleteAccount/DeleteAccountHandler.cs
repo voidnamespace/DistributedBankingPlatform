@@ -15,10 +15,12 @@ public class DeleteAccountHandler : IRequestHandler<DeleteAccountCommand>
 
     public async Task Handle (DeleteAccountCommand command, CancellationToken ct)
     {
+        
         var account = await _accountRepository.GetByIdAsync(command.AccountId, ct);
         if (account == null)
             throw new KeyNotFoundException($"Account with ID {command.AccountId} not found");
-        
+        if (account.UserId != command.UserId)
+            throw new InvalidOperationException("U can delete only your account");
         await _accountRepository.DeleteAsync(command.AccountId, ct);
         await _unitOfWork.SaveChangesAsync(ct);
     }
