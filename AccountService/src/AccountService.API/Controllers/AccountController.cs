@@ -6,6 +6,7 @@ using AccountService.Application.DTOs;
 using AccountService.Application.Queries.GetAllAccounts;
 using AccountService.Application.Queries.GetByAccountNumberAccount;
 using AccountService.Application.Queries.GetByIdAccount;
+using AccountService.Application.Queries.GetMyAccount;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -122,6 +123,20 @@ public class AccountController : ControllerBase
         var command = new DeleteAccountCommand(accountId, userId);
         await _mediator.Send(command, ct);
         return NoContent();
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMyAccount(CancellationToken ct)
+    {
+        var userId = Guid.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var result = await _mediator.Send(
+            new GetMyAccountQuery(userId),
+            ct);
+
+        return Ok(result);
     }
 
 }
