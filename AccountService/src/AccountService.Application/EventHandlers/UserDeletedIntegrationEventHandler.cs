@@ -1,4 +1,4 @@
-﻿using AccountService.Application.Commands.DeleteAccount;
+﻿using AccountService.Application.Commands.DeleteAccountEventChain;
 using AccountService.Application.IntegrationEvents;
 using MediatR;
 
@@ -18,7 +18,7 @@ public class UserDeletedIntegrationEventHandler
         UserDeletedIntegrationEvent notification,
         CancellationToken ct)
     {
-        var command = new DeleteAccountCommand(notification.UserId);
+        var command = new DeleteAccountEventChainCommand(notification.UserId);
 
         await _mediator.Send(command, ct);
     }
