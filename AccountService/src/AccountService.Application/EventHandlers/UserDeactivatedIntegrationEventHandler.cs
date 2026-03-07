@@ -1,10 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using AccountService.Application.IntegrationEvents;
+using MediatR;
+namespace AccountService.Application.EventHandlers;
 
-namespace AccountService.Application.EventHandlers
+public class UserDeactivatedIntegrationEventHandler
+: INotificationHandler<UserDeactivatedIntegrationEvent>
 {
-    internal class UserDeactivatedIntegrationEventHandler
+    public Task Handle(
+        UserDeactivatedIntegrationEvent notification,
+        CancellationToken ct)
     {
+        Console.WriteLine($"User deactivated: {notification.UserId}");
+
+        return Task.CompletedTask;
     }
 }

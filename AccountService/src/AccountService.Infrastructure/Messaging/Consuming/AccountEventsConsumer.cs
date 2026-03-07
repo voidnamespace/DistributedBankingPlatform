@@ -24,10 +24,12 @@ public class AccountEventsConsumer : BackgroundService
     private IModel? _channel;
 
     private static readonly Dictionary<string, Type> EventTypes = new()
-    {
-        { "UserCreatedIntegrationEvent", typeof(UserCreatedIntegrationEvent) },
-        { "UserDeletedIntegrationEvent", typeof(UserDeletedIntegrationEvent) }
-    };
+{
+    { "UserCreatedIntegrationEvent", typeof(UserCreatedIntegrationEvent) },
+    { "UserDeletedIntegrationEvent", typeof(UserDeletedIntegrationEvent) },
+    { "UserActivatedIntegrationEvent", typeof(UserActivatedIntegrationEvent) },
+    { "UserDeactivatedIntegrationEvent", typeof(UserDeactivatedIntegrationEvent) }
+};
 
     public AccountEventsConsumer(
         IServiceScopeFactory scopeFactory,
