@@ -44,7 +44,7 @@ public class AccountController : ControllerBase
     }
 
     [Authorize(Roles = "Admin")]
-    [HttpGet]
+    [HttpGet("all")]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var result = await _mediator.Send(new GetAllAccountsQuery(), ct);

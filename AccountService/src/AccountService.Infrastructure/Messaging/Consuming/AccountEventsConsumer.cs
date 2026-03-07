@@ -93,12 +93,13 @@ public class AccountEventsConsumer : BackgroundService
         {
             try
             {
-
-                Console.WriteLine("MESSAGE ARRIVED");
                 var json = Encoding.UTF8.GetString(ea.Body.ToArray());
 
-                Console.WriteLine("MESSAGE BODY:");
-                Console.WriteLine(json);
+                _logger.LogInformation(
+                    "RabbitMQ message received. RoutingKey: {RoutingKey}, Body: {Body}",
+                    ea.RoutingKey,
+                    json
+                );
 
                 using var scope = _scopeFactory.CreateScope();
 
