@@ -6,5 +6,6 @@ namespace AccountService.Application.Commands.WithdrawMoney;
 public record WithdrawMoneyCommand(
     decimal Amount,
     Currency Currency,
-    string AccountNumber
+    string AccountNumber,
+    Guid UserId
 ) : IRequest;

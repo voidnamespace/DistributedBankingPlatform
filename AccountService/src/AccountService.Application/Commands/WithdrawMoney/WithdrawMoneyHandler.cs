@@ -21,6 +21,9 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
         var acc = await _accountRepository.GetByAccountNumberAsync(accNum, ct)
             ?? throw new KeyNotFoundException("No such acc");
 
+        if (acc.UserId!=command.UserId)
+            throw new InvalidOperationException("U can withdrawal only your account");
+
         var money = new MoneyVO(
             command.Amount,
             command.Currency

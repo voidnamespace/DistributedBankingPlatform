@@ -54,20 +54,23 @@ public class AccountController : ControllerBase
     [HttpGet("{accountId:guid}")]
     public async Task<IActionResult> GetById(Guid accountId, CancellationToken ct)
     {
-        var userId = Guid.Parse(
+        var tokenUserId = Guid.Parse(
         User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var result = await _mediator.Send(new GetByIdAccountQuery(accountId), ct);
+        var result = await _mediator.Send(new GetByIdAccountQuery(accountId, tokenUserId), ct);
         return Ok(result);
     }
 
     [Authorize]
     [HttpGet("by-number/{accountNumber}")]
-    public async Task<IActionResult> GetByAccountNumber(string accountNumber, CancellationToken ct)
+    public async Task<IActionResult> GetByAccountNumber(
+        string accountNumber,
+        CancellationToken ct)
     {
         var userId = Guid.Parse(
-        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
         var result = await _mediator.Send(
-            new GetByAccountNumberAccountQuery(accountNumber),
+            new GetByAccountNumberAccountQuery(accountNumber, userId),
             ct
         );
 
@@ -101,7 +104,8 @@ public class AccountController : ControllerBase
         var command = new WithdrawMoneyCommand(
             request.Amount,
             request.Currency,
-            accountNumber
+            accountNumber,
+            userId
         );
 
         await _mediator.Send(command, ct);
