@@ -1,7 +1,6 @@
 ﻿using AccountService.Application.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
-
 namespace AccountService.Application.Commands.DeleteAccount;
 
 public class DeleteAccountHandler : IRequestHandler<DeleteAccountCommand>
