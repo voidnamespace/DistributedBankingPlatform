@@ -4,6 +4,7 @@ using AuthService.Application.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AuthService.Infrastructure.Authentication;
@@ -35,6 +36,10 @@ public static class JwtExtensions
                 {
                     OnTokenValidated = async ctx =>
                     {
+                        var logger = ctx.HttpContext.RequestServices
+                            .GetRequiredService<ILoggerFactory>()
+                            .CreateLogger("JwtAuthentication");
+
                         var userRepo = ctx.HttpContext.RequestServices
                             .GetRequiredService<IUserRepository>();
 
@@ -43,14 +48,31 @@ public static class JwtExtensions
 
                         if (!Guid.TryParse(userIdStr, out var userId))
                         {
+                            logger.LogWarning("JWT token validation failed: invalid user id claim");
+
                             ctx.Fail("Invalid token.");
                             return;
                         }
 
-                        var user = await userRepo.GetByIdAsync(userId, ctx.HttpContext.RequestAborted);
+                        var user = await userRepo.GetByIdAsync(
+                            userId,
+                            ctx.HttpContext.RequestAborted);
 
-                        if (user is null || !user.IsActive)
+                        if (user is null)
+                        {
+                            logger.LogWarning("JWT token rejected: user {UserId} not found", userId);
+                            ctx.Fail("User not found.");
+                            return;
+                        }
+
+                        if (!user.IsActive)
+                        {
+                            logger.LogWarning("JWT token rejected: user {UserId} is inactive", userId);
                             ctx.Fail("User inactive.");
+                            return;
+                        }
+
+                        logger.LogInformation("JWT token validated for user {UserId}", userId);
                     }
                 };
             });

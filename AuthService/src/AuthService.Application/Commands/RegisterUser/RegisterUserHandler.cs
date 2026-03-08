@@ -3,27 +3,41 @@ using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
 using AuthService.Domain.ValueObjects;
 using MediatR;
+using Microsoft.Extensions.Logging;
 namespace AuthService.Application.Commands.RegisterUser;
 
 public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, RegisterResponse>
 {
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<RegisterUserHandler> _logger;
 
     public RegisterUserHandler(
         IUserRepository userRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<RegisterUserHandler> logger)
     {
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task<RegisterResponse> Handle(
-    RegisterUserCommand command,
-    CancellationToken cancellationToken)
+        RegisterUserCommand command,
+        CancellationToken cancellationToken)
     {
+        _logger.LogInformation(
+            "Registering new user {Email}",
+            command.Email);
+
         if (command.Password != command.ConfirmPassword)
+        {
+            _logger.LogWarning(
+                "Password mismatch during registration {Email}",
+                command.Email);
+
             throw new ArgumentException("The passwords don't match");
+        }
 
         var user = new User(
             new EmailVO(command.Email.Trim()),
@@ -32,6 +46,11 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
         await _userRepository.CreateAsync(user, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "User registered successfully {UserId} {Email}",
+            user.Id,
+            user.Email.Value);
 
         return new RegisterResponse
         {

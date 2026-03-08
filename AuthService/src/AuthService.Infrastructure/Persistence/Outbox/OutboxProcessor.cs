@@ -3,21 +3,28 @@ using AuthService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
+
 namespace AuthService.Infrastructure.Persistence.Outbox;
 
 public class OutboxProcessor : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-   
+    private readonly ILogger<OutboxProcessor> _logger;
 
-    public OutboxProcessor(IServiceScopeFactory scopeFactory)
+    public OutboxProcessor(
+        IServiceScopeFactory scopeFactory,
+        ILogger<OutboxProcessor> logger)
     {
         _scopeFactory = scopeFactory;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _logger.LogInformation("OutboxProcessor started");
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -33,6 +40,13 @@ public class OutboxProcessor : BackgroundService
                     .Take(20)
                     .ToListAsync(stoppingToken);
 
+                if (batch.Count > 0)
+                {
+                    _logger.LogInformation(
+                        "Outbox batch fetched. Count={Count}",
+                        batch.Count);
+                }
+
                 foreach (var msg in batch)
                 {
                     try
@@ -45,15 +59,29 @@ public class OutboxProcessor : BackgroundService
 
                         var json = JsonSerializer.Serialize(envelope);
 
-                        await publisher.PublishRawAsync(json, msg.RoutingKey, stoppingToken);
+                        await publisher.PublishRawAsync(
+                            json,
+                            msg.RoutingKey,
+                            stoppingToken);
 
                         msg.ProcessedAt = DateTime.UtcNow;
                         msg.Error = null;
+
+                        _logger.LogInformation(
+                            "Outbox message published. Id={Id} RoutingKey={RoutingKey}",
+                            msg.Id,
+                            msg.RoutingKey);
                     }
                     catch (Exception ex)
                     {
                         msg.AttemptCount += 1;
                         msg.Error = ex.Message;
+
+                        _logger.LogError(
+                            ex,
+                            "Outbox message failed. Id={Id} Attempt={Attempt}",
+                            msg.Id,
+                            msg.AttemptCount);
                     }
                 }
 
@@ -62,10 +90,12 @@ public class OutboxProcessor : BackgroundService
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Outbox] ERROR: {ex.Message}");
+                _logger.LogError(ex, "OutboxProcessor main loop failure");
             }
 
             await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
         }
+
+        _logger.LogInformation("OutboxProcessor stopped");
     }
 }

@@ -1,18 +1,27 @@
 ﻿using System.Text.Json;
 using AuthService.Application.Interfaces.Messaging;
 using AuthService.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
+
 namespace AuthService.Infrastructure.Persistence.Outbox;
 
 public class OutboxWriter : IOutboxWriter
 {
     private readonly AuthDbContext _context;
+    private readonly ILogger<OutboxWriter> _logger;
 
-    public OutboxWriter(AuthDbContext context)
+    public OutboxWriter(
+        AuthDbContext context,
+        ILogger<OutboxWriter> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
-    public Task EnqueueAsync<T>(T integrationEvent, string routingKey, CancellationToken ct)
+    public Task EnqueueAsync<T>(
+        T integrationEvent,
+        string routingKey,
+        CancellationToken ct)
     {
         var message = new OutboxMessage
         {
@@ -25,6 +34,13 @@ public class OutboxWriter : IOutboxWriter
         };
 
         _context.OutboxMessages.Add(message);
+
+        _logger.LogInformation(
+            "Outbox message queued. Type={Type} RoutingKey={RoutingKey} Id={Id}",
+            message.Type,
+            routingKey,
+            message.Id);
+
         return Task.CompletedTask;
     }
 }

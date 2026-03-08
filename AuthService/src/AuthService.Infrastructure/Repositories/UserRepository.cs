@@ -22,12 +22,7 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken)
     {
-        var allUsers = await _context.Users
-            .Include(u => u.RefreshTokens)
-            .ToListAsync();
-
-        return allUsers.FirstOrDefault(u =>
-            u.Email.Value.ToLower() == email.ToLower());
+        return await _context.Users.Include(u => u.RefreshTokens).FirstOrDefaultAsync(u => u.Email.Value == email, cancellationToken);
     }
 
     public async Task CreateAsync(User user, CancellationToken cancellationToken)

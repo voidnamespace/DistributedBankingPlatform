@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using AuthService.Application.Interfaces;
+
 namespace AuthService.Infrastructure.Caching;
 
 public class RedisService : IRedisService
@@ -31,21 +32,27 @@ public class RedisService : IRedisService
     {
         try
         {
+            var redisKey = BuildKey(key);
+
             if (value == null)
             {
-                await _db.KeyDeleteAsync(BuildKey(key));
+                _logger.LogDebug("Redis delete because value is null. Key={Key}", redisKey);
+
+                await _db.KeyDeleteAsync(redisKey);
                 return;
             }
 
             var json = JsonSerializer.Serialize(value, _jsonOptions);
 
             await _db.StringSetAsync(
-                BuildKey(key),
+                redisKey,
                 json,
                 expiry: expiry,
                 when: When.Always,
                 flags: CommandFlags.None
             );
+
+            _logger.LogDebug("Redis SET success. Key={Key}", redisKey);
         }
         catch (Exception ex)
         {
@@ -54,15 +61,21 @@ public class RedisService : IRedisService
         }
     }
 
-
     public async Task<T?> GetAsync<T>(string key)
     {
         try
         {
-            var value = await _db.StringGetAsync(BuildKey(key));
+            var redisKey = BuildKey(key);
+
+            var value = await _db.StringGetAsync(redisKey);
 
             if (!value.HasValue)
+            {
+                _logger.LogDebug("Redis GET miss. Key={Key}", redisKey);
                 return default;
+            }
+
+            _logger.LogDebug("Redis GET hit. Key={Key}", redisKey);
 
             return JsonSerializer.Deserialize<T>(value!, _jsonOptions);
         }
@@ -77,7 +90,11 @@ public class RedisService : IRedisService
     {
         try
         {
-            await _db.KeyDeleteAsync(BuildKey(key));
+            var redisKey = BuildKey(key);
+
+            await _db.KeyDeleteAsync(redisKey);
+
+            _logger.LogDebug("Redis REMOVE success. Key={Key}", redisKey);
         }
         catch (Exception ex)
         {

@@ -3,6 +3,7 @@ using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AuthService.Application.Commands.LoginUser;
 
 public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
@@ -13,7 +14,8 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
     private readonly ILogger<LoginUserHandler> _logger;
     private readonly IUnitOfWork _unitOfWork;
 
-    public LoginUserHandler(IUserRepository userRepository,
+    public LoginUserHandler(
+        IUserRepository userRepository,
         IJwtService jwtService,
         IRefreshTokenRepository refreshTokenRepository,
         ILogger<LoginUserHandler> logger,
@@ -26,29 +28,55 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
         _unitOfWork = unitOfWork;
     }
 
-
-    public async Task<LoginResponse> Handle(LoginUserCommand command, CancellationToken cancellationToken)
+    public async Task<LoginResponse> Handle(
+        LoginUserCommand command,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Attempting login for {Email}", command.Email);
+        _logger.LogInformation(
+            "Attempting login for {Email}",
+            command.Email);
 
-        if (string.IsNullOrWhiteSpace(command.Email) || string.IsNullOrWhiteSpace(command.Password))
+        if (string.IsNullOrWhiteSpace(command.Email) ||
+            string.IsNullOrWhiteSpace(command.Password))
         {
+            _logger.LogWarning(
+                "Login failed due to missing credentials");
+
             throw new ArgumentException("Email and password are required.");
         }
 
         var lowerEmail = command.Email.ToLower().Trim();
 
-        var user = await _userRepository.GetByEmailAsync(lowerEmail, cancellationToken);
+        var user = await _userRepository.GetByEmailAsync(
+            lowerEmail,
+            cancellationToken);
 
         if (user == null)
+        {
+            _logger.LogWarning(
+                "Login failed. User not found {Email}",
+                lowerEmail);
+
             throw new UnauthorizedAccessException("Incorrect email or password");
+        }
 
         if (!user.IsActive)
+        {
+            _logger.LogWarning(
+                "Login attempt for deactivated user {UserId}",
+                user.Id);
+
             throw new UnauthorizedAccessException("User is deactivated");
+        }
 
         if (!BCrypt.Net.BCrypt.Verify(command.Password, user.PasswordHash!.Hash))
-            throw new UnauthorizedAccessException("Incorrect email or password");
+        {
+            _logger.LogWarning(
+                "Login failed. Invalid password for {Email}",
+                lowerEmail);
 
+            throw new UnauthorizedAccessException("Incorrect email or password");
+        }
 
         var accessToken = _jwtService.GenerateAccessToken(user);
         var refreshTokenValue = _jwtService.GenerateRefreshToken();
@@ -63,10 +91,15 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
             IsRevoked = false
         };
 
-        await _refreshTokenRepository.CreateAsync(refreshToken, cancellationToken);
+        await _refreshTokenRepository.CreateAsync(
+            refreshToken,
+            cancellationToken);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("User {UserId} successfully logged in", user.Id);
+        _logger.LogInformation(
+            "User {UserId} successfully logged in",
+            user.Id);
 
         return new LoginResponse
         {
