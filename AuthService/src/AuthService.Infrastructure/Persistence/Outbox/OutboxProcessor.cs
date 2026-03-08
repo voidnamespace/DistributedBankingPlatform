@@ -51,16 +51,8 @@ public class OutboxProcessor : BackgroundService
                 {
                     try
                     {
-                        var envelope = new
-                        {
-                            Type = msg.Type,
-                            Payload = JsonSerializer.Deserialize<object>(msg.Payload)
-                        };
-
-                        var json = JsonSerializer.Serialize(envelope);
-
                         await publisher.PublishRawAsync(
-                            json,
+                            msg.Payload,
                             msg.RoutingKey,
                             stoppingToken);
 

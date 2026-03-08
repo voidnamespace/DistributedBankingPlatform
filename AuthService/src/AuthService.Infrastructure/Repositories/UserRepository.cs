@@ -1,5 +1,6 @@
-﻿using AuthService.Domain.Entities;
-using AuthService.Application.Interfaces;
+﻿using AuthService.Application.Interfaces;
+using AuthService.Domain.Entities;
+using AuthService.Domain.ValueObjects;
 using AuthService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 namespace AuthService.Infrastructure.Repositories;
@@ -20,9 +21,11 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 
-    public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken)
+    public async Task<User?> GetByEmailAsync(EmailVO email, CancellationToken ct)
     {
-        return await _context.Users.Include(u => u.RefreshTokens).FirstOrDefaultAsync(u => u.Email.Value == email, cancellationToken);
+        return await _context.Users
+            .Include(u => u.RefreshTokens)
+            .FirstOrDefaultAsync(u => u.Email == email, ct);
     }
 
     public async Task CreateAsync(User user, CancellationToken cancellationToken)
@@ -65,14 +68,12 @@ public class UserRepository : IUserRepository
         user.Activate();
     }
 
-    public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken)
+    public async Task<bool> ExistsByEmailAsync(
+        EmailVO email,
+        CancellationToken cancellationToken)
     {
-        var normalizedEmail = email.Trim().ToLower();
-
         return await _context.Users
-            .AnyAsync(
-                u => u.Email.Value.ToLower() == normalizedEmail,
-                cancellationToken);
+            .AnyAsync(u => u.Email == email, cancellationToken);
     }
 
     public async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken)

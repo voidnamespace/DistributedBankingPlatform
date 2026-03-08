@@ -1,6 +1,7 @@
 ﻿using AuthService.Application.DTOs;
 using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
+using AuthService.Domain.ValueObjects;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -36,8 +37,8 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
             "Attempting login for {Email}",
             command.Email);
 
-        if (string.IsNullOrWhiteSpace(command.Email) ||
-            string.IsNullOrWhiteSpace(command.Password))
+        if (string.IsNullOrWhiteSpace(command.Password) ||
+            string.IsNullOrWhiteSpace(command.Email))
         {
             _logger.LogWarning(
                 "Login failed due to missing credentials");
@@ -45,17 +46,17 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
             throw new ArgumentException("Email and password are required.");
         }
 
-        var lowerEmail = command.Email.ToLower().Trim();
+        var email = new EmailVO(command.Email);
 
         var user = await _userRepository.GetByEmailAsync(
-            lowerEmail,
+            email,
             cancellationToken);
 
         if (user == null)
         {
             _logger.LogWarning(
                 "Login failed. User not found {Email}",
-                lowerEmail);
+                email.Value);
 
             throw new UnauthorizedAccessException("Incorrect email or password");
         }
@@ -69,11 +70,11 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
             throw new UnauthorizedAccessException("User is deactivated");
         }
 
-        if (!BCrypt.Net.BCrypt.Verify(command.Password, user.PasswordHash!.Hash))
+        if (!BCrypt.Net.BCrypt.Verify(command.Password, user.PasswordHash.Hash))
         {
             _logger.LogWarning(
                 "Login failed. Invalid password for {Email}",
-                lowerEmail);
+                email.Value);
 
             throw new UnauthorizedAccessException("Incorrect email or password");
         }
@@ -108,7 +109,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
             ExpiresAt = DateTime.UtcNow.AddMinutes(5),
             UserId = user.Id,
             Email = user.Email.Value,
-            Role = user.Role.ToString(),
+            Role = user.Role.ToString()
         };
     }
 }
