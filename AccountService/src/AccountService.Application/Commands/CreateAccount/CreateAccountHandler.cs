@@ -2,6 +2,8 @@
 using AccountService.Domain.Entity;
 using AccountService.Domain.ValueObjects;
 using MediatR;
+using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.Commands.CreateAccount;
 
 public class CreateAccountHandler
@@ -9,19 +11,27 @@ public class CreateAccountHandler
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<CreateAccountHandler> _logger;
 
     public CreateAccountHandler(
         IAccountRepository accountRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<CreateAccountHandler> logger)
     {
         _accountRepository = accountRepository;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task Handle(
         CreateAccountCommand command,
         CancellationToken ct)
     {
+        _logger.LogInformation(
+            "CreateAccountCommand received for user {UserId} with currency {Currency}",
+            command.UserId,
+            command.Currency);
+
         AccountNumberVO accountNumberVO;
 
         do
@@ -38,5 +48,10 @@ public class CreateAccountHandler
 
         await _accountRepository.AddAsync(acc, ct);
         await _unitOfWork.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Account created for user {UserId} with account number {AccountNumber}",
+            command.UserId,
+            accountNumberVO.Value);
     }
 }

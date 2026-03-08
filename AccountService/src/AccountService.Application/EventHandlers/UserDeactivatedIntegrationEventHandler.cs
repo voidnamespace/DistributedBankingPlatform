@@ -1,15 +1,27 @@
 ﻿using AccountService.Application.IntegrationEvents;
 using MediatR;
+using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.EventHandlers;
 
 public class UserDeactivatedIntegrationEventHandler
-: INotificationHandler<UserDeactivatedIntegrationEvent>
+    : INotificationHandler<UserDeactivatedIntegrationEvent>
 {
+    private readonly ILogger<UserDeactivatedIntegrationEventHandler> _logger;
+
+    public UserDeactivatedIntegrationEventHandler(
+        ILogger<UserDeactivatedIntegrationEventHandler> logger)
+    {
+        _logger = logger;
+    }
+
     public Task Handle(
         UserDeactivatedIntegrationEvent notification,
         CancellationToken ct)
     {
-        Console.WriteLine($"User deactivated: {notification.UserId}");
+        _logger.LogInformation(
+            "UserDeactivatedIntegrationEvent received for user {UserId}",
+            notification.UserId);
 
         return Task.CompletedTask;
     }

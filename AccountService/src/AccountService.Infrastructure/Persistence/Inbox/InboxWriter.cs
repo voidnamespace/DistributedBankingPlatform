@@ -1,13 +1,18 @@
 ﻿using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Persistence.Inbox;
+using Microsoft.Extensions.Logging;
 
 public class InboxWriter : IInboxWriter
 {
     private readonly AccountDbContext _context;
+    private readonly ILogger<InboxWriter> _logger;
 
-    public InboxWriter(AccountDbContext context)
+    public InboxWriter(
+        AccountDbContext context,
+        ILogger<InboxWriter> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task SaveAsync(
@@ -28,6 +33,13 @@ public class InboxWriter : IInboxWriter
         };
 
         _context.InboxMessages.Add(message);
+
         await _context.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Inbox message saved. Id={Id} Type={Type} RoutingKey={RoutingKey}",
+            message.Id,
+            type,
+            routingKey);
     }
 }
