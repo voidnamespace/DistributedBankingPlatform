@@ -1,9 +1,12 @@
 using AspNetCoreRateLimit;
 using AuthService.API.Extensions;
+using AuthService.Application.Commands.RegisterUser;
 using AuthService.Infrastructure.Data;
 using AuthService.Infrastructure.Extensions;
 using AuthService.Infrastructure.Persistence.Seeding;
 using Microsoft.EntityFrameworkCore;
+using AuthService.Application.EventHandlers;
+
 namespace AuthService.API;
 
 public class Startup
@@ -18,9 +21,10 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddMediatR(cfg =>
-            cfg.RegisterServicesFromAssembly(
-                typeof(AuthService.Application.Commands.RegisterUser.RegisterUserCommand).Assembly
-            ));
+    cfg.RegisterServicesFromAssemblies(
+        typeof(RegisterUserCommand).Assembly,
+        typeof(UserActivatedDomainEventHandler).Assembly
+    ));
 
         services.AddApi(Configuration);
         services.AddInfrastructure(Configuration);

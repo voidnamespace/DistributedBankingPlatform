@@ -18,11 +18,12 @@ public class GetByIdAccountHandler
 
     public async Task<ReadAccountDTO> Handle (GetByIdAccountQuery query, CancellationToken ct)
     {
-        var acc = await _accountRepository.GetByIdAsync(query.UserId, ct);
+        var acc = await _accountRepository.GetByIdAsync(query.AccountId, ct);
 
         if (acc == null)
             throw new KeyNotFoundException("no account found");
-
+        if (acc.UserId!=query.TokenUserId)
+            throw new UnauthorizedAccessException();
         return new ReadAccountDTO
         {
             Id = acc.Id,

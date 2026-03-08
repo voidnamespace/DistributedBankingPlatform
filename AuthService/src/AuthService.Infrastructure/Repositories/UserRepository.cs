@@ -1,5 +1,6 @@
-﻿using AuthService.Domain.Entities;
-using AuthService.Application.Interfaces;
+﻿using AuthService.Application.Interfaces;
+using AuthService.Domain.Entities;
+using AuthService.Domain.ValueObjects;
 using AuthService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 namespace AuthService.Infrastructure.Repositories;
@@ -20,14 +21,11 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 
-    public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken)
+    public async Task<User?> GetByEmailAsync(EmailVO email, CancellationToken ct)
     {
-        var allUsers = await _context.Users
+        return await _context.Users
             .Include(u => u.RefreshTokens)
-            .ToListAsync();
-
-        return allUsers.FirstOrDefault(u =>
-            u.Email.Value.ToLower() == email.ToLower());
+            .FirstOrDefaultAsync(u => u.Email == email, ct);
     }
 
     public async Task CreateAsync(User user, CancellationToken cancellationToken)
@@ -41,23 +39,38 @@ public class UserRepository : IUserRepository
         _context.Users.Update(user);
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+    public Task DeleteAsync(User user, CancellationToken ct)
     {
-        var user = await _context.Users.FindAsync(id);
-        if (user != null)
-        {
-            _context.Users.Remove(user);
-        }
+        _context.Users.Remove(user);
+        return Task.CompletedTask;
     }
 
-    public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken)
+    public async Task DeactivateAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var normalizedEmail = email.Trim().ToLower();
+        var user = await _context.Users.FindAsync(userId);
 
+        if (user is null)
+            return;
+
+        user.Deactivate();
+    }
+
+    public async Task ActivateAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var user = await _context.Users.FindAsync(userId);
+
+        if (user is null)
+            return;
+
+        user.Activate();
+    }
+
+    public async Task<bool> ExistsByEmailAsync(
+        EmailVO email,
+        CancellationToken cancellationToken)
+    {
         return await _context.Users
-            .AnyAsync(
-                u => u.Email.Value.ToLower() == normalizedEmail,
-                cancellationToken);
+            .AnyAsync(u => u.Email == email, cancellationToken);
     }
 
     public async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken)

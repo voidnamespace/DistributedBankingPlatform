@@ -15,4 +15,6 @@ public interface IAccountRepository
 
     Task DeleteAsync(Guid accId, CancellationToken ct);
 
+    Task<IReadOnlyList<Account>> GetByUserIdAsync(Guid userId, CancellationToken ct);
+
 }

@@ -1,5 +1,6 @@
 ﻿using AccountService.Domain.Entity;
 using AccountService.Domain.ValueObjects;
+using AccountService.Infrastructure.Persistence.Inbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AccountService.Infrastructure.Data;
@@ -11,7 +12,7 @@ public class AccountDbContext : DbContext
     {
     }
     public DbSet<Account> Accounts { get; set; }
-
+    public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -20,6 +21,19 @@ public class AccountDbContext : DbContext
         vo => vo.Value,
         value => new AccountNumberVO(value));
 
+        modelBuilder.Entity<InboxMessage>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Type)
+                .IsRequired();
+
+            entity.Property(x => x.Payload)
+                .IsRequired();
+
+            entity.Property(x => x.ReceivedAt)
+                .IsRequired();
+        });
         modelBuilder.Entity<Account>(entity =>
         {
             entity.HasKey(u => u.Id);

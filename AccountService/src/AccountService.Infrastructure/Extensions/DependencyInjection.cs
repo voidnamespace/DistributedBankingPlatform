@@ -1,6 +1,8 @@
 ﻿using AccountService.Application.Interfaces;
-using AccountService.Infrastructure.Messaging;
+using AccountService.Infrastructure.Messaging.Consuming;
+using AccountService.Infrastructure.Messaging.Options;
 using AccountService.Infrastructure.Persistence;
+using AccountService.Infrastructure.Persistence.Inbox;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,10 +17,13 @@ public static class DI
         services.AddDatabaseConfiguration(configuration);
 
         services.AddRepositories();
-
+        services.Configure<ConsumerOptions>(
+    configuration.GetSection("RabbitMQ"));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddHostedService<AccountEventsConsumer>();
+        services.AddHostedService<InboxProcessor>();
+        services.AddScoped<IInboxWriter, InboxWriter>();
 
-        services.AddHostedService<UserCreatedConsumer>();
 
         return services;
     }

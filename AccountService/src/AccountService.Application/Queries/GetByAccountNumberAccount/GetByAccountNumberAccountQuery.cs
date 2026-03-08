@@ -2,4 +2,4 @@
 using MediatR;
 namespace AccountService.Application.Queries.GetByAccountNumberAccount;
 
-public record GetByAccountNumberAccountQuery(string AccountId) : IRequest<ReadAccountDTO>;
+public record GetByAccountNumberAccountQuery(string AccountNumber, Guid UserId) : IRequest<ReadAccountDTO>;

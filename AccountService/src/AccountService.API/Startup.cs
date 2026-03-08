@@ -4,6 +4,9 @@ using AccountService.Infrastructure.Data;
 using AspNetCoreRateLimit;
 using Microsoft.EntityFrameworkCore;
 using AccountService.Infrastructure.Extensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 namespace AccountService.API;
 
 public class Startup
@@ -18,28 +21,64 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly));
+            cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly));
+
         services.AddInfrastructure(Configuration);
+
         services.AddControllers();
         services.AddEndpointsApiExplorer();
+
         services.AddSwaggerConfiguration();
         services.AddHealthChecksConfiguration(Configuration);
         services.AddRateLimitingConfiguration(Configuration);
 
+
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                 {
+                     var key = Configuration["Jwt:SecretKey"]
+                      ?? throw new Exception("JWT key not configured");
+
+                     options.TokenValidationParameters = new TokenValidationParameters
+                     {
+                      ValidateIssuer = true,
+                      ValidIssuer = Configuration["Jwt:Issuer"],
+
+                      ValidateAudience = true,
+                      ValidAudience = Configuration["Jwt:Audience"],
+
+                      ValidateLifetime = true,
+
+                      ValidateIssuerSigningKey = true,
+                      IssuerSigningKey =
+                      new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+                 };
+             });
+
+        services.AddAuthorization();
     }
 
     public void Configure(WebApplication app, IWebHostEnvironment env)
     {
         app.UseHttpsRedirection();
+
         app.UseSwaggerConfiguration();
+
         app.UseIpRateLimiting();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
         app.MapControllers();
+
         app.MapHealthCheckEndpoints();
+
         using (var scope = app.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AccountDbContext>();
 
             var retries = 10;
+
             while (retries > 0)
             {
                 try

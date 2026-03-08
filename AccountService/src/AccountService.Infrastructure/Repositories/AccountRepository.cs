@@ -50,6 +50,11 @@ public class AccountRepository : IAccountRepository
             _context.Accounts.Remove(acc);
         }
     }
-
+    public async Task<IReadOnlyList<Account>> GetByUserIdAsync(Guid userId, CancellationToken ct)
+    {
+        return await _context.Accounts
+            .Where(a => a.UserId == userId)
+            .ToListAsync(ct);
+    }
 
 }

@@ -2,5 +2,5 @@
 
 namespace AccountService.Application.Commands.DeleteAccount;
 
-public record DeleteAccountCommand(Guid accId) : IRequest;
+public record DeleteAccountCommand(Guid AccountId, Guid UserId) : IRequest;
 

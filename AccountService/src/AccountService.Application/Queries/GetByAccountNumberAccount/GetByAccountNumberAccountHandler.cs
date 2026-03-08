@@ -17,14 +17,15 @@ public class GetByAccountNumberAccountHandler : IRequestHandler<GetByAccountNumb
 
     public async Task<ReadAccountDTO> Handle(GetByAccountNumberAccountQuery query, CancellationToken ct)
     {
-        var accountNumberVO = new AccountNumberVO(query.AccountId);
+        var accountNumberVO = new AccountNumberVO(query.AccountNumber);
 
         var acc = await _accountRepository
             .GetByAccountNumberAsync(accountNumberVO, ct);
 
         if (acc == null)
             throw new DomainException("Account not found");
-
+        if (acc.UserId != query.UserId)
+            throw new UnauthorizedAccessException();
         return new ReadAccountDTO
         {
             Id = acc.Id,

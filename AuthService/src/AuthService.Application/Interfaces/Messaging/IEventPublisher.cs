@@ -6,4 +6,6 @@ public interface IEventPublisher
         T message,
         string routingKey,
         CancellationToken ct = default);
+
+    Task PublishRawAsync(string payloadJson, string routingKey, CancellationToken ct);
 }

@@ -1,6 +1,9 @@
-﻿namespace AccountService.Application.IntegrationEvents;
+﻿using MediatR;
+
+namespace AccountService.Application.IntegrationEvents;
 
 public record UserCreatedIntegrationEvent(
     Guid UserId,
-    string Email
-);
+    string Email,
+    string Currency
+) : INotification;

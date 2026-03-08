@@ -1,4 +1,5 @@
 using AuthService.Domain.Enums;
+using AuthService.Domain.Events;
 using AuthService.Domain.ValueObjects;
 namespace AuthService.Domain.Entities;
 
@@ -19,7 +20,7 @@ public class User : Entity
 
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
-    private User() { } 
+    private User() { }
     public User(EmailVO email, PasswordVO password)
     {
         Id = Guid.NewGuid();
@@ -27,6 +28,9 @@ public class User : Entity
         PasswordHash = password;
         Role = Roles.Customer;
         CreatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(
+            new UserCreatedDomainEvent(Id, Email.Value));
     }
 
     public static User CreateAdmin(EmailVO email, PasswordVO password)
@@ -64,14 +68,31 @@ public class User : Entity
     }
     public void Deactivate()
     {
+        if (!IsActive)
+            return;
+
         IsActive = false;
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(
+            new UserDeactivatedDomainEvent(Id));
     }
 
     public void Activate()
     {
+        if (IsActive)
+            return;
+
         IsActive = true;
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(
+            new UserActivatedDomainEvent(Id));
     }
 
+    public void Delete()
+    {
+        AddDomainEvent(
+            new UserDeletedDomainEvent(Id));
+    }
 }

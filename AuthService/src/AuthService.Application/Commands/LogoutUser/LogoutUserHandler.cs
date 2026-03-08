@@ -1,6 +1,7 @@
 ﻿using AuthService.Application.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AuthService.Application.Commands.LogoutUser;
 
 public class LogoutUserHandler : IRequestHandler<LogoutUserCommand>
@@ -9,7 +10,8 @@ public class LogoutUserHandler : IRequestHandler<LogoutUserCommand>
     private readonly ILogger<LogoutUserHandler> _logger;
     private readonly IUnitOfWork _unitOfWork;
 
-    public LogoutUserHandler(IRefreshTokenRepository refreshTokenRepository,
+    public LogoutUserHandler(
+        IRefreshTokenRepository refreshTokenRepository,
         ILogger<LogoutUserHandler> logger,
         IUnitOfWork unitOfWork)
     {
@@ -18,13 +20,26 @@ public class LogoutUserHandler : IRequestHandler<LogoutUserCommand>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle (LogoutUserCommand request, CancellationToken cancellationToken)
+    public async Task Handle(
+        LogoutUserCommand request,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Attempting to logout user {UserId}", request.userId);
+        _logger.LogInformation(
+            "Attempting to logout user {UserId}",
+            request.userId);
 
-        await _refreshTokenRepository.RevokeAllUserTokensAsync(request.userId, cancellationToken);
+        await _refreshTokenRepository.RevokeAllUserTokensAsync(
+            request.userId,
+            cancellationToken);
+
+        _logger.LogInformation(
+            "All refresh tokens revoked for user {UserId}",
+            request.userId);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("User {UserId} successfully logged out", request.userId);
+        _logger.LogInformation(
+            "User {UserId} successfully logged out",
+            request.userId);
     }
 }

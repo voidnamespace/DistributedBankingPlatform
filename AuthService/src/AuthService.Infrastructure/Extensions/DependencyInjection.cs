@@ -4,8 +4,9 @@ using AuthService.Infrastructure.Authentication;
 using AuthService.Infrastructure.Caching;
 using AuthService.Infrastructure.Messaging.Options;
 using AuthService.Infrastructure.Messaging.Publishing;
-using AuthService.Infrastructure.Persistence;
+using AuthService.Infrastructure.Persistence.Outbox;
 using AuthService.Infrastructure.Persistence.Seeding;
+using AuthService.Infrastructure.Persistence.UnitOfWork;
 using AuthService.Infrastructure.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +41,10 @@ public static class DependencyInjection
             configuration.GetSection("RabbitMq"));
 
         services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
+
+        services.AddScoped<IOutboxWriter, OutboxWriter>();
+
+        services.AddHostedService<OutboxProcessor>();
 
         return services;
     }

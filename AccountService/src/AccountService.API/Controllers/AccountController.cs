@@ -1,4 +1,5 @@
-﻿using AccountService.Application.Commands.CreateAccount;
+﻿using AccountService.Application.Commands.ActivateAccount;
+using AccountService.Application.Commands.CreateAccount;
 using AccountService.Application.Commands.DeleteAccount;
 using AccountService.Application.Commands.DepositMoney;
 using AccountService.Application.Commands.WithdrawMoney;
@@ -6,8 +7,11 @@ using AccountService.Application.DTOs;
 using AccountService.Application.Queries.GetAllAccounts;
 using AccountService.Application.Queries.GetByAccountNumberAccount;
 using AccountService.Application.Queries.GetByIdAccount;
+using AccountService.Application.Queries.GetMyAccount;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 namespace AccountService.API.Controllers;
 
 [ApiController]
@@ -22,60 +26,133 @@ public class AccountController : ControllerBase
         _mediator = mediator; 
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> CreateAccount(
-    CreateAccountRequest request,
-    CancellationToken ct)
+        CreateAccountRequest request,
+        CancellationToken ct)
     {
-        await _mediator.Send(new CreateAccountCommand(request), ct);
+        var userId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        await _mediator.Send(
+            new CreateAccountCommand(
+                userId,
+                request.Currency),
+            ct);
+
         return Accepted();
     }
 
-    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    [HttpGet("all")]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var result = await _mediator.Send(new GetAllAccountsQuery(), ct);
         return Ok(result);
     }
 
+    [Authorize]
     [HttpGet("{accountId:guid}")]
     public async Task<IActionResult> GetById(Guid accountId, CancellationToken ct)
     {
-        var result = await _mediator.Send(new GetByIdAccountQuery(accountId), ct);
+        var tokenUserId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var result = await _mediator.Send(new GetByIdAccountQuery(accountId, tokenUserId), ct);
         return Ok(result);
     }
 
+    [Authorize]
     [HttpGet("by-number/{accountNumber}")]
-    public async Task<IActionResult> GetByAccountNumber(string accountNumber, CancellationToken ct)
+    public async Task<IActionResult> GetByAccountNumber(
+        string accountNumber,
+        CancellationToken ct)
     {
+        var userId = Guid.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
         var result = await _mediator.Send(
-            new GetByAccountNumberAccountQuery(accountNumber),
+            new GetByAccountNumberAccountQuery(accountNumber, userId),
             ct
         );
 
         return Ok(result);
     }
 
+    [Authorize]
     [HttpPost("{accountNumber}/deposit")]
     public async Task <IActionResult> Deposit(string accountNumber,
     [FromBody] DepositRequest request, CancellationToken ct)
     {
-        await _mediator.Send(new DepositMoneyCommand(request, accountNumber),ct);
+        var userId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var command = new DepositMoneyCommand(
+            request.Amount,
+            request.Currency,
+            accountNumber);
+        await _mediator.Send(command,ct);
         return Ok();
     }
 
+    [Authorize]
     [HttpPatch("{accountNumber}/withdraw")]
-    public async Task <IActionResult> Withdraw (string accountNumber,
-    [FromBody] WithdrawRequest request, CancellationToken ct)
+    public async Task<IActionResult> Withdraw(
+    string accountNumber,
+    [FromBody] WithdrawRequest request,
+    CancellationToken ct)
     {
-        await _mediator.Send(new WithdrawMoneyCommand(request, accountNumber), ct);
+        var userId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var command = new WithdrawMoneyCommand(
+            request.Amount,
+            request.Currency,
+            accountNumber,
+            userId
+        );
+
+        await _mediator.Send(command, ct);
+
         return Ok();
     }
 
+    [Authorize]
     [HttpDelete("{accountId:guid}")]
     public async Task <IActionResult> DeleteAccount(Guid accountId, CancellationToken ct)
     {
-        await _mediator.Send(new DeleteAccountCommand(accountId));
+        var userId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var command = new DeleteAccountCommand(accountId, userId);
+        await _mediator.Send(command, ct);
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMyAccount(CancellationToken ct)
+    {
+        var userId = Guid.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var result = await _mediator.Send(
+            new GetMyAccountQuery(userId),
+            ct);
+
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpPatch("{accountId:guid}/activate")]
+    public async Task<IActionResult> ActivateAccount(
+    Guid accountId,
+    CancellationToken ct)
+    {
+        var userId = Guid.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var command = new ActivateAccountCommand(accountId, userId);
+
+        await _mediator.Send(command, ct);
+
         return NoContent();
     }
 
