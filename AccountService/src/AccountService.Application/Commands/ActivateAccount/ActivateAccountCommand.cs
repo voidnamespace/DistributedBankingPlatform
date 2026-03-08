@@ -2,4 +2,4 @@
 
 namespace AccountService.Application.Commands.ActivateAccount;
 
-public record ActivateAccountCommand(Guid AccountId) : IRequest;
+public record ActivateAccountCommand(Guid AccountId, Guid UserId) : IRequest;

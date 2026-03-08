@@ -1,5 +1,5 @@
-﻿using AccountService.Application.Commands.ActivateAccount;
-using AccountService.Application.Commands.DeactivateAccount;
+﻿using AccountService.Application.Commands.DeactivateAccountEventChain;
+using AccountService.Application.Commands.DeleteAccountEventChain;
 using AccountService.Application.IntegrationEvents;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -10,14 +10,17 @@ public class UserDeactivatedIntegrationEventHandler
     : INotificationHandler<UserDeactivatedIntegrationEvent>
 {
     private readonly ILogger<UserDeactivatedIntegrationEventHandler> _logger;
+    private readonly IMediator _mediator;
 
     public UserDeactivatedIntegrationEventHandler(
-        ILogger<UserDeactivatedIntegrationEventHandler> logger)
+        ILogger<UserDeactivatedIntegrationEventHandler> logger,
+        IMediator mediator)
     {
         _logger = logger;
+        _mediator = mediator;
     }
 
-    public Task Handle(
+    public async Task Handle(
         UserDeactivatedIntegrationEvent notification,
         CancellationToken ct)
     {
@@ -25,8 +28,12 @@ public class UserDeactivatedIntegrationEventHandler
             "UserDeactivatedIntegrationEvent received for user {UserId}",
             notification.UserId);
 
-        var command = new DeactivateAccountCommand(notification.UserId);
+        var command = new DeactivateAccountEventChainCommand(notification.UserId);
 
+        await _mediator.Send(command, ct);
 
+        _logger.LogInformation(
+            "DeleteAccountEventChainCommand sent for user {UserId}",
+            notification.UserId);
     }
 }

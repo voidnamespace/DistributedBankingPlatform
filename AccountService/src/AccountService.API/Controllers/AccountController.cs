@@ -1,4 +1,5 @@
-﻿using AccountService.Application.Commands.CreateAccount;
+﻿using AccountService.Application.Commands.ActivateAccount;
+using AccountService.Application.Commands.CreateAccount;
 using AccountService.Application.Commands.DeleteAccount;
 using AccountService.Application.Commands.DepositMoney;
 using AccountService.Application.Commands.WithdrawMoney;
@@ -137,6 +138,22 @@ public class AccountController : ControllerBase
             ct);
 
         return Ok(result);
+    }
+
+    [Authorize]
+    [HttpPatch("{accountId:guid}/activate")]
+    public async Task<IActionResult> ActivateAccount(
+    Guid accountId,
+    CancellationToken ct)
+    {
+        var userId = Guid.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var command = new ActivateAccountCommand(accountId, userId);
+
+        await _mediator.Send(command, ct);
+
+        return NoContent();
     }
 
 }

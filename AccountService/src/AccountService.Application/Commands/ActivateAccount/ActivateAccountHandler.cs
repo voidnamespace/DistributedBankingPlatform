@@ -35,6 +35,9 @@ public class ActivateAccountHandler
         if (account == null)
             throw new KeyNotFoundException("Account not found");
 
+        if (account.UserId != request.UserId)
+            throw new UnauthorizedAccessException();
+
         account.Activate(); 
 
         await _unitOfWork.SaveChangesAsync(ct);
