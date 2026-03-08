@@ -1,4 +1,6 @@
-﻿using AccountService.Application.IntegrationEvents;
+﻿using AccountService.Application.Commands.ActivateAccount;
+using AccountService.Application.Commands.DeactivateAccount;
+using AccountService.Application.IntegrationEvents;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -23,6 +25,8 @@ public class UserDeactivatedIntegrationEventHandler
             "UserDeactivatedIntegrationEvent received for user {UserId}",
             notification.UserId);
 
-        return Task.CompletedTask;
+        var command = new DeactivateAccountCommand(notification.UserId);
+
+
     }
 }
