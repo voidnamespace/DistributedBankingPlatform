@@ -8,7 +8,7 @@ public interface IUserRepository
     Task<User?> GetByEmailAsync(EmailVO email, CancellationToken cancellationToken);
     Task CreateAsync(User user, CancellationToken cancellationToken);
     Task UpdateAsync(User user, CancellationToken cancellationToken);
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+    Task DeleteAsync(User user, CancellationToken cancellationToken);
     Task DeactivateAsync(Guid id, CancellationToken cancellationToken);
     Task ActivateAsync(Guid id, CancellationToken cancellationToken);
     Task<bool> ExistsByEmailAsync(EmailVO email, CancellationToken cancellationToken);

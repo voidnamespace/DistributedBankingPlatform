@@ -15,8 +15,7 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand>
     public DeleteUserHandler(
         IUserRepository userRepository,
         ILogger<DeleteUserHandler> logger,
-        IUnitOfWork unitOfWork,
-        IEventPublisher eventPublisher)
+        IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _logger = logger;
@@ -30,8 +29,8 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand>
             request.userId);
 
         var user = await _userRepository.GetByIdAsync(
-            request.userId,
-            cancellationToken);
+                            request.userId,
+                            cancellationToken);
 
         if (user == null)
         {
@@ -42,8 +41,10 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand>
             throw new KeyNotFoundException($"User with ID {request.userId} not found");
         }
 
+        user.Delete(); 
+
         await _userRepository.DeleteAsync(
-            request.userId,
+            user,
             cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

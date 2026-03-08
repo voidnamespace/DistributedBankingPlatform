@@ -90,4 +90,9 @@ public class User : Entity
             new UserActivatedDomainEvent(Id));
     }
 
+    public void Delete()
+    {
+        AddDomainEvent(
+            new UserDeletedDomainEvent(Id));
+    }
 }
