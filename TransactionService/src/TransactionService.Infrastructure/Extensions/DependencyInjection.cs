@@ -3,9 +3,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TransactionService.Application.Interfaces;
 using TransactionService.Application.Interfaces.Messaging;
+using TransactionService.Infrastructure.Messaging.Options;
+using TransactionService.Infrastructure.Messaging.Publishing;
 using TransactionService.Infrastructure.Persistence.Outbox;
 using TransactionService.Infrastructure.Persistence.UnitOfWork;
-
+using TransactionService.Infrastructure.Repositories;
 namespace TransactionService.Infrastructure.Extensions;
 
 public static class DependencyInjection
@@ -17,17 +19,16 @@ public static class DependencyInjection
     {
         services.AddDatabaseConfiguration(configuration);
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-
+        services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 
-        services.AddScoped<IOutboxWriter, OutboxWriter>();
+        services.Configure<RabbitMqOptions>(
+            configuration.GetSection("RabbitMq"));
 
+        services.AddScoped<IOutboxWriter, OutboxWriter>();
         services.AddHostedService<OutboxProcessor>();
 
-
+        return services;
     }
-
-
 
 }

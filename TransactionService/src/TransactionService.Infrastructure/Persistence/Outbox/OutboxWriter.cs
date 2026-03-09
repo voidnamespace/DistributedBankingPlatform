@@ -1,9 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Data;
 namespace TransactionService.Infrastructure.Persistence.Outbox;
 
-public class OutboxWriter
+public class OutboxWriter : IOutboxWriter
 {
     private readonly TransactionDbContext _context;
     private readonly ILogger<OutboxWriter> _logger;
