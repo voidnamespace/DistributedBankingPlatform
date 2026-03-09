@@ -1,8 +1,6 @@
 ﻿using MediatR;
-using TransactionService.Application.Events;
 using TransactionService.Application.Interfaces;
 using TransactionService.Domain.Entities;
-using TransactionService.Domain.Exceptions;
 using TransactionService.Domain.ValueObjects;
 namespace TransactionService.Application.Commands.CreateTransfer;
 
