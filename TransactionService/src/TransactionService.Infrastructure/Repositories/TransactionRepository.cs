@@ -21,7 +21,7 @@ public class TransactionRepository : ITransactionRepository
     public async Task<Transaction?> GetByIdAsync(Guid id, CancellationToken ct)
     {
         return await _context.Transactions
-            .FirstOrDefaultAsync(x => x.Id == id, ct);
+            .FirstOrDefaultAsync(x => x.TransactionId == id, ct);
     }
 
 }

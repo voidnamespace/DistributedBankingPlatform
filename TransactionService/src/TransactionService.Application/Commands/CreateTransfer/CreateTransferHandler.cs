@@ -27,7 +27,6 @@ public class CreateTransferHandler
         var money = new MoneyVO(cmd.Amount, cmd.Currency);
 
         var transaction = new Transaction(
-            cardId: Guid.Empty, 
             fromAccountId: cmd.FromAccountId,
             toAccountId: cmd.ToAccountId,
             money: money);
@@ -35,6 +34,6 @@ public class CreateTransferHandler
         await _repository.AddAsync(transaction, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        return transaction.Id;
+        return transaction.TransactionId;
     }
 }

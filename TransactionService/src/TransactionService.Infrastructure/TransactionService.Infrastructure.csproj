@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Folder Include="Messaging\" />
+    <Folder Include="Persistence\Outbox\" />
   </ItemGroup>
 
 </Project>
