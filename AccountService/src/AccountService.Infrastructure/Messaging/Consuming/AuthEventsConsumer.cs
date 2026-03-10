@@ -14,11 +14,11 @@ using System.Text.Json;
 
 namespace AccountService.Infrastructure.Messaging.Consuming;
 
-public class AccountEventsConsumer : BackgroundService
+public class AuthEventsConsumer : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ConsumerOptions _options;
-    private readonly ILogger<AccountEventsConsumer> _logger;
+    private readonly AuthEventsConsumerOptions _options;
+    private readonly ILogger<AuthEventsConsumer> _logger;
 
     private IConnection? _connection;
     private IModel? _channel;
@@ -31,10 +31,10 @@ public class AccountEventsConsumer : BackgroundService
     { "UserDeactivatedIntegrationEvent", typeof(UserDeactivatedIntegrationEvent) }
 };
 
-    public AccountEventsConsumer(
+    public AuthEventsConsumer(
         IServiceScopeFactory scopeFactory,
-        IOptions<ConsumerOptions> options,
-        ILogger<AccountEventsConsumer> logger)
+        IOptions<AuthEventsConsumerOptions> options,
+        ILogger<AuthEventsConsumer> logger)
     {
         _scopeFactory = scopeFactory;
         _options = options.Value;

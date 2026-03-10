@@ -13,7 +13,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
     private readonly IModel _channel;
 
 
-    private const string ExchangeName = "trans.events";
+    private const string ExchangeName = "transaction.events";
 
     public RabbitMqEventPublisher(IOptions<RabbitMqOptions> options)
     {

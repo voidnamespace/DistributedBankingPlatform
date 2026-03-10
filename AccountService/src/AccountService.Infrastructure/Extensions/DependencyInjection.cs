@@ -17,10 +17,10 @@ public static class DI
         services.AddDatabaseConfiguration(configuration);
 
         services.AddRepositories();
-        services.Configure<ConsumerOptions>(
+        services.Configure<AuthEventsConsumerOptions>(
     configuration.GetSection("RabbitMQ"));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddHostedService<AccountEventsConsumer>();
+        services.AddHostedService<AuthEventsConsumer>();
         services.AddHostedService<InboxProcessor>();
         services.AddScoped<IInboxWriter, InboxWriter>();
 
