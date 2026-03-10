@@ -15,7 +15,7 @@ public class TransactionController : ControllerBase
     {
         _mediator = mediator;
     }
-    [Authorize]
+   // [Authorize]
     [HttpPost("transfer")]
     public async Task<IActionResult> Transfer(
     [FromBody] CreateTransferRequest request,
