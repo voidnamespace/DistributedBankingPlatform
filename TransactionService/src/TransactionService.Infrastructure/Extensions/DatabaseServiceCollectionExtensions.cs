@@ -13,7 +13,7 @@ public static class DatabaseServiceCollectionExtensions
     {
         services.AddDbContext<TransactionDbContext>(options =>
             options.UseNpgsql(
-                configuration.GetConnectionString("TransDb")
+                configuration.GetConnectionString("Default")
             ));
 
         return services;

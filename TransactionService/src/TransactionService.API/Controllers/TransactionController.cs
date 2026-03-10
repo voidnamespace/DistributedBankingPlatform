@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TransactionService.Application.Commands.CreateTransfer;
 using TransactionService.Application.DTOs;
@@ -14,7 +15,7 @@ public class TransactionController : ControllerBase
     {
         _mediator = mediator;
     }
-
+    [Authorize]
     [HttpPost("transfer")]
     public async Task<IActionResult> Transfer(
     [FromBody] CreateTransferRequest request,
