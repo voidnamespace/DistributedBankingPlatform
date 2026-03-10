@@ -21,6 +21,11 @@ public class TransactionEventsConsumer : BackgroundService
     private IConnection? _connection;
     private IModel? _channel;
 
+    private static readonly Dictionary<string, string> EventTypes = new()
+    {
+    { "transaction.created", "TransferCreatedIntegrationEvent" }
+    };
+
     public TransactionEventsConsumer(
         IServiceScopeFactory scopeFactory,
         IOptions<TransactionEventsConsumerOptions> options,
@@ -116,9 +121,17 @@ public class TransactionEventsConsumer : BackgroundService
 
                 var json = Encoding.UTF8.GetString(ea.Body.ToArray());
 
+                if (!EventTypes.TryGetValue(ea.RoutingKey, out var typeName))
+                {
+                    _logger.LogWarning("Unknown event type for routing key {RoutingKey}", ea.RoutingKey);
+                    _channel.BasicAck(ea.DeliveryTag, false);
+                    return;
+                }
+
                 var inbox = new InboxMessage
                 {
                     Id = messageId,
+                    Type = typeName,
                     Payload = json,
                     RoutingKey = ea.RoutingKey,
                     Processed = false,

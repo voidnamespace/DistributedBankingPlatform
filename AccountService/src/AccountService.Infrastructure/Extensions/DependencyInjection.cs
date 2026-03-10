@@ -18,9 +18,13 @@ public static class DI
 
         services.AddRepositories();
         services.Configure<AuthEventsConsumerOptions>(
-    configuration.GetSection("RabbitMQ"));
+            configuration.GetSection("AuthEvents"));
+
+        services.Configure<TransactionEventsConsumerOptions>(
+            configuration.GetSection("TransactionEvents"));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddHostedService<AuthEventsConsumer>();
+        services.AddHostedService<TransactionEventsConsumer>();
         services.AddHostedService<InboxProcessor>();
         services.AddScoped<IInboxWriter, InboxWriter>();
 
