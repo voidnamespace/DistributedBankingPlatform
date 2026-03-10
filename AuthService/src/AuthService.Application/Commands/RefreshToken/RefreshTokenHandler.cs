@@ -108,7 +108,7 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         {
             AccessToken = newAccessToken,
             RefreshToken = newRefreshTokenValue,
-            ExpiresAt = DateTime.UtcNow.AddHours(1)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15)
         };
     }
 }
