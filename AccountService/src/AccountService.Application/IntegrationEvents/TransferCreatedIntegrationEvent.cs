@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AccountService.Domain.Enums;
+using MediatR;
+namespace AccountService.Application.IntegrationEvents;
 
-namespace AccountService.Application.IntegrationEvents
-{
-    internal class TransferCreatedIntegrationEvent
-    {
+public record TransferCreatedIntegrationEvent(Guid TransactionId,
+    Guid FromAccountId,
+    Guid ToAccountId,
+    decimal Amount,
+    Currency currency) : INotification;
 
-        fgujerhfowref
-    }
-}

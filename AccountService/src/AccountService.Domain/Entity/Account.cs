@@ -1,9 +1,10 @@
 ﻿using AccountService.Domain.ValueObjects;
 using AccountService.Domain.Exceptions;
 using AccountService.Domain.Enums;
+using AccountService.Domain.Events;
 namespace AccountService.Domain.Entity;
 
-public class Account
+public class Account : Entity
 {
     public Guid Id { get; private set; }
 
@@ -78,6 +79,26 @@ public class Account
             Balance.Amount + moneyVO.Amount, Balance.Currency
             );
         UpdatedAt = DateTime.UtcNow;
+    }
+
+
+    public void TransferTo(Account toAccount, MoneyVO money)
+    {
+        if (toAccount == null)
+            throw new DomainException("Target account is null");
+
+        if (Id == toAccount.Id)
+            throw new DomainException("Cannot transfer to same account");
+
+        Withdraw(money);
+        toAccount.Deposit(money);
+
+        AddDomainEvent(new TransferDoneDomainEvent(
+            Id,
+            toAccount.Id,
+            money.Amount,
+            money.Currency
+        ));
     }
 
 }
