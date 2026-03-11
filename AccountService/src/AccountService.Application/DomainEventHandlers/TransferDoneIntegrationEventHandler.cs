@@ -2,11 +2,12 @@
 using AccountService.Domain.Events;
 using AccountService.Application.IntegrationEvents;
 using AccountService.Application.Interfaces.Messaging;
+using AccountService.Application.Common;
 
 namespace AccountService.Application.DomainEventHandlers;
 
 public class TransferDoneDomainEventHandler
-    : INotificationHandler<TransferDoneDomainEvent>
+    : INotificationHandler<DomainEventNotification<TransferDoneDomainEvent>>
 {
     private readonly IOutboxWriter _outbox;
 
@@ -16,16 +17,18 @@ public class TransferDoneDomainEventHandler
     }
 
     public async Task Handle(
-        TransferDoneDomainEvent notification,
+        DomainEventNotification<TransferDoneDomainEvent> notification,
         CancellationToken ct)
     {
+        var domainEvent = notification.DomainEvent;
+
         var integrationEvent = new TransferCreatedIntegrationEvent(
-            notification.FromAccountId,
-            notification.ToAccountId,
-            notification.Amount,
-            notification.Currency
+            domainEvent.FromAccountId,
+            domainEvent.ToAccountId,
+            domainEvent.Amount,
+            domainEvent.Currency
         );
 
-        await _outbox.WriteAsync(integrationEvent, ct);
+        await _outbox.EnqueueAsync(integrationEvent, "transfer.created", ct);
     }
 }

@@ -1,12 +1,34 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AccountService.Application.Interfaces.Messaging;
+using AccountService.Infrastructure.Data;
+using System.Text.Json;
+namespace AccountService.Infrastructure.Persistence.Outbox;
 
-namespace AccountService.Infrastructure.Persistence.Outbox
+public class OutboxWriter : IOutboxWriter
 {
-    internal class OutboxWriter
+    private readonly AccountDbContext _context;
+
+    public OutboxWriter(AccountDbContext context)
     {
+        _context = context;
+    }
+
+    public Task EnqueueAsync<T>(
+        T integrationEvent,
+        string routingKey,
+        CancellationToken ct)
+    {
+        var message = new OutboxMessage
+        {
+            Id = Guid.NewGuid(),
+            Type = typeof(T).FullName!,
+            RoutingKey = routingKey,
+            Payload = JsonSerializer.Serialize(integrationEvent),
+            OccurredOnUtc = DateTime.UtcNow,
+            AttemptCount = 0
+        };
+
+        _context.OutboxMessages.Add(message);
+
+        return Task.CompletedTask;
     }
 }

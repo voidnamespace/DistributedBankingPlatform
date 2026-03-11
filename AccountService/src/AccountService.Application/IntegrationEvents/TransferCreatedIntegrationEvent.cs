@@ -2,9 +2,9 @@
 using MediatR;
 namespace AccountService.Application.IntegrationEvents;
 
-public record TransferCreatedIntegrationEvent(Guid TransactionId,
+public record TransferCreatedIntegrationEvent(
     Guid FromAccountId,
     Guid ToAccountId,
     decimal Amount,
-    Currency currency) : INotification;
+    Currency Currency) : INotification;
 

@@ -1,12 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AccountService.Infrastructure.Data;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
-namespace AccountService.Infrastructure.Persistence.Outbox
+
+namespace AccountService.Infrastructure.Persistence.Outbox;
+
+public class OutboxProcessor : BackgroundService
 {
-    internal class OutboxProcessor
+
+    private readonly IServiceScopeFactory _scopeFactory;
+
+    public OutboxProcessor(IServiceScopeFactory scopeFactory)
     {
+        _scopeFactory = scopeFactory; 
     }
-}
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+
+                var db = scope.ServiceProvider.GetRequiredService<AccountDbContext>();
+                var publisher = scope.ServiceProvider.GetRequiredService<IEventPublisher>();
+
+
+            }
+    }

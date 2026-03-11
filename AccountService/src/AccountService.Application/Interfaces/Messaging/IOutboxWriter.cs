@@ -2,5 +2,8 @@
 
 public interface IOutboxWriter
 {
-    Task SaveAsync();
+    Task EnqueueAsync<T>(
+       T integrationEvent,
+       string routingKey,
+       CancellationToken ct);
 }
