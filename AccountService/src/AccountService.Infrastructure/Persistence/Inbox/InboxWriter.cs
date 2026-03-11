@@ -1,7 +1,7 @@
 ﻿using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Persistence.Inbox;
 using Microsoft.Extensions.Logging;
-
+using AccountService.Application.Interfaces.Messaging;
 public class InboxWriter : IInboxWriter
 {
     private readonly AccountDbContext _context;

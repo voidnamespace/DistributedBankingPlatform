@@ -3,7 +3,7 @@ using AccountService.Domain.Events;
 using AccountService.Application.IntegrationEvents;
 using AccountService.Application.Interfaces.Messaging;
 
-namespace AccountService.Application.EventHandlers;
+namespace AccountService.Application.DomainEventHandlers;
 
 public class TransferDoneDomainEventHandler
     : INotificationHandler<TransferDoneDomainEvent>

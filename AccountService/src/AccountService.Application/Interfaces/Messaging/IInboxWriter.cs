@@ -1,4 +1,6 @@
-﻿public interface IInboxWriter
+﻿namespace AccountService.Application.Interfaces.Messaging;
+
+public interface IInboxWriter
 {
     Task SaveAsync(
         string type,

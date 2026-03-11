@@ -1,6 +1,7 @@
 ﻿using AccountService.Domain.Entity;
 using AccountService.Domain.ValueObjects;
 using AccountService.Infrastructure.Persistence.Inbox;
+using AccountService.Infrastructure.Persistence.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AccountService.Infrastructure.Data;
@@ -13,6 +14,7 @@ public class AccountDbContext : DbContext
     }
     public DbSet<Account> Accounts { get; set; }
     public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
