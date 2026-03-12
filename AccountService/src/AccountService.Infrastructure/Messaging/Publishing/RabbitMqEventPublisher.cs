@@ -1,7 +1,10 @@
 ﻿using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Messaging.Options;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using System.Text;
+using System.Text.Json;
 namespace AccountService.Infrastructure.Messaging.Publishing;
 
 public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
@@ -10,13 +13,15 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
     private readonly RabbitMqOptions _options;
     private readonly IConnection _connection;
     private readonly IModel _channel;
+    private readonly ILogger<RabbitMqEventPublisher> _logger;
 
     private const string ExchangeName = "account.transaction.events";
 
-    public RabbitMqEventPublisher(IOptions<RabbitMqOptions> options)
+    public RabbitMqEventPublisher(IOptions<RabbitMqOptions> options,
+        ILogger<RabbitMqEventPublisher> logger)
     {
         _options = options.Value;
-
+        _logger = logger;
 
         var factory = new ConnectionFactory
         {
@@ -37,12 +42,39 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
     }
 
 
-    public Task PublishAsync<T>(T message,
-        string routingKey, CancellationToken ct)
+    public Task PublishAsync<T>(
+       T message,
+       string routingKey,
+       CancellationToken ct = default)
     {
+        var body = Encoding.UTF8.GetBytes(
+            JsonSerializer.Serialize(message));
 
+        var props = _channel.CreateBasicProperties();
+        props.Persistent = true;
+        props.MessageId = Guid.NewGuid().ToString();
+        props.ContentType = "application/json";
+
+        _channel.BasicPublish(
+            exchange: ExchangeName,
+            routingKey: routingKey,
+            basicProperties: props,
+            body: body);
+
+        _logger.LogInformation(
+            "RabbitMQ event published. Type={EventType} RoutingKey={RoutingKey}",
+            typeof(T).Name,
+            routingKey);
+
+        return Task.CompletedTask;
     }
 
+    public void Dispose()
+    {
+        _channel?.Dispose();
+        _connection?.Dispose();
 
+        _logger.LogInformation("RabbitMQ publisher disposed");
+    }
 
 }
