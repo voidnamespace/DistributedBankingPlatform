@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace AccountService.Infrastructure.Messaging.Options;
 
-internal class RabbitMqOptions
+public sealed class RabbitMqOptions
 {
-    asd
+    public string Host { get; init; } = default!;
+    public int Port { get; init; } = 5672;
+    public string User { get; init; } = "guest";
+    public string Password { get; init; } = "guest";
+    public string Exchange { get; init; } = "account.transaction.events";
 }
