@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TransactionService.Domain.Entities;
+using TransactionService.Infrastructure.Persistence.Inbox;
 using TransactionService.Infrastructure.Persistence.Outbox;
 
 namespace TransactionService.Infrastructure.Data;
@@ -8,6 +9,7 @@ public class TransactionDbContext : DbContext
 {
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
 
     public TransactionDbContext(
         DbContextOptions<TransactionDbContext> options)
@@ -32,7 +34,21 @@ public class TransactionDbContext : DbContext
                 .HasConversion<string>();  
             });
         });
+        modelBuilder.Entity<InboxMessage>(b =>
+        {
+            b.ToTable("OutboxMessages");
+            b.HasKey(x => x.Id);
 
+            b.Property(x => x.Type).IsRequired().HasMaxLength(256);
+            b.Property(x => x.RoutingKey).IsRequired().HasMaxLength(256);
+            b.Property(x => x.Payload).IsRequired();
+
+            b.Property(x => x.ReceivedAt).IsRequired();
+            b.Property(x => x.AttemptCount).IsRequired();
+
+            b.HasIndex(x => x.ProcessedAt);
+            b.HasIndex(x => x.ProcessedAt);
+        });
         modelBuilder.Entity<OutboxMessage>(b =>
         {
             b.ToTable("OutboxMessages");

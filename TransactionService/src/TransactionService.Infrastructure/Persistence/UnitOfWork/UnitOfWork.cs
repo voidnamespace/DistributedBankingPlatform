@@ -33,14 +33,14 @@ public class UnitOfWork : IUnitOfWork
             .ToList();
 
 
-        foreach (var domainEvent in domainEvents)
-        {
-            var notificationType =
-                    typeof(DomainEventNotification<>)
-                        .MakeGenericType(domainEvent.GetType());
+            foreach (var domainEvent in domainEvents)
+            {
+                var notificationType =
+                        typeof(DomainEventNotification<>)
+                            .MakeGenericType(domainEvent.GetType());
 
-            var notification =
-                    Activator.CreateInstance(notificationType, domainEvent);  // impressive, explain?
+                var notification =
+                        Activator.CreateInstance(notificationType, domainEvent);  // impressive, explain?
 
 
                 await _mediator.Publish((INotification)notification!, ct);
