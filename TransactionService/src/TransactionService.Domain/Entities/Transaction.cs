@@ -33,7 +33,7 @@ public class Transaction : Entity
         FromAccountId = fromAccountId;
         ToAccountId = toAccountId;
         Money = money;
-        Status = TransactionStatus.Created;
+        Status = TransactionStatus.Processing;
         CreatedAt = DateTime.UtcNow;
 
         AddDomainEvent(new TransferCreatedDomainEvent(TransactionId, fromAccountId, toAccountId, money));
@@ -42,7 +42,7 @@ public class Transaction : Entity
 
     public void StartProcessing()
     {
-        if (Status != TransactionStatus.Created)
+        if (Status != TransactionStatus.Processing)
             throw new DomainException("Only created transaction can be processed");
 
         Status = TransactionStatus.Processing;

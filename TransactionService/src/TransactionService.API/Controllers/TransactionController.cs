@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TransactionService.Application.Commands.CreateTransfer;
 using TransactionService.Application.DTOs;
+using TransactionService.Application.Queries.CheckTransferStatus;
 namespace TransactionService.API.Controllers;
 
 [ApiController]
@@ -35,5 +36,16 @@ public class TransactionController : ControllerBase
 
         return Accepted(new { transactionId });
     }
+
+    [HttpGet]
+    public async Task<IActionResult> CheckStatus(Guid transactionId, CancellationToken ct)  
+    {
+        var query = new CheckTransferStatusQuery(transactionId);
+        var status = await _mediator.Send(query, ct);
+        return Ok(status);
+    }
+
+
+
 
 }
