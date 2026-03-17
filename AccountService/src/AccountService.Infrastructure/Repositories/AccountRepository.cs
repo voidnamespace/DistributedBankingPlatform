@@ -42,13 +42,10 @@ public class AccountRepository : IAccountRepository
             .AsNoTracking()
             .ToListAsync(ct);
     }
-    public async Task DeleteAsync (Guid accId, CancellationToken ct)
+    public Task DeleteAsync(Account account, CancellationToken ct)
     {
-        var acc = await _context.Accounts.FindAsync(accId, ct);
-        if (acc != null)
-        {
-            _context.Accounts.Remove(acc);
-        }
+        _context.Accounts.Remove(account);
+        return Task.CompletedTask;
     }
     public async Task<IReadOnlyList<Account>> GetByUserIdAsync(Guid userId, CancellationToken ct)
     {

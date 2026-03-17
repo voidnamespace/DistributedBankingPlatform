@@ -38,7 +38,7 @@ public class DeleteAccountEventChainHandler : IRequestHandler<DeleteAccountEvent
 
         foreach (var account in accounts)
         {
-            await _accountRepository.DeleteAsync(account.Id, ct);
+            await _accountRepository.DeleteAsync(account, ct);
         }
 
         await _unitOfWork.SaveChangesAsync(ct);

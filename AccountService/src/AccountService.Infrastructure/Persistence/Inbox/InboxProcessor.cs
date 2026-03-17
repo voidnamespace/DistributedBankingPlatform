@@ -53,7 +53,7 @@ public class InboxProcessor : BackgroundService
                 try
                 {
                     var type = Type.GetType(
-                        $"AccountService.Application.IntegrationEvents.{message.Type}, AccountService.Application");
+                        $"AccountService.Application.IntegrationEvents.{message.Type}, AccountService.Application"); // how it works
 
                     if (type is null)
                     {
