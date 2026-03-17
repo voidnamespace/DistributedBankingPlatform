@@ -45,26 +45,6 @@ public class UserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
-    public async Task DeactivateAsync(Guid userId, CancellationToken cancellationToken)
-    {
-        var user = await _context.Users.FindAsync(userId);
-
-        if (user is null)
-            return;
-
-        user.Deactivate();
-    }
-
-    public async Task ActivateAsync(Guid userId, CancellationToken cancellationToken)
-    {
-        var user = await _context.Users.FindAsync(userId);
-
-        if (user is null)
-            return;
-
-        user.Activate();
-    }
-
     public async Task<bool> ExistsByEmailAsync(
         EmailVO email,
         CancellationToken cancellationToken)

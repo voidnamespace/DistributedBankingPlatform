@@ -39,9 +39,7 @@ public class ActivateUserHandler : IRequestHandler<ActivateUserCommand>
             throw new KeyNotFoundException($"User with ID {request.userId} not found");
         }
 
-        await _userRepository.ActivateAsync(
-            request.userId,
-            cancellationToken);
+        user.Activate();
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
