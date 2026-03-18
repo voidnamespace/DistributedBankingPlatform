@@ -89,9 +89,56 @@ public class Account : Entity
 
         if (Id == toAccount.Id)
             throw new DomainException("Cannot transfer to same account");
+        if (money.Amount <= 0)
+            throw new DomainException("Amount must be greater than zero");
 
-        Withdraw(money);
-        toAccount.Deposit(money);
+        if (!IsActive)
+        {
+            AddDomainEvent(new TransferFailedDomainEvent(
+            Id,
+            toAccount.Id,
+            money.Amount,
+            money.Currency,
+            "FromAccount is inactive"
+        ));
+            return;
+        }
+        if (!toAccount.IsActive)
+        {
+            AddDomainEvent(new TransferFailedDomainEvent(
+                Id,
+                toAccount.Id,
+                money.Amount,
+                money.Currency,
+                "ToAccount is inactive "
+            ));
+            return;
+        }
+        if (Balance.Amount < money.Amount)
+        {
+            AddDomainEvent(new TransferFailedDomainEvent(
+            Id,
+            toAccount.Id,
+            money.Amount,
+            money.Currency,
+            "Not enough money"
+        ));
+            return;
+        }
+        if(Balance.Currency != money.Currency)
+        {
+            AddDomainEvent(new TransferFailedDomainEvent(
+            Id,
+            toAccount.Id,
+            money.Amount,
+            money.Currency,
+            "Wrong currency"
+        ));
+            return;
+        }
+
+        DecreaseBalance(money);
+        toAccount.IncreaseBalance(money);
 
         AddDomainEvent(new TransferDoneDomainEvent(
             Id,
@@ -100,5 +147,26 @@ public class Account : Entity
             money.Currency
         ));
     }
+
+    private void IncreaseBalance(MoneyVO money)
+    {
+        Balance = new MoneyVO(
+            Balance.Amount + money.Amount,
+            Balance.Currency
+        );
+
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    private void DecreaseBalance(MoneyVO money)
+    {
+        Balance = new MoneyVO(
+            Balance.Amount - money.Amount,
+            Balance.Currency
+        );
+
+        UpdatedAt = DateTime.UtcNow;
+    }
+
 
 }

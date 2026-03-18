@@ -31,9 +31,8 @@ public class TransferMoneyHandler
 
             if (fromAccount == null || toAccount == null)
                 throw new ArgumentException("Wrong account");
-
-            if (fromAccount.Balance.Currency != toAccount.Balance.Currency)
-                throw new ArgumentException("Invalid currency");
+            //  рождать интеграционное событие сразу что операция отклонена transferrejectedintegrationevent
+            
 
             var moneyVO = new MoneyVO(command.Amount, command.Currency);
 
