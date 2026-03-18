@@ -1,4 +1,5 @@
-﻿using AccountService.Infrastructure.Data;
+﻿using AccountService.Application.Interfaces.Messaging;
+using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Options;
 using AccountService.Infrastructure.Persistence.Inbox;
 using Microsoft.EntityFrameworkCore;
@@ -92,8 +93,8 @@ public class TransactionEventsConsumer : BackgroundService
             {
                 using var scope = _scopeFactory.CreateScope();
 
-                var db = scope.ServiceProvider
-                    .GetRequiredService<AccountDbContext>();
+                var inboxWriter = scope.ServiceProvider
+                    .GetRequiredService<IInboxWriter>();
 
                 if (string.IsNullOrEmpty(ea.BasicProperties.MessageId))
                 {
@@ -109,16 +110,6 @@ public class TransactionEventsConsumer : BackgroundService
                     return;
                 }
 
-                var exists = await db.InboxMessages
-                    .AnyAsync(x => x.Id == messageId, stoppingToken);
-
-                if (exists)
-                {
-                    _logger.LogInformation("Duplicate message skipped: {MessageId}", messageId);
-                    _channel.BasicAck(ea.DeliveryTag, false);
-                    return;
-                }
-
                 var json = Encoding.UTF8.GetString(ea.Body.ToArray());
 
                 if (!EventTypes.TryGetValue(ea.RoutingKey, out var typeName))
@@ -127,21 +118,7 @@ public class TransactionEventsConsumer : BackgroundService
                     _channel.BasicAck(ea.DeliveryTag, false);
                     return;
                 }
-
-                var inbox = new InboxMessage
-                {
-                    Id = messageId,
-                    Type = typeName,
-                    Payload = json,
-                    RoutingKey = ea.RoutingKey,
-                    Processed = false,
-                    AttemptCount = 0,
-                    ReceivedAt = DateTime.UtcNow
-                };
-
-                db.InboxMessages.Add(inbox);
-                await db.SaveChangesAsync(stoppingToken);
-
+                await inboxWriter.SaveAsync(Guid.Parse(ea.BasicProperties.MessageId), typeName, json, ea.RoutingKey, stoppingToken);
                 _channel.BasicAck(ea.DeliveryTag, false);
 
                 _logger.LogInformation("Message stored in Inbox: {MessageId}", messageId);

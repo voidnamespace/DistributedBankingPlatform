@@ -1,8 +1,7 @@
-﻿using AccountService.Application.IntegrationEvents;
+﻿using AccountService.Application.IntegrationEvents.Users;
 using MediatR;
 using Microsoft.Extensions.Logging;
-
-namespace AccountService.Application.EventHandlers;
+namespace AccountService.Application.IntegrationEventHandlers.Users;
 
 public class UserActivatedIntegrationEventHandler
     : INotificationHandler<UserActivatedIntegrationEvent>

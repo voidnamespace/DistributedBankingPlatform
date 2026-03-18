@@ -1,4 +1,4 @@
-﻿using AccountService.Application.IntegrationEvents;
+﻿using AccountService.Application.IntegrationEvents.Users;
 using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Options;
 using AccountService.Infrastructure.Persistence.Inbox;
@@ -144,6 +144,18 @@ public class AuthEventsConsumer : BackgroundService
                     _channel.BasicAck(ea.DeliveryTag, false);
                     return;
                 }
+
+
+
+
+
+
+
+
+                //use here inboxwriter!
+
+
+
 
                 var inbox = new InboxMessage
                 {

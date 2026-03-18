@@ -2,7 +2,7 @@
 
 public interface IInboxWriter
 {
-    Task SaveAsync(
+    Task SaveAsync(Guid messageId,
         string type,
         string payload,
         string routingKey,

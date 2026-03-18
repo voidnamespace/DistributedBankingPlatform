@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AccountService.Application.IntegrationEvents
+namespace AccountService.Application.IntegrationEventHandlers.Transactions
 {
-    internal class TransferFailedIntegrationEvent
+    internal class TransferSuccessEventHandler
     {
     }
 }

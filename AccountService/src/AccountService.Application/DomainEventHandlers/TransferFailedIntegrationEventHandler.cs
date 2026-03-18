@@ -1,12 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AccountService.Application.Common;
+using AccountService.Application.IntegrationEvents;
+using AccountService.Application.Interfaces.Messaging;
+using AccountService.Domain.Events;
+using MediatR;
+namespace AccountService.Application.DomainEventHandlers;
 
-namespace AccountService.Application.DomainEventHandlers
+public class TransferFailedIntegrationEventHandler : INotificationHandler<DomainEventNotification<TransferFailedDomainEvent>>
 {
-    internal class TransferFailedIntegrationEventHandler
+
+    private readonly IOutboxWriter _outbox;
+
+
+    public TransferFailedIntegrationEventHandler(IOutboxWriter outbox)
     {
+        _outbox = outbox;
     }
+
+    public async Task Handle(
+      DomainEventNotification<TransferFailedDomainEvent> notification,
+      CancellationToken ct)
+    {
+        var domainEvent = notification.DomainEvent;
+
+        var integrationEvent = new TransferFailedIntegrationEvent(
+            domainEvent.FromAccountId,
+            domainEvent.ToAccountId,
+            domainEvent.Amount,
+            domainEvent.Currency
+        );
+
+        await _outbox.EnqueueAsync(integrationEvent, "transfer.failed", ct);
+    }
+
+
+
+
+
+
+
+
+
+
 }

@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace AccountService.Application.IntegrationEvents;
+namespace AccountService.Application.IntegrationEvents.Users;
 
 public record UserCreatedIntegrationEvent(
     Guid UserId,
