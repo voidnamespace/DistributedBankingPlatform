@@ -140,7 +140,7 @@ public class Account : Entity
         DecreaseBalance(money);
         toAccount.IncreaseBalance(money);
 
-        AddDomainEvent(new TransferDoneDomainEvent(
+        AddDomainEvent(new TransferSuccessDomainEvent(
             Id,
             toAccount.Id,
             money.Amount,

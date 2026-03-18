@@ -6,18 +6,18 @@ using AccountService.Application.Common;
 
 namespace AccountService.Application.DomainEventHandlers;
 
-public class TransferDoneDomainEventHandler
-    : INotificationHandler<DomainEventNotification<TransferDoneDomainEvent>>
+public class TransferSuccessDomainEventHandler
+    : INotificationHandler<DomainEventNotification<TransferSuccessDomainEvent>>
 {
     private readonly IOutboxWriter _outbox;
 
-    public TransferDoneDomainEventHandler(IOutboxWriter outbox)
+    public TransferSuccessDomainEventHandler(IOutboxWriter outbox)
     {
         _outbox = outbox;
     }
 
     public async Task Handle(
-        DomainEventNotification<TransferDoneDomainEvent> notification,
+        DomainEventNotification<TransferSuccessDomainEvent> notification,
         CancellationToken ct)
     {
         var domainEvent = notification.DomainEvent;
