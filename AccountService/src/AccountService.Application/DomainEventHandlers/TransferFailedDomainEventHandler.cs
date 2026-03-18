@@ -5,13 +5,13 @@ using AccountService.Domain.Events;
 using MediatR;
 namespace AccountService.Application.DomainEventHandlers;
 
-public class TransferFailedIntegrationEventHandler : INotificationHandler<DomainEventNotification<TransferFailedDomainEvent>>
+public class TransferFailedDomainEventHandler : INotificationHandler<DomainEventNotification<TransferFailedDomainEvent>>
 {
 
     private readonly IOutboxWriter _outbox;
 
 
-    public TransferFailedIntegrationEventHandler(IOutboxWriter outbox)
+    public TransferFailedDomainEventHandler(IOutboxWriter outbox)
     {
         _outbox = outbox;
     }

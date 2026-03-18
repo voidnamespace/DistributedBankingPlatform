@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using TransactionService.Domain.Enums;
+namespace TransactionService.Application.IntegrationEvents;
 
-namespace TransactionService.Application.IntegrationEvents
+public sealed record TransferFailedIntegrationEvent(Guid TransactionId,
+    Guid FromAccountId,
+    Guid ToAccountId,
+    decimal Amount,
+    Currency currency)
 {
-    internal class TransferFailedIntegrationEvent
-    {
-    }
 }
+
