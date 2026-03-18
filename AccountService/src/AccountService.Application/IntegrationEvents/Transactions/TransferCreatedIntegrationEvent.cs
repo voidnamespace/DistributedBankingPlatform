@@ -2,7 +2,7 @@
 using MediatR;
 namespace AccountService.Application.IntegrationEvents.Transactions;
 
-public record TransferCreatedIntegrationEvent(
+public record TransferCreatedIntegrationEvent(Guid TransactionId,
     Guid FromAccountId,
     Guid ToAccountId,
     decimal Amount,

@@ -1,6 +1,9 @@
-﻿using AccountService.Application.Interfaces;
+﻿using AccountService.Application.IntegrationEvents.Transactions;
+using AccountService.Application.Interfaces;
+using AccountService.Application.Interfaces.Messaging;
 using AccountService.Domain.ValueObjects;
 using MediatR;
+using System.ComponentModel;
 namespace AccountService.Application.Commands.TransferMoney;
 
 public class TransferMoneyHandler
@@ -8,12 +11,14 @@ public class TransferMoneyHandler
 
     private readonly IAccountRepository _accountRepository;
     private readonly IUnitOfWork _unitOfWork;
-
-    public TransferMoneyHandler(IAccountRepository accountRepository, 
-        IUnitOfWork unitOfWork)
+    private readonly IOutboxWriter _outboxWriter;
+    public TransferMoneyHandler(IAccountRepository accountRepository,
+        IUnitOfWork unitOfWork,
+        IOutboxWriter outboxWriter)
     {
         _accountRepository = accountRepository;
         _unitOfWork = unitOfWork;
+        _outboxWriter = outboxWriter;
     }
 
     public async Task Handle(TransferMoneyCommand command, CancellationToken ct)
@@ -29,14 +34,24 @@ public class TransferMoneyHandler
             var fromAccount = await _accountRepository.GetByAccountNumberAsync(fromAccVO, ct);
             var toAccount = await _accountRepository.GetByAccountNumberAsync(toAccVo, ct);
 
-            if (fromAccount == null || toAccount == null)
-                throw new ArgumentException("Wrong account");
-            //  рождать интеграционное событие сразу что операция отклонена transferrejectedintegrationevent
+        if (fromAccount == null || toAccount == null)
+        {
             
+            await _outboxWriter.EnqueueAsync(new TransferFailedIntegrationEvent(
+                command.TransactionId,
+                command.FromAccountId,
+                command.ToAccountId,
+                command.Amount,
+                command.Currency,
+                "Account not found"
+            ),);
+             
+            return;
+        }
 
-            var moneyVO = new MoneyVO(command.Amount, command.Currency);
+        var moneyVO = new MoneyVO(command.Amount, command.Currency);
 
-            fromAccount.TransferTo(toAccount, moneyVO);
+            fromAccount.TransferTo(toAccount, moneyVO, command.TransactionId);
 
 
             await _unitOfWork.SaveChangesAsync(ct);
@@ -44,3 +59,6 @@ public class TransferMoneyHandler
     }
 
 }
+
+
+add routing key in integration event instead of hardcoding

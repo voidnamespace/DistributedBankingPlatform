@@ -82,7 +82,7 @@ public class Account : Entity
     }
 
 
-    public void TransferTo(Account toAccount, MoneyVO money)
+    public void TransferTo(Account toAccount, MoneyVO money, Guid transactionId)
     {
         if (toAccount == null)
             throw new DomainException("Target account is null");
@@ -94,7 +94,7 @@ public class Account : Entity
 
         if (!IsActive)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(
+            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
             Id,
             toAccount.Id,
             money.Amount,
@@ -105,7 +105,7 @@ public class Account : Entity
         }
         if (!toAccount.IsActive)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(
+            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
                 Id,
                 toAccount.Id,
                 money.Amount,
@@ -116,7 +116,7 @@ public class Account : Entity
         }
         if (Balance.Amount < money.Amount)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(
+            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
             Id,
             toAccount.Id,
             money.Amount,
@@ -127,7 +127,7 @@ public class Account : Entity
         }
         if(Balance.Currency != money.Currency)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(
+            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
             Id,
             toAccount.Id,
             money.Amount,
@@ -140,7 +140,7 @@ public class Account : Entity
         DecreaseBalance(money);
         toAccount.IncreaseBalance(money);
 
-        AddDomainEvent(new TransferSuccessDomainEvent(
+        AddDomainEvent(new TransferSuccessDomainEvent(transactionId,
             Id,
             toAccount.Id,
             money.Amount,
