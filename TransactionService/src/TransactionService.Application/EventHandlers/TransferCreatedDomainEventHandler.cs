@@ -31,7 +31,7 @@ public class TransferCreatedDomainEventHandler : INotificationHandler<DomainEven
             currency
             );
 
-        await _outbox.EnqueueAsync(integrationEvent, "transaction.created", ct);
+        await _outbox.EnqueueAsync(integrationEvent, ct);
     }
 
 

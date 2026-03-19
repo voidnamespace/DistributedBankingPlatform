@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Data;
 namespace TransactionService.Infrastructure.Persistence.Outbox;
@@ -34,7 +35,7 @@ public class OutboxProcessor : BackgroundService
 
                 var batch = await db.OutboxMessages
                     .Where(x => x.ProcessedAt == null)
-                    .OrderBy(x => x.ProcessedAt)
+                    .OrderBy(x => x.CreatedAt)
                     .Take(20)
                     .ToListAsync(stoppingToken);
 
@@ -42,10 +43,19 @@ public class OutboxProcessor : BackgroundService
                 {
                     try
                     {
-                        await publisher.PublishRawAsync(
-                                msg.Payload,
-                                msg.RoutingKey,
-                                stoppingToken);
+                        var type = Type.GetType(msg.Type);
+
+                        if (type == null)
+                            throw new Exception($"Unknown type: {msg.Type}");
+
+                        var integrationEvent = JsonSerializer.Deserialize(
+                            msg.Payload,
+                            type);
+
+                        if (integrationEvent == null)
+                            throw new Exception("Deserialization returned null");
+
+                        await publisher.PublishAsync(integrationEvent, stoppingToken);
 
                         msg.ProcessedAt = DateTime.UtcNow;
                         msg.Error = null;

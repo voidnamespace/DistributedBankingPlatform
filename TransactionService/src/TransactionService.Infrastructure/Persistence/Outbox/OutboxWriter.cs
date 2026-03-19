@@ -16,13 +16,12 @@ public class OutboxWriter : IOutboxWriter
         _logger = logger;
     }
 
-    public Task EnqueueAsync<T>(T integrationEvent, string routingKey, CancellationToken cancellationToken)
+    public Task EnqueueAsync<T>(T integrationEvent, CancellationToken cancellationToken)
     {
         var message = new OutboxMessage
         {
             Id = Guid.NewGuid(),
-            Type = typeof(T).Name,
-            RoutingKey = routingKey,
+            Type = typeof(T).AssemblyQualifiedName!,
             Payload = JsonSerializer.Serialize(integrationEvent),
             CreatedAt = DateTime.UtcNow,
             AttemptCount = 0,
@@ -30,7 +29,7 @@ public class OutboxWriter : IOutboxWriter
 
         _context.OutboxMessages.Add(message);
 
-        _logger.LogInformation("Outbox message queued. Type={Type} RoutingKey={RoutingKey} Id={Id}", message.Type, routingKey, message.Id);
+        _logger.LogInformation("Outbox message queued. Type={Type} Id={Id}", message.Type, message.Id);
 
         return Task.CompletedTask;
     }

@@ -1,9 +1,10 @@
-﻿using RabbitMQ.Client;
-using TransactionService.Application.Interfaces.Messaging;
-using TransactionService.Infrastructure.Messaging.Options;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
+using TransactionService.Application.Interfaces.Messaging;
+using TransactionService.Infrastructure.Messaging.Options;
+using TransactionService.Infrastructure.Messaging.Routing;
 namespace TransactionService.Infrastructure.Messaging.Publishing;
 
 public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
@@ -39,31 +40,15 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
     }
 
-    public Task PublishAsync<T>(T message, string routingKey, CancellationToken ct = default)
+    public Task PublishAsync<T>(T message, CancellationToken ct = default)
     {
-        
+        if (message == null)
+            throw new ArgumentNullException(nameof(message));
+
+        var routingKey = RoutingKeyMap.Get(message.GetType());
+
+
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
-
-        var props = _channel.CreateBasicProperties();
-        props.Persistent = true;
-        props.MessageId = Guid.NewGuid().ToString();
-        props.ContentType = "application/json";
-
-        _channel.BasicPublish(
-            exchange: ExchangeName,
-            routingKey: routingKey,
-            mandatory: true,
-            basicProperties: props,
-            body: body);
-
-        return Task.CompletedTask;
-    }
-
-
-    public Task PublishRawAsync(string payloadJson, string routingKey, CancellationToken ct)
-    {
-
-        var body = Encoding.UTF8.GetBytes(payloadJson);
 
         var props = _channel.CreateBasicProperties();
         props.Persistent = true;
