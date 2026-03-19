@@ -6,7 +6,8 @@ public static class RoutingKeyMap
 {
     private static readonly Dictionary<Type, string> _map = new()
     {
-        { typeof(TransferCreatedIntegrationEvent), "transaction.created" }
+        { typeof(TransferCreatedIntegrationEvent), "transaction.created" },
+        { typeof(TransferSuccessIntegrationEvent), "transaction.success" }
     };
 
     public static string Get(Type type)

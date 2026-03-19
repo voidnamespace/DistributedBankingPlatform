@@ -1,8 +1,9 @@
-﻿using AccountService.Infrastructure.Data;
+﻿using AccountService.Application.Interfaces.Messaging;
+using AccountService.Infrastructure.Data;
+using AccountService.Infrastructure.Messaging.Routing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using AccountService.Application.Interfaces.Messaging;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 namespace AccountService.Infrastructure.Persistence.Outbox;
 
@@ -44,33 +45,37 @@ public class OutboxProcessor : BackgroundService
                 }
 
 
+            Outbox: сохраняю Type как string,
+но RoutingKeyMap ожидает Type → нужно преобразовать string → Type
+
+
+
+
                 foreach (var msg in batch)
                 {
                     try
                     {
+                        var eventType = Type.GetType(msg.Type)!;
+
+                        var routingKey = RoutingKeyMap.Get(eventType);
+
                         await publisher.PublishAsync(
                             msg.Payload,
+                            routingKey,
                             stoppingToken);
 
-                        msg.OccurredOnUtc = DateTime.UtcNow;
+                        msg.ProcessedOnUtc = DateTime.UtcNow;
                         msg.Error = null;
-                        _logger.LogInformation(
-                            "Outbox message published. Id={Id} RoutingKey={RoutingKey}",
-                            msg.Id);
                     }
                     catch (Exception ex)
                     {
                         msg.AttemptCount += 1;
                         msg.Error = ex.Message;
-                        _logger.LogError(
-                            ex,
-                            "Outbox message failed. Id={Id} Attempt={Attempt}",
-                            msg.Id,
-                            msg.AttemptCount);
                     }
-
-
                 }
+
+
+            
             }
             catch (Exception ex)
             {
