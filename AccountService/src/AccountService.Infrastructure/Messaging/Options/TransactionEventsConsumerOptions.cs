@@ -6,6 +6,6 @@ public class TransactionEventsConsumerOptions
     public string Username { get; init; } = "guest";
     public string Password { get; init; } = "guest";
 
-    public string Exchange { get; init; } = "transaction.events";
+    public string Exchange { get; init; } = "transaction.service.exchange";
     public string Queue { get; init; } = "account.transaction.events";
 }

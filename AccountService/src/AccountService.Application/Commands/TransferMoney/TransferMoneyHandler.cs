@@ -44,12 +44,12 @@ public class TransferMoneyHandler
                 command.Amount,
                 command.Currency,
                 "Account not found"
-            ),);
+            ), ct);
              
             return;
         }
 
-        var moneyVO = new MoneyVO(command.Amount, command.Currency);
+            var moneyVO = new MoneyVO(command.Amount, command.Currency);
 
             fromAccount.TransferTo(toAccount, moneyVO, command.TransactionId);
 
@@ -60,5 +60,3 @@ public class TransferMoneyHandler
 
 }
 
-
-add routing key in integration event instead of hardcoding

@@ -14,7 +14,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
     private readonly IModel _channel;
 
 
-    private const string ExchangeName = "transaction.events";
+    private const string ExchangeName = "transaction.service.exchange";
 
     public RabbitMqEventPublisher(IOptions<RabbitMqOptions> options)
     {

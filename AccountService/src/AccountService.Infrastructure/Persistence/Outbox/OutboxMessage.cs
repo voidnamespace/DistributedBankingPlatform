@@ -8,8 +8,6 @@ public class OutboxMessage
 
     public string Payload { get; set; } = default!;
 
-    public string RoutingKey { get; set; } = default!;
-
     public DateTime OccurredOnUtc { get; set; }
 
     public DateTime? ProcessedOnUtc { get; set; }

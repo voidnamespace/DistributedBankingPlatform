@@ -14,14 +14,12 @@ public class OutboxWriter : IOutboxWriter
 
     public Task EnqueueAsync<T>(
         T integrationEvent,
-        string routingKey,
         CancellationToken ct)
     {
         var message = new OutboxMessage
         {
             Id = Guid.NewGuid(),
             Type = typeof(T).FullName!,
-            RoutingKey = routingKey,
             Payload = JsonSerializer.Serialize(integrationEvent),
             OccurredOnUtc = DateTime.UtcNow,
             AttemptCount = 0

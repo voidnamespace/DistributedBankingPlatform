@@ -3,17 +3,18 @@ using AccountService.Domain.Events;
 using AccountService.Application.IntegrationEvents;
 using AccountService.Application.Interfaces.Messaging;
 using AccountService.Application.Common;
+using AccountService.Application.IntegrationEvents.Transactions;
 
 namespace AccountService.Application.DomainEventHandlers;
 
 public class TransferSuccessDomainEventHandler
     : INotificationHandler<DomainEventNotification<TransferSuccessDomainEvent>>
 {
-    private readonly IOutboxWriter _outbox;
+    private readonly IOutboxWriter _outboxWriter;
 
-    public TransferSuccessDomainEventHandler(IOutboxWriter outbox)
+    public TransferSuccessDomainEventHandler(IOutboxWriter outboxWriter)
     {
-        _outbox = outbox;
+        _outboxWriter = outboxWriter;
     }
 
     public async Task Handle(
@@ -22,13 +23,13 @@ public class TransferSuccessDomainEventHandler
     {
         var domainEvent = notification.DomainEvent;
 
-        var integrationEvent = new TransferCreatedIntegrationEvent(
+        var integrationEvent = new TransferSuccessIntegrationEvent(domainEvent.TransactionId,
             domainEvent.FromAccountId,
             domainEvent.ToAccountId,
             domainEvent.Amount,
             domainEvent.Currency
         );
 
-        await _outbox.EnqueueAsync(integrationEvent, "transfer.created", ct);
+        await _outboxWriter.EnqueueAsync(integrationEvent, ct);
     }
 }

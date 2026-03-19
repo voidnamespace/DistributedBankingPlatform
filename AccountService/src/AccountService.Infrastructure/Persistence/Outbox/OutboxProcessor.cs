@@ -50,15 +50,13 @@ public class OutboxProcessor : BackgroundService
                     {
                         await publisher.PublishAsync(
                             msg.Payload,
-                            msg.RoutingKey,
                             stoppingToken);
 
                         msg.OccurredOnUtc = DateTime.UtcNow;
                         msg.Error = null;
                         _logger.LogInformation(
                             "Outbox message published. Id={Id} RoutingKey={RoutingKey}",
-                            msg.Id,
-                            msg.RoutingKey);
+                            msg.Id);
                     }
                     catch (Exception ex)
                     {
