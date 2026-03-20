@@ -8,8 +8,6 @@ public class InboxMessage
 
     public string Payload { get; set; } = default!;
 
-    public string RoutingKey { get; set; } = default!;
-
     public bool Processed { get; set; }
 
     public DateTime ReceivedAt { get; set; } = DateTime.UtcNow;

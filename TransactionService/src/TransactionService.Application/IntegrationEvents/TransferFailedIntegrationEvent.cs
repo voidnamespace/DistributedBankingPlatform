@@ -1,11 +1,11 @@
-﻿using TransactionService.Domain.Enums;
+﻿using MediatR;
+using TransactionService.Domain.Enums;
 namespace TransactionService.Application.IntegrationEvents;
 
 public sealed record TransferFailedIntegrationEvent(Guid TransactionId,
     Guid FromAccountId,
     Guid ToAccountId,
     decimal Amount,
-    Currency currency)
-{
-}
+    Currency currency) : INotification;
+
 

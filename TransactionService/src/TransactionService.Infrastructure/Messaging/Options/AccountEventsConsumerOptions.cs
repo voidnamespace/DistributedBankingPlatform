@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace TransactionService.Infrastructure.Messaging.Options;
 
 public sealed class AccountEventsConsumerOptions
@@ -14,8 +9,6 @@ public sealed class AccountEventsConsumerOptions
     public string Exchange { get; init; } = "account.events";
 
     public string Queue { get; init; } = "asd";
-
-
 
 
 }

@@ -1,17 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System.Runtime.CompilerServices;
 using System.Text;
 using TransactionService.Application.IntegrationEvents;
-using TransactionService.Application.Interfaces.Messaging;
-using TransactionService.Infrastructure.Data;
 using TransactionService.Infrastructure.Messaging.Options;
 using TransactionService.Infrastructure.Persistence.Inbox;
-using TransactionService.Infrastructure.Persistence.Outbox;
 
 namespace TransactionService.Infrastructure.Messaging.Consuming;
 
@@ -27,9 +22,10 @@ public class AccountEventsConsumer : BackgroundService
     private  IModel? _channel;
 
     private static readonly Dictionary<string, Type> EventTypes = new()
-{
-        { "UserCreatedIntegrationEvent", typeof(TransferCreatedIntegrationEvent) },
-};
+    {
+        ["transfer.failed"] = typeof(TransferFailedIntegrationEvent),
+        ["transfer.success"] = typeof(TransferSuccessIntegrationEvent)
+    };
     public AccountEventsConsumer(IServiceScopeFactory scopeFactory,
         AccountEventsConsumerOptions options,
         ILogger<AccountEventsConsumer> logger)
@@ -126,12 +122,9 @@ public class AccountEventsConsumer : BackgroundService
                     return;
                 }
 
-                await inboxWriter.SaveAsync(messageId, typeName, json, ea.RoutingKey, stoppingToken);
-
-           
+                await inboxWriter.SaveAsync(messageId, typeName, json, stoppingToken);
 
                 _channel.BasicAck(ea.DeliveryTag, false);
-
 
             }
 
@@ -161,6 +154,4 @@ public class AccountEventsConsumer : BackgroundService
         _connection?.Dispose();
         base.Dispose();
     }
-
-
 }

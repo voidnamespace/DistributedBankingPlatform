@@ -36,11 +36,10 @@ public class TransactionDbContext : DbContext
         });
         modelBuilder.Entity<InboxMessage>(b =>
         {
-            b.ToTable("OutboxMessages");
+            b.ToTable("InboxMessages");
             b.HasKey(x => x.Id);
 
             b.Property(x => x.Type).IsRequired().HasMaxLength(256);
-            b.Property(x => x.RoutingKey).IsRequired().HasMaxLength(256);
             b.Property(x => x.Payload).IsRequired();
 
             b.Property(x => x.ReceivedAt).IsRequired();
@@ -55,7 +54,6 @@ public class TransactionDbContext : DbContext
             b.HasKey(x => x.Id);
 
             b.Property(x => x.Type).IsRequired().HasMaxLength(256);
-            b.Property(x => x.RoutingKey).IsRequired().HasMaxLength(256);
             b.Property(x => x.Payload).IsRequired();
 
             b.Property(x => x.CreatedAt).IsRequired();
