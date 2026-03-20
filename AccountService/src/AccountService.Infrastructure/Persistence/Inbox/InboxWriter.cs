@@ -20,7 +20,6 @@ public class InboxWriter : IInboxWriter
     public async Task SaveAsync(Guid messageId,
         string type,
         string payload,
-        string routingKey,
         CancellationToken ct)
     {
         var exists = await _context.InboxMessages
@@ -28,7 +27,7 @@ public class InboxWriter : IInboxWriter
 
         if (exists)
         {
-            _logger.LogInformation("Duplicate message skipped: {MessageId}", message.Id);
+            _logger.LogInformation("Duplicate message skipped: {MessageId}", messageId);
             return;
         }
 
@@ -37,7 +36,6 @@ public class InboxWriter : IInboxWriter
             Id = messageId,
             Type = type,
             Payload = payload,
-            RoutingKey = routingKey,
             ReceivedAt = DateTime.UtcNow,
             AttemptCount = 0,
             Processed = false
@@ -48,9 +46,8 @@ public class InboxWriter : IInboxWriter
         await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation(
-            "Inbox message saved. Id={Id} Type={Type} RoutingKey={RoutingKey}",
+            "Inbox message saved. Id={Id} Type={Type} ",
             message.Id,
-            type,
-            routingKey);
+            type);
     }
 }

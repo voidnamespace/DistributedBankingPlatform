@@ -18,8 +18,6 @@ public class TransferCreatedIntegrationEventHandler : INotificationHandler<Trans
         _logger = logger;
     }
 
-
-
     public async Task Handle(TransferCreatedIntegrationEvent notification, CancellationToken ct)
     {
         _logger.LogInformation(
@@ -38,15 +36,6 @@ public class TransferCreatedIntegrationEventHandler : INotificationHandler<Trans
             "TransferCreatedIntegrationEvent sent {TransactionId}",
             notification.TransactionId);
 
-
-
     }
-
-
-
-
-
-
-
 }
 

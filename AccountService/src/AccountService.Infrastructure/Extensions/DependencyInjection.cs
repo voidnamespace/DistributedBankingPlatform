@@ -5,6 +5,7 @@ using AccountService.Infrastructure.Messaging.Options;
 using AccountService.Infrastructure.Messaging.Publishing;
 using AccountService.Infrastructure.Persistence;
 using AccountService.Infrastructure.Persistence.Inbox;
+using AccountService.Infrastructure.Persistence.Outbox;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 namespace AccountService.Infrastructure.Extensions;
@@ -28,6 +29,8 @@ public static class DI
         services.AddHostedService<TransactionEventsConsumer>();
         services.AddHostedService<InboxProcessor>();
         services.AddScoped<IInboxWriter, InboxWriter>();
+        services.AddHostedService<OutboxProcessor>();
+        services.AddScoped<IOutboxWriter, OutboxWriter>();
         services.Configure<RabbitMqOptions>(
             configuration.GetSection("RabbitMq"));
 

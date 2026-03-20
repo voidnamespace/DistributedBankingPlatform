@@ -118,7 +118,7 @@ public class TransactionEventsConsumer : BackgroundService
                     _channel.BasicAck(ea.DeliveryTag, false);
                     return;
                 }
-                await inboxWriter.SaveAsync(Guid.Parse(ea.BasicProperties.MessageId), typeName, json, ea.RoutingKey, stoppingToken);
+                await inboxWriter.SaveAsync(Guid.Parse(ea.BasicProperties.MessageId), typeName, json, stoppingToken);
                 _channel.BasicAck(ea.DeliveryTag, false);
 
                 _logger.LogInformation("Message stored in Inbox: {MessageId}", messageId);

@@ -1,4 +1,5 @@
 ﻿using AccountService.Application.IntegrationEvents.Users;
+using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Options;
 using AccountService.Infrastructure.Persistence.Inbox;
@@ -103,8 +104,8 @@ public class AuthEventsConsumer : BackgroundService
 
                 using var scope = _scopeFactory.CreateScope();
 
-                var db = scope.ServiceProvider
-                    .GetRequiredService<AccountDbContext>();
+                var inboxWriter = scope.ServiceProvider
+                    .GetRequiredService<IInboxWriter>();
 
                 if (string.IsNullOrEmpty(ea.BasicProperties.MessageId))
                 {
@@ -138,38 +139,8 @@ public class AuthEventsConsumer : BackgroundService
                     return;
                 }
 
-                if (await db.InboxMessages.AnyAsync(x => x.Id == messageId))
-                {
-                    _logger.LogInformation("Duplicate message {MessageId}", messageId);
-                    _channel.BasicAck(ea.DeliveryTag, false);
-                    return;
-                }
+                await inboxWriter.SaveAsync(messageId, typeName, json, stoppingToken);
 
-
-
-
-
-
-
-
-                //use here inboxwriter!
-
-
-
-
-                var inbox = new InboxMessage
-                {
-                    Id = messageId,
-                    Type = typeName,
-                    Payload = json,
-                    RoutingKey = ea.RoutingKey,
-                    Processed = false,
-                    AttemptCount = 0,
-                    ReceivedAt = DateTime.UtcNow
-                };
-
-                db.InboxMessages.Add(inbox);
-                await db.SaveChangesAsync();
 
                 _channel.BasicAck(ea.DeliveryTag, false);
             }

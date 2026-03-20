@@ -1,5 +1,5 @@
 ﻿using AccountService.Application.Common;
-using AccountService.Application.IntegrationEvents;
+using AccountService.Application.IntegrationEvents.Transactions;
 using AccountService.Application.Interfaces.Messaging;
 using AccountService.Domain.Events;
 using MediatR;
@@ -7,13 +7,11 @@ namespace AccountService.Application.DomainEventHandlers;
 
 public class TransferFailedDomainEventHandler : INotificationHandler<DomainEventNotification<TransferFailedDomainEvent>>
 {
+    private readonly IOutboxWriter _outboxWriter;
 
-    private readonly IOutboxWriter _outbox;
-
-
-    public TransferFailedDomainEventHandler(IOutboxWriter outbox)
+    public TransferFailedDomainEventHandler(IOutboxWriter outboxWriter)
     {
-        _outbox = outbox;
+        _outboxWriter = outboxWriter;
     }
 
     public async Task Handle(
@@ -22,23 +20,13 @@ public class TransferFailedDomainEventHandler : INotificationHandler<DomainEvent
     {
         var domainEvent = notification.DomainEvent;
 
-        var integrationEvent = new TransferFailedIntegrationEvent(
+        var integrationEvent = new TransferFailedIntegrationEvent(domainEvent.ToAccountId,
             domainEvent.FromAccountId,
             domainEvent.ToAccountId,
             domainEvent.Amount,
             domainEvent.Currency
         );
 
-        await _outbox.EnqueueAsync(integrationEvent, "transfer.failed", ct);
+        await _outboxWriter.EnqueueAsync(integrationEvent, ct);
     }
-
-
-
-
-
-
-
-
-
-
 }

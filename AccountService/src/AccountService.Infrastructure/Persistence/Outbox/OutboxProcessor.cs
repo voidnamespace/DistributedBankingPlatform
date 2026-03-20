@@ -1,4 +1,5 @@
-﻿using AccountService.Application.Interfaces.Messaging;
+﻿using AccountService.Application.IntegrationEvents.Transactions;
+using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ public class OutboxProcessor : BackgroundService
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<OutboxProcessor> _logger;
+
     public OutboxProcessor(IServiceScopeFactory scopeFactory,
         ILogger<OutboxProcessor> logger)
     {
@@ -23,6 +25,12 @@ public class OutboxProcessor : BackgroundService
     {
         _logger.LogInformation("OutboxProcessor started");
 
+        var map = new Dictionary<string, Type>
+        {
+            ["transfer.created"] = typeof(TransferCreatedIntegrationEvent),
+            ["transfer.failed"] = typeof(TransferFailedIntegrationEvent),
+            ["transfer.success"] = typeof(TransferSuccessIntegrationEvent)
+        };
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -45,17 +53,14 @@ public class OutboxProcessor : BackgroundService
                 }
 
 
-            Outbox: сохраняю Type как string,
-но RoutingKeyMap ожидает Type → нужно преобразовать string → Type
-
-
-
-
                 foreach (var msg in batch)
                 {
                     try
                     {
-                        var eventType = Type.GetType(msg.Type)!;
+                        if (!map.TryGetValue(msg.Type, out var eventType))
+                        {
+                            throw new Exception($"Unknown type: {msg.Type}");
+                        }
 
                         var routingKey = RoutingKeyMap.Get(eventType);
 

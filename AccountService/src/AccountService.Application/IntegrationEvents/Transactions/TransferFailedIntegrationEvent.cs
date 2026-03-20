@@ -6,6 +6,4 @@ public sealed record TransferFailedIntegrationEvent(Guid TransactionId,
     Guid FromAccountId,
     Guid ToAccountId,
     decimal Amount,
-    Currency Currency,
-    string Reason) : INotification;
-
+    Currency Currency) : INotification;

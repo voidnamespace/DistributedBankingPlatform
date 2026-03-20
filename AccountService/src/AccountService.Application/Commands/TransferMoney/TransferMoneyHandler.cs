@@ -2,8 +2,6 @@
 using AccountService.Application.Interfaces;
 using AccountService.Application.Interfaces.Messaging;
 using AccountService.Domain.ValueObjects;
-using MediatR;
-using System.ComponentModel;
 namespace AccountService.Application.Commands.TransferMoney;
 
 public class TransferMoneyHandler
@@ -42,8 +40,7 @@ public class TransferMoneyHandler
                 command.FromAccountId,
                 command.ToAccountId,
                 command.Amount,
-                command.Currency,
-                "Account not found"
+                command.Currency
             ), ct);
              
             return;
