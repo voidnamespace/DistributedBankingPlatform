@@ -20,25 +20,26 @@ public class OutboxWriter : IOutboxWriter
 
     public Task EnqueueAsync<T>(
         T integrationEvent,
-        string routingKey,
         CancellationToken ct)
     {
         var message = new OutboxMessage
         {
             Id = Guid.NewGuid(),
-            Type = typeof(T).Name,
-            RoutingKey = routingKey,
+
+            Type = typeof(T).AssemblyQualifiedName!,
+
             Payload = JsonSerializer.Serialize(integrationEvent),
+
             CreatedAt = DateTime.UtcNow,
+
             AttemptCount = 0
         };
 
         _context.OutboxMessages.Add(message);
 
         _logger.LogInformation(
-            "Outbox message queued. Type={Type} RoutingKey={RoutingKey} Id={Id}",
+            "Outbox message queued. Type={Type} Id={Id}",
             message.Type,
-            routingKey,
             message.Id);
 
         return Task.CompletedTask;

@@ -85,7 +85,7 @@ public class AuthDbContext : DbContext
             b.HasKey(x => x.Id);
 
             b.Property(x => x.Type).IsRequired().HasMaxLength(256);
-            b.Property(x => x.RoutingKey).IsRequired().HasMaxLength(256);
+
             b.Property(x => x.Payload).IsRequired();
 
             b.Property(x => x.CreatedAt).IsRequired();

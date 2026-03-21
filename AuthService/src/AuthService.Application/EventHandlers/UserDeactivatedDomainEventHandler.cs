@@ -36,7 +36,6 @@ public class UserDeactivatedDomainEventHandler
 
         await _outbox.EnqueueAsync(
             integrationEvent,
-            "user.deactivated",
             ct);
 
         _logger.LogInformation(

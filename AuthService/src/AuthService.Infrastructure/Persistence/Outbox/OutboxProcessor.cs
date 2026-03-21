@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+
 namespace AuthService.Infrastructure.Persistence.Outbox;
 
 public class OutboxProcessor : BackgroundService
@@ -49,18 +51,34 @@ public class OutboxProcessor : BackgroundService
                 {
                     try
                     {
-                        await publisher.PublishRawAsync(
+                        var type = Type.GetType(msg.Type);
+
+                        if (type == null)
+                        {
+                            throw new InvalidOperationException(
+                                $"Cannot resolve message type: {msg.Type}");
+                        }
+
+                        var messageObject = JsonSerializer.Deserialize(
                             msg.Payload,
-                            msg.RoutingKey,
+                            type);
+
+                        if (messageObject == null)
+                        {
+                            throw new InvalidOperationException(
+                                $"Cannot deserialize message payload: {msg.Id}");
+                        }
+
+                        await publisher.PublishAsync(
+                            messageObject,
                             stoppingToken);
 
                         msg.ProcessedAt = DateTime.UtcNow;
                         msg.Error = null;
 
                         _logger.LogInformation(
-                            "Outbox message published. Id={Id} RoutingKey={RoutingKey}",
-                            msg.Id,
-                            msg.RoutingKey);
+                            "Outbox message published. Id={Id}",
+                            msg.Id);
                     }
                     catch (Exception ex)
                     {

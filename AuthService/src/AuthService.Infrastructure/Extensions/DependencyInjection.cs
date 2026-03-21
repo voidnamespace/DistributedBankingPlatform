@@ -11,6 +11,7 @@ using AuthService.Infrastructure.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
+
 namespace AuthService.Infrastructure.Extensions;
 
 public static class DependencyInjection
@@ -21,24 +22,32 @@ public static class DependencyInjection
     {
 
         services.AddDatabaseConfiguration(configuration);
+
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         services.AddScoped<IJwtService, JwtService>();
+
         services.AddScoped<AuthDbSeeder>();
+
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var connectionString =
-                configuration["Redis:ConnectionString"]
+                configuration["Redis"]
                 ?? throw new InvalidOperationException("Redis connection string not configured");
 
             return ConnectionMultiplexer.Connect(connectionString);
         });
+
         services.AddSingleton<IRedisService, RedisService>();
+
         services.Configure<RabbitMqOptions>(
-            configuration.GetSection("RabbitMq"));
+            configuration.GetSection("RabbitMQ"));
+
+        services.Configure<AuthEventsPublisherOptions>(
+            configuration.GetSection("AuthEventsPublisher"));
 
         services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 

@@ -36,7 +36,6 @@ public class UserDeletedDomainEventHandler
 
         await _outbox.EnqueueAsync(
             integrationEvent,
-            "user.deleted",
             ct);
 
         _logger.LogInformation(

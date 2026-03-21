@@ -38,7 +38,6 @@ public class UserCreatedDomainEventHandler
 
         await _outbox.EnqueueAsync(
             integrationEvent,
-            "user.created",
             ct);
 
         _logger.LogInformation(

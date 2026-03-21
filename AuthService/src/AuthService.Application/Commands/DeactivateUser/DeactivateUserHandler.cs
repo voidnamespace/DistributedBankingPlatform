@@ -42,9 +42,7 @@ public class DeactivateUserHandler : IRequestHandler<DeactivateUserCommand>
             throw new KeyNotFoundException($"User with ID {request.userId} not found");
         }
 
-        await _userRepository.DeactivateAsync(
-            request.userId,
-            cancellationToken);
+        user.Deactivate();
 
         await _refreshTokenRepository.RevokeAllUserTokensAsync(
             request.userId,
