@@ -62,7 +62,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
         T message,
         CancellationToken ct = default)
     {
-        var routingKey = RoutingKeyMap.Get(typeof(T));
+        var routingKey = IntegrationEventMap.GetName(message!.GetType());
 
         var body = Encoding.UTF8.GetBytes(
             JsonSerializer.Serialize(message));

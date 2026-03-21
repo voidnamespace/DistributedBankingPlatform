@@ -1,5 +1,6 @@
 ﻿using AuthService.Application.Interfaces.Messaging;
 using AuthService.Infrastructure.Data;
+using AuthService.Infrastructure.Messaging.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -51,7 +52,7 @@ public class OutboxProcessor : BackgroundService
                 {
                     try
                     {
-                        var type = Type.GetType(msg.Type);
+                        var type = IntegrationEventMap.GetType(msg.Type);
 
                         if (type == null)
                         {
@@ -59,18 +60,18 @@ public class OutboxProcessor : BackgroundService
                                 $"Cannot resolve message type: {msg.Type}");
                         }
 
-                        var messageObject = JsonSerializer.Deserialize(
+                        var integrationEvent = JsonSerializer.Deserialize(
                             msg.Payload,
                             type);
 
-                        if (messageObject == null)
+                        if (integrationEvent == null)
                         {
                             throw new InvalidOperationException(
                                 $"Cannot deserialize message payload: {msg.Id}");
                         }
 
                         await publisher.PublishAsync(
-                            messageObject,
+                            integrationEvent,
                             stoppingToken);
 
                         msg.ProcessedAt = DateTime.UtcNow;

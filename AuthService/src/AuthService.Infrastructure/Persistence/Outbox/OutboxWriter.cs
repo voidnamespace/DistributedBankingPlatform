@@ -1,7 +1,8 @@
-﻿using System.Text.Json;
-using AuthService.Application.Interfaces.Messaging;
+﻿using AuthService.Application.Interfaces.Messaging;
 using AuthService.Infrastructure.Data;
+using AuthService.Infrastructure.Messaging.Routing;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace AuthService.Infrastructure.Persistence.Outbox;
 
@@ -26,7 +27,7 @@ public class OutboxWriter : IOutboxWriter
         {
             Id = Guid.NewGuid(),
 
-            Type = typeof(T).AssemblyQualifiedName!,
+            Type = IntegrationEventMap.GetName(typeof(T)),
 
             Payload = JsonSerializer.Serialize(integrationEvent),
 
