@@ -18,6 +18,8 @@ public class TransactionEventsConsumer : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly TransactionEventsConsumerOptions _options;
     private readonly ILogger<TransactionEventsConsumer> _logger;
+    private readonly RabbitMqOptions _rabbitMqOptions;
+
 
     private IConnection? _connection;
     private IModel? _channel;
@@ -30,11 +32,13 @@ public class TransactionEventsConsumer : BackgroundService
     public TransactionEventsConsumer(
         IServiceScopeFactory scopeFactory,
         IOptions<TransactionEventsConsumerOptions> options,
-        ILogger<TransactionEventsConsumer> logger)
+        ILogger<TransactionEventsConsumer> logger,
+        IOptions<RabbitMqOptions> rabbitMqOptions)
     {
         _scopeFactory = scopeFactory;
         _options = options.Value;
         _logger = logger;
+        _rabbitMqOptions = rabbitMqOptions.Value;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -45,9 +49,9 @@ public class TransactionEventsConsumer : BackgroundService
             {
                 var factory = new ConnectionFactory
                 {
-                    HostName = _options.Host,
-                    UserName = _options.Username,
-                    Password = _options.Password,
+                    HostName = _rabbitMqOptions.Host,
+                    UserName = _rabbitMqOptions.User,
+                    Password = _rabbitMqOptions.Password,
                     DispatchConsumersAsync = true
                 };
 

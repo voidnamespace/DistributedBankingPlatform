@@ -81,7 +81,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
         _logger.LogInformation(
             "RabbitMQ event published. Type={EventType} RoutingKey={RoutingKey}",
-            typeof(T).Name,
+            message.GetType().Name,
             routingKey);
 
         return Task.CompletedTask;

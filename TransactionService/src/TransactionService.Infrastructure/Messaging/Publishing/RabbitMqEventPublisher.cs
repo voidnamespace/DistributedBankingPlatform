@@ -13,9 +13,6 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
     private readonly IConnection _connection;
     private readonly IModel _channel;
 
-
-    private const string ExchangeName = "transaction.service.exchange";
-
     public RabbitMqEventPublisher(IOptions<RabbitMqOptions> options)
     {
         _options = options.Value;
@@ -34,7 +31,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
        _channel = _connection.CreateModel();
 
        _channel.ExchangeDeclare(
-            exchange: ExchangeName,
+            exchange: _options.Exchange,
             type: ExchangeType.Topic,
             durable: true);
 
@@ -56,7 +53,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
         props.ContentType = "application/json";
 
         _channel.BasicPublish(
-            exchange: ExchangeName,
+            exchange: _options.Exchange,
             routingKey: routingKey,
             mandatory: true,
             basicProperties: props,

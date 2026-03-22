@@ -10,5 +10,5 @@ public sealed class AccountEventsConsumerOptions
 
     public string Queue { get; init; } = "asd";
 
-
+    HHAT IS THIS DUDE WHY U HAVE HERE RABBIT MQ OPTITONS WHAT TO DOE ^!!???
 }

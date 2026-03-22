@@ -39,6 +39,7 @@ public class UserCreatedDomainEventHandler
         await _outbox.EnqueueAsync(
             integrationEvent,
             ct);
+        _logger.LogInformation("type of integrationEvent = {Type}", integrationEvent.GetType().FullName);
 
         _logger.LogInformation(
             "UserCreatedIntegrationEvent enqueued to outbox for user {UserId}",

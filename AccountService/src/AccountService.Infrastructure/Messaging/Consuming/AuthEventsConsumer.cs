@@ -1,9 +1,6 @@
-﻿using AccountService.Application.IntegrationEvents.Users;
-using AccountService.Application.Interfaces.Messaging;
-using AccountService.Infrastructure.Data;
+﻿using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Messaging.Options;
-using AccountService.Infrastructure.Persistence.Inbox;
-using Microsoft.EntityFrameworkCore;
+using AccountService.Infrastructure.Messaging.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -11,7 +8,6 @@ using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
-using System.Text.Json;
 
 namespace AccountService.Infrastructure.Messaging.Consuming;
 
@@ -20,26 +16,21 @@ public class AuthEventsConsumer : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly AuthEventsConsumerOptions _options;
     private readonly ILogger<AuthEventsConsumer> _logger;
+    private readonly RabbitMqOptions _rabbitMqOptions;
 
     private IConnection? _connection;
     private IModel? _channel;
 
-    private static readonly Dictionary<string, Type> EventTypes = new()
-{
-    { "UserCreatedIntegrationEvent", typeof(UserCreatedIntegrationEvent) },
-    { "UserDeletedIntegrationEvent", typeof(UserDeletedIntegrationEvent) },
-    { "UserActivatedIntegrationEvent", typeof(UserActivatedIntegrationEvent) },
-    { "UserDeactivatedIntegrationEvent", typeof(UserDeactivatedIntegrationEvent) }
-};
-
     public AuthEventsConsumer(
-        IServiceScopeFactory scopeFactory,
-        IOptions<AuthEventsConsumerOptions> options,
-        ILogger<AuthEventsConsumer> logger)
+    IServiceScopeFactory scopeFactory,
+    IOptions<AuthEventsConsumerOptions> options,
+    ILogger<AuthEventsConsumer> logger,
+    IOptions<RabbitMqOptions> rabbitMqOptions)
     {
         _scopeFactory = scopeFactory;
         _options = options.Value;
         _logger = logger;
+        _rabbitMqOptions = rabbitMqOptions.Value;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -50,16 +41,19 @@ public class AuthEventsConsumer : BackgroundService
             {
                 var factory = new ConnectionFactory
                 {
-                    HostName = _options.Host,
-                    UserName = _options.Username,
-                    Password = _options.Password,
+                    HostName = _rabbitMqOptions.Host,
+                    UserName = _rabbitMqOptions.User,
+                    Password = _rabbitMqOptions.Password,
                     DispatchConsumersAsync = true
                 };
 
                 _connection = factory.CreateConnection();
                 _channel = _connection.CreateModel();
+
                 _channel.BasicQos(0, 1, false);
+
                 _logger.LogInformation("RabbitMQ connected");
+
                 break;
             }
             catch
@@ -99,8 +93,7 @@ public class AuthEventsConsumer : BackgroundService
                 _logger.LogInformation(
                     "RabbitMQ message received. RoutingKey: {RoutingKey}, Body: {Body}",
                     ea.RoutingKey,
-                    json
-                );
+                    json);
 
                 using var scope = _scopeFactory.CreateScope();
 
@@ -114,33 +107,20 @@ public class AuthEventsConsumer : BackgroundService
                     return;
                 }
 
-                var messageId = Guid.Parse(ea.BasicProperties.MessageId);
-
-                var typeName = ea.RoutingKey switch
+                if (!Guid.TryParse(ea.BasicProperties.MessageId, out var messageId))
                 {
-                    "user.created" => "UserCreatedIntegrationEvent",
-                    "user.deleted" => "UserDeletedIntegrationEvent",
-                    "user.activated" => "UserActivatedIntegrationEvent",
-                    "user.deactivated" => "UserDeactivatedIntegrationEvent",
-                    _ => null
-                };
-
-                if (typeName == null)
-                {
-                    _logger.LogWarning("Invalid type {Type}", typeName);
+                    _logger.LogWarning("Invalid MessageId format");
                     _channel.BasicAck(ea.DeliveryTag, false);
                     return;
                 }
 
-                if (!EventTypes.TryGetValue(typeName, out var type))
-                {
-                    _logger.LogWarning("Unknown event type {Type}", typeName);
-                    _channel.BasicAck(ea.DeliveryTag, false);
-                    return;
-                }
+                var eventType = ea.RoutingKey;
 
-                await inboxWriter.SaveAsync(messageId, typeName, json, stoppingToken);
-
+                await inboxWriter.SaveAsync(
+                    messageId,
+                    eventType,
+                    json,
+                    stoppingToken);
 
                 _channel.BasicAck(ea.DeliveryTag, false);
             }
@@ -160,7 +140,7 @@ public class AuthEventsConsumer : BackgroundService
             autoAck: false,
             consumer: consumer);
 
-        _logger.LogInformation("AccountEventsConsumer started");
+        _logger.LogInformation("AuthEventsConsumer started");
 
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }

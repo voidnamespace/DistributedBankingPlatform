@@ -1,4 +1,5 @@
 ﻿using AccountService.Infrastructure.Data;
+using AccountService.Infrastructure.Messaging.Routing;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,8 +53,15 @@ public class InboxProcessor : BackgroundService
             {
                 try
                 {
-                    var type = Type.GetType(
-                        $"AccountService.Application.IntegrationEvents.{message.Type}, AccountService.Application"); // how it works
+                    if (!AuthConsumerRoutingMap.TryGet(message.Type, out var type))
+                    {
+                        _logger.LogWarning(
+                            "Inbox message type not found. Id={Id} Type={Type}",
+                            message.Id,
+                            message.Type);
+
+                        continue;
+                    }
 
                     if (type is null)
                     {

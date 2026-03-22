@@ -36,6 +36,8 @@ public class OutboxWriter : IOutboxWriter
             AttemptCount = 0
         };
 
+        _logger.LogInformation("type of integrationEvent {Type}", integrationEvent.GetType().FullName);
+
         _context.OutboxMessages.Add(message);
 
         _logger.LogInformation(
