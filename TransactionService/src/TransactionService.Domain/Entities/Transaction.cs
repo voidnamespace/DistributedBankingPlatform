@@ -1,14 +1,13 @@
 ﻿using TransactionService.Domain.Enums;
+using TransactionService.Domain.Events;
 using TransactionService.Domain.Exceptions;
 using TransactionService.Domain.ValueObjects;
 
 namespace TransactionService.Domain.Entities;
 
-public class Transaction
+public class Transaction : Entity
 {
-    public Guid Id { get; private set; }
-
-    public Guid CardId { get; private set; }
+    public Guid TransactionId { get; private set; }
 
     public Guid FromAccountId { get; private set; }
 
@@ -25,24 +24,25 @@ public class Transaction
     private Transaction() { }
 
 
-    public Transaction (Guid cardId, Guid fromAccountId, Guid toAccountId, MoneyVO money)
+    public Transaction (Guid fromAccountId, Guid toAccountId, MoneyVO money)
     {
         if (fromAccountId == toAccountId)
             throw new DomainException("Accounts must be different");
 
-        Id = Guid.NewGuid();
-        CardId = cardId;
+        TransactionId = Guid.NewGuid();
         FromAccountId = fromAccountId;
         ToAccountId = toAccountId;
         Money = money;
-        Status = TransactionStatus.Created;
+        Status = TransactionStatus.Processing;
         CreatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new TransferCreatedDomainEvent(TransactionId, fromAccountId, toAccountId, money));
 
     }
 
     public void StartProcessing()
     {
-        if (Status != TransactionStatus.Created)
+        if (Status != TransactionStatus.Processing)
             throw new DomainException("Only created transaction can be processed");
 
         Status = TransactionStatus.Processing;

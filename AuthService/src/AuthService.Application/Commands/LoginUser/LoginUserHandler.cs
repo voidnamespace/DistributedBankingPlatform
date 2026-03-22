@@ -106,7 +106,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
         {
             AccessToken = accessToken,
             RefreshToken = refreshTokenValue,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15),
             UserId = user.Id,
             Email = user.Email.Value,
             Role = user.Role.ToString()

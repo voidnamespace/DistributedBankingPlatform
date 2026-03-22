@@ -1,5 +1,6 @@
 ﻿using AuthService.Application.Interfaces.Messaging;
 using AuthService.Infrastructure.Data;
+using AuthService.Infrastructure.Messaging.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -51,18 +52,36 @@ public class OutboxProcessor : BackgroundService
                 {
                     try
                     {
-                        await publisher.PublishRawAsync(
+                        var type = IntegrationEventMap.GetType(msg.Type);
+
+                        
+
+                        if (type == null)
+                        {
+                            throw new InvalidOperationException(
+                                $"Cannot resolve message type: {msg.Type}");
+                        }
+
+                        var integrationEvent = JsonSerializer.Deserialize(
                             msg.Payload,
-                            msg.RoutingKey,
+                            type);
+
+                        if (integrationEvent == null)
+                        {
+                            throw new InvalidOperationException(
+                                $"Cannot deserialize message payload: {msg.Id}");
+                        }
+                        _logger.LogInformation("integration event type = {Type}", integrationEvent.GetType().FullName);
+                        await publisher.PublishAsync(
+                            integrationEvent,
                             stoppingToken);
 
                         msg.ProcessedAt = DateTime.UtcNow;
                         msg.Error = null;
 
                         _logger.LogInformation(
-                            "Outbox message published. Id={Id} RoutingKey={RoutingKey}",
-                            msg.Id,
-                            msg.RoutingKey);
+                            "Outbox message published. Id={Id}",
+                            msg.Id);
                     }
                     catch (Exception ex)
                     {

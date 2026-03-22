@@ -1,7 +1,9 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TransactionService.Application.Commands.CreateTransfer;
 using TransactionService.Application.DTOs;
+using TransactionService.Application.Queries.CheckTransferStatus;
 namespace TransactionService.API.Controllers;
 
 [ApiController]
@@ -14,13 +16,16 @@ public class TransactionController : ControllerBase
     {
         _mediator = mediator;
     }
-
+   // [Authorize]
     [HttpPost("transfer")]
     public async Task<IActionResult> Transfer(
     [FromBody] CreateTransferRequest request,
     CancellationToken ct)
     {
-
+        if (request.FromAccountId == request.ToAccountId)
+            return BadRequest("Cannot transfer to the same account");
+        if (request.Amount <= 0)
+            return BadRequest("Amount must be greater than zero");
         var command = new CreateTransferCommand(
             request.FromAccountId,
             request.ToAccountId,
@@ -31,5 +36,16 @@ public class TransactionController : ControllerBase
 
         return Accepted(new { transactionId });
     }
+
+    [HttpGet]
+    public async Task<IActionResult> CheckStatus(Guid transactionId, CancellationToken ct)  
+    {
+        var query = new CheckTransferStatusQuery(transactionId);
+        var status = await _mediator.Send(query, ct);
+        return Ok(status);
+    }
+
+
+
 
 }

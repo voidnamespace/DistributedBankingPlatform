@@ -124,11 +124,6 @@ namespace AuthService.Infrastructure.Migrations
                     b.Property<DateTime?>("ProcessedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("RoutingKey")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(256)

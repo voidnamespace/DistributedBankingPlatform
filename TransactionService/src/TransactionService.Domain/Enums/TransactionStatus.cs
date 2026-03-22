@@ -2,8 +2,7 @@
 
 public enum TransactionStatus
 {
-    Created = 0,
-    Processing = 1,
-    Completed = 2,
-    Failed = 3
+    Processing = 0,
+    Completed = 1,
+    Failed = 2
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TransactionService.Application.Interfaces;
 using TransactionService.Domain.Entities;
+using TransactionService.Domain.Enums;
 using TransactionService.Infrastructure.Data;
 namespace TransactionService.Infrastructure.Repositories;
 
@@ -21,7 +22,8 @@ public class TransactionRepository : ITransactionRepository
     public async Task<Transaction?> GetByIdAsync(Guid id, CancellationToken ct)
     {
         return await _context.Transactions
-            .FirstOrDefaultAsync(x => x.Id == id, ct);
+            .FirstOrDefaultAsync(x => x.TransactionId == id, ct);
     }
+
 
 }

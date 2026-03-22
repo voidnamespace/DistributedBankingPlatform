@@ -36,7 +36,6 @@ public class UserActivatedDomainEventHandler
 
         await _outbox.EnqueueAsync(
             integrationEvent,
-            "user.activated",
             ct);
 
         _logger.LogInformation(

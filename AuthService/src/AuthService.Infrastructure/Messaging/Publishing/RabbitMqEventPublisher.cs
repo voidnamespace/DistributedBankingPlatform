@@ -1,35 +1,40 @@
-﻿using System.Text;
-using System.Text.Json;
-using AuthService.Application.Interfaces.Messaging;
+﻿using AuthService.Application.Interfaces.Messaging;
 using AuthService.Infrastructure.Messaging.Options;
+using AuthService.Infrastructure.Messaging.Routing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using System.Text;
+using System.Text.Json;
 
 namespace AuthService.Infrastructure.Messaging.Publishing;
 
 public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 {
-    private readonly RabbitMqOptions _options;
+    private readonly RabbitMqOptions _connectionOptions;
+    private readonly AuthEventsPublisherOptions _publisherOptions;
+
     private readonly ILogger<RabbitMqEventPublisher> _logger;
+
     private readonly IConnection _connection;
     private readonly IModel _channel;
 
-    private const string ExchangeName = "auth.events";
-
     public RabbitMqEventPublisher(
-        IOptions<RabbitMqOptions> options,
+        IOptions<RabbitMqOptions> connectionOptions,
+        IOptions<AuthEventsPublisherOptions> publisherOptions,
         ILogger<RabbitMqEventPublisher> logger)
     {
-        _options = options.Value;
+        _connectionOptions = connectionOptions.Value;
+        _publisherOptions = publisherOptions.Value;
+
         _logger = logger;
 
         var factory = new ConnectionFactory
         {
-            HostName = _options.Host,
-            Port = _options.Port,
-            UserName = _options.User,
-            Password = _options.Password,
+            HostName = _connectionOptions.Host,
+            Port = _connectionOptions.Port,
+            UserName = _connectionOptions.User,
+            Password = _connectionOptions.Password,
             DispatchConsumersAsync = true
         };
 
@@ -37,7 +42,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
         _channel = _connection.CreateModel();
 
         _channel.ExchangeDeclare(
-            exchange: ExchangeName,
+            exchange: _publisherOptions.Exchange,
             type: ExchangeType.Topic,
             durable: true);
 
@@ -48,57 +53,35 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
                 args.RoutingKey);
         };
 
-        _logger.LogInformation("RabbitMQ publisher initialized");
+        _logger.LogInformation(
+            "RabbitMQ publisher initialized. Exchange={Exchange}",
+            _publisherOptions.Exchange);
     }
 
     public Task PublishAsync<T>(
         T message,
-        string routingKey,
         CancellationToken ct = default)
     {
+        var routingKey = IntegrationEventMap.GetName(message!.GetType());
+
         var body = Encoding.UTF8.GetBytes(
             JsonSerializer.Serialize(message));
 
         var props = _channel.CreateBasicProperties();
+
         props.Persistent = true;
         props.MessageId = Guid.NewGuid().ToString();
         props.ContentType = "application/json";
 
         _channel.BasicPublish(
-            exchange: ExchangeName,
+            exchange: _publisherOptions.Exchange,
             routingKey: routingKey,
             basicProperties: props,
             body: body);
 
         _logger.LogInformation(
             "RabbitMQ event published. Type={EventType} RoutingKey={RoutingKey}",
-            typeof(T).Name,
-            routingKey);
-
-        return Task.CompletedTask;
-    }
-
-    public Task PublishRawAsync(
-        string payloadJson,
-        string routingKey,
-        CancellationToken ct)
-    {
-        var body = Encoding.UTF8.GetBytes(payloadJson);
-
-        var props = _channel.CreateBasicProperties();
-        props.Persistent = true;
-        props.MessageId = Guid.NewGuid().ToString();
-        props.ContentType = "application/json";
-
-        _channel.BasicPublish(
-            exchange: ExchangeName,
-            routingKey: routingKey,
-            mandatory: true,
-            basicProperties: props,
-            body: body);
-
-        _logger.LogInformation(
-            "RabbitMQ RAW message published. RoutingKey={RoutingKey}",
+            message.GetType().Name,
             routingKey);
 
         return Task.CompletedTask;

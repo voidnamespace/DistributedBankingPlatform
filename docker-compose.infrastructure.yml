@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
 
   # =====================
@@ -6,6 +8,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management
+    container_name: rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -17,6 +20,9 @@ services:
 
   redis:
     image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -30,20 +36,25 @@ services:
 
   auth-postgres:
     image: postgres:16
+    container_name: auth-postgres
     environment:
       POSTGRES_DB: authdb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+    volumes:
+      - auth_pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+
   account-postgres:
     image: postgres:16
+    container_name: account-postgres
     environment:
       POSTGRES_DB: accountdb
       POSTGRES_USER: postgres
@@ -58,5 +69,30 @@ services:
       timeout: 5s
       retries: 5
 
+
+  transaction-postgres:
+    image: postgres:16
+    container_name: transaction-postgres
+    environment:
+      POSTGRES_DB: transactiondb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - transaction_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
+# =====================
+# VOLUMES
+# =====================
+
 volumes:
+  auth_pgdata:
   account_pgdata:
+  transaction_pgdata:

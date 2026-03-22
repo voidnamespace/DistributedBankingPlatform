@@ -1,6 +1,7 @@
 ﻿using AccountService.Domain.Entity;
 using AccountService.Domain.ValueObjects;
 using AccountService.Infrastructure.Persistence.Inbox;
+using AccountService.Infrastructure.Persistence.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AccountService.Infrastructure.Data;
@@ -13,6 +14,7 @@ public class AccountDbContext : DbContext
     }
     public DbSet<Account> Accounts { get; set; }
     public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -20,19 +22,54 @@ public class AccountDbContext : DbContext
         var accountNumberConverter = new ValueConverter<AccountNumberVO, string>(
         vo => vo.Value,
         value => new AccountNumberVO(value));
-
-        modelBuilder.Entity<InboxMessage>(entity =>
+        modelBuilder.Entity<InboxMessage>(b =>
         {
-            entity.HasKey(x => x.Id);
+            b.ToTable("InboxMessages"); 
 
-            entity.Property(x => x.Type)
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Type)
+                .IsRequired()
+                .HasMaxLength(256);
+
+            b.Property(x => x.Payload)
                 .IsRequired();
 
-            entity.Property(x => x.Payload)
+            b.Property(x => x.ReceivedAt)
                 .IsRequired();
 
-            entity.Property(x => x.ReceivedAt)
+            b.Property(x => x.ProcessedAt);
+
+            b.Property(x => x.AttemptCount)
                 .IsRequired();
+
+            b.HasIndex(x => x.ProcessedAt);
+        });
+        modelBuilder.Entity<OutboxMessage>(b =>
+        {
+            b.ToTable("OutboxMessages");
+
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Type)
+                .IsRequired()
+                .HasMaxLength(256);
+
+            b.Property(x => x.Payload)
+                .IsRequired();
+
+            b.Property(x => x.OccurredOnUtc)
+                .IsRequired();
+
+            b.Property(x => x.ProcessedOnUtc);
+
+            b.Property(x => x.AttemptCount)
+                .IsRequired();
+
+            b.Property(x => x.Error);
+
+            b.HasIndex(x => x.ProcessedOnUtc);
+            b.HasIndex(x => x.OccurredOnUtc);
         });
         modelBuilder.Entity<Account>(entity =>
         {

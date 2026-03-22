@@ -1,7 +1,9 @@
-﻿using AccountService.Infrastructure.Data;
+﻿using AccountService.Application.Interfaces.Messaging;
+using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Persistence.Inbox;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-
+using System.Threading.Channels;
 public class InboxWriter : IInboxWriter
 {
     private readonly AccountDbContext _context;
@@ -15,31 +17,37 @@ public class InboxWriter : IInboxWriter
         _logger = logger;
     }
 
-    public async Task SaveAsync(
+    public async Task SaveAsync(Guid messageId,
         string type,
         string payload,
-        string routingKey,
         CancellationToken ct)
     {
+        var exists = await _context.InboxMessages
+                    .AnyAsync(x => x.Id == messageId, ct);
+
+        if (exists)
+        {
+            _logger.LogInformation("Duplicate message skipped: {MessageId}", messageId);
+            return;
+        }
+
         var message = new InboxMessage
         {
-            Id = Guid.NewGuid(),
+            Id = messageId,
             Type = type,
             Payload = payload,
-            RoutingKey = routingKey,
             ReceivedAt = DateTime.UtcNow,
             AttemptCount = 0,
             Processed = false
         };
-
+        
         _context.InboxMessages.Add(message);
 
         await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation(
-            "Inbox message saved. Id={Id} Type={Type} RoutingKey={RoutingKey}",
+            "Inbox message saved. Id={Id} Type={Type} ",
             message.Id,
-            type,
-            routingKey);
+            type);
     }
 }

@@ -6,8 +6,6 @@ public class OutboxMessage
 
     public string Type { get; set; } = default!;
 
-    public string RoutingKey { get; set; } = default!;
-
     public string Payload { get; set; } = default!;
 
     public DateTime CreatedAt { get; set; }

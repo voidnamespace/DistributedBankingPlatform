@@ -1,8 +1,9 @@
-﻿public interface IInboxWriter
+﻿namespace AccountService.Application.Interfaces.Messaging;
+
+public interface IInboxWriter
 {
-    Task SaveAsync(
+    Task SaveAsync(Guid messageId,
         string type,
         string payload,
-        string routingKey,
         CancellationToken ct);
 }

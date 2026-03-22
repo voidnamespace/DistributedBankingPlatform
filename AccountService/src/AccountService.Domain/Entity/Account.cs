@@ -1,9 +1,10 @@
 ﻿using AccountService.Domain.ValueObjects;
 using AccountService.Domain.Exceptions;
 using AccountService.Domain.Enums;
+using AccountService.Domain.Events;
 namespace AccountService.Domain.Entity;
 
-public class Account
+public class Account : Entity
 {
     public Guid Id { get; private set; }
 
@@ -79,5 +80,93 @@ public class Account
             );
         UpdatedAt = DateTime.UtcNow;
     }
+
+
+    public void TransferTo(Account toAccount, MoneyVO money, Guid transactionId)
+    {
+        if (toAccount == null)
+            throw new DomainException("Target account is null");
+
+        if (Id == toAccount.Id)
+            throw new DomainException("Cannot transfer to same account");
+        if (money.Amount <= 0)
+            throw new DomainException("Amount must be greater than zero");
+
+        if (!IsActive)
+        {
+            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
+            Id,
+            toAccount.Id,
+            money.Amount,
+            money.Currency,
+            "FromAccount is inactive"
+        ));
+            return;
+        }
+        if (!toAccount.IsActive)
+        {
+            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
+                Id,
+                toAccount.Id,
+                money.Amount,
+                money.Currency,
+                "ToAccount is inactive "
+            ));
+            return;
+        }
+        if (Balance.Amount < money.Amount)
+        {
+            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
+            Id,
+            toAccount.Id,
+            money.Amount,
+            money.Currency,
+            "Not enough money"
+        ));
+            return;
+        }
+        if(Balance.Currency != money.Currency)
+        {
+            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
+            Id,
+            toAccount.Id,
+            money.Amount,
+            money.Currency,
+            "Wrong currency"
+        ));
+            return;
+        }
+
+        DecreaseBalance(money);
+        toAccount.IncreaseBalance(money);
+
+        AddDomainEvent(new TransferSuccessDomainEvent(transactionId,
+            Id,
+            toAccount.Id,
+            money.Amount,
+            money.Currency
+        ));
+    }
+
+    private void IncreaseBalance(MoneyVO money)
+    {
+        Balance = new MoneyVO(
+            Balance.Amount + money.Amount,
+            Balance.Currency
+        );
+
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    private void DecreaseBalance(MoneyVO money)
+    {
+        Balance = new MoneyVO(
+            Balance.Amount - money.Amount,
+            Balance.Currency
+        );
+
+        UpdatedAt = DateTime.UtcNow;
+    }
+
 
 }
