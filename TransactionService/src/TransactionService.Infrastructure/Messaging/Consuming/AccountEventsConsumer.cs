@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
@@ -14,7 +15,8 @@ public class AccountEventsConsumer : BackgroundService
 {
 
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly AccountEventsConsumerOptions _options;
+    private readonly IOptions<AccountEventsConsumerOptions> _consumerOptions;
+    private readonly IOptions<RabbitMqOptions> _connectionOptions;
     private readonly ILogger<AccountEventsConsumer> _logger;
    
     
@@ -27,11 +29,13 @@ public class AccountEventsConsumer : BackgroundService
         ["transfer.success"] = typeof(TransferSuccessIntegrationEvent)
     };
     public AccountEventsConsumer(IServiceScopeFactory scopeFactory,
-        AccountEventsConsumerOptions options,
+        IOptions<AccountEventsConsumerOptions> consumerOptions,
+        IOptions<RabbitMqOptions> connectionOptions,
         ILogger<AccountEventsConsumer> logger)
     {
         _scopeFactory = scopeFactory;
-        _options = options;
+        _consumerOptions = consumerOptions;
+        _connectionOptions = connectionOptions;
         _logger = logger;
     }
 
@@ -45,9 +49,9 @@ public class AccountEventsConsumer : BackgroundService
             {
                 var factory = new ConnectionFactory
                 {
-                    HostName = _options.Host,
-                    UserName = _options.Username,
-                    Password = _options.Password,
+                    HostName = _connectionOptions.Value.Host,
+                    UserName = _connectionOptions.Value.User,
+                    Password = _connectionOptions.Value.Password,
                     DispatchConsumersAsync = true,
                 };
                 _connection = factory.CreateConnection();
@@ -66,13 +70,13 @@ public class AccountEventsConsumer : BackgroundService
             return;
 
         _channel.ExchangeDeclare(
-            exchange: _options.Exchange,
+            exchange: _consumerOptions.Value.Exchange,
             type: ExchangeType.Topic,
             durable: true
             );
 
         _channel.QueueDeclare(
-            queue: _options.Queue,
+            queue: _consumerOptions.Value.Queue,
             durable: true,
             exclusive: false,
             autoDelete: false);
@@ -139,7 +143,7 @@ public class AccountEventsConsumer : BackgroundService
             }
         };
         _channel.BasicConsume(
-        queue: _options.Queue,
+        queue: _consumerOptions.Value.Queue,
         autoAck: false,
         consumer: consumer);
 
