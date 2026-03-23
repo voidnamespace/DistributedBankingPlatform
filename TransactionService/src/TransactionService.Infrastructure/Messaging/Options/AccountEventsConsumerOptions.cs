@@ -5,6 +5,6 @@ public sealed class AccountEventsConsumerOptions
 {
     public string Exchange { get; init; } = "account.events";
 
-    public string Queue { get; init; } = "asd";
+    public string Queue { get; init; } = "transaction.account.events";
 
 }
