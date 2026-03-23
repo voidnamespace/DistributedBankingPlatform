@@ -4,8 +4,8 @@ namespace TransactionService.Application.IntegrationEvents;
 
 public sealed record TransferCreatedIntegrationEvent(
     Guid TransactionId,
-    Guid FromAccountId,
-    Guid ToAccountId,
+    string FromAccountId,
+    string ToAccountId,
     decimal Amount,
     Currency currency) : INotification;
 

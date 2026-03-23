@@ -9,9 +9,9 @@ public class Transaction : Entity
 {
     public Guid TransactionId { get; private set; }
 
-    public Guid FromAccountId { get; private set; }
+    public string FromAccountId { get; private set; } = default!;
 
-    public Guid ToAccountId { get; private set; }
+    public string ToAccountId { get; private set; } = default!;
 
     public MoneyVO Money { get; private set; } = null!;
 
@@ -24,7 +24,7 @@ public class Transaction : Entity
     private Transaction() { }
 
 
-    public Transaction (Guid fromAccountId, Guid toAccountId, MoneyVO money)
+    public Transaction (string fromAccountId, string toAccountId, MoneyVO money)
     {
         if (fromAccountId == toAccountId)
             throw new DomainException("Accounts must be different");

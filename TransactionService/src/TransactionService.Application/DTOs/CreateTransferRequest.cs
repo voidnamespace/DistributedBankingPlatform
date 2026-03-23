@@ -2,8 +2,8 @@
 namespace TransactionService.Application.DTOs;
 
 public record CreateTransferRequest(
-    Guid FromAccountId,
-    Guid ToAccountId,
+    string FromAccountId,
+    string ToAccountId,
     decimal Amount,
     Currency Currency
 );

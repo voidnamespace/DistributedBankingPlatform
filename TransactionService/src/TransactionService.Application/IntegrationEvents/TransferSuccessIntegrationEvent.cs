@@ -4,7 +4,7 @@ using TransactionService.Domain.Enums;
 namespace TransactionService.Application.IntegrationEvents;
 
 public sealed record TransferSuccessIntegrationEvent(Guid TransactionId,
-    Guid FromAccountId,
-    Guid ToAccountId,
+    string FromAccountId,
+    string ToAccountId,
     decimal Amount,
     Currency currency) : INotification;
