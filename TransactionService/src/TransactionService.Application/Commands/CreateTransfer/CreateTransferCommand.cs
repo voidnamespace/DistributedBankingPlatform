@@ -3,8 +3,8 @@ using TransactionService.Domain.Enums;
 namespace TransactionService.Application.Commands.CreateTransfer;
 
 public record CreateTransferCommand(
-    string FromAccountId,
-    string ToAccountId,
+    string FromAccountNumber,
+    string ToAccountNumber,
     decimal Amount,
     Currency Currency
 ) : IRequest<Guid>;

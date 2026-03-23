@@ -24,19 +24,19 @@ public class Transaction : Entity
     private Transaction() { }
 
 
-    public Transaction (string fromAccountId, string toAccountId, MoneyVO money)
+    public Transaction (string fromAccountNumber, string toAccountNumber, MoneyVO money)
     {
-        if (fromAccountId == toAccountId)
+        if (fromAccountNumber == toAccountNumber)
             throw new DomainException("Accounts must be different");
 
         TransactionId = Guid.NewGuid();
-        FromAccountId = fromAccountId;
-        ToAccountId = toAccountId;
+        FromAccountId = fromAccountNumber;
+        ToAccountId = toAccountNumber;
         Money = money;
         Status = TransactionStatus.Processing;
         CreatedAt = DateTime.UtcNow;
 
-        AddDomainEvent(new TransferCreatedDomainEvent(TransactionId, fromAccountId, toAccountId, money));
+        AddDomainEvent(new TransferCreatedDomainEvent(TransactionId, fromAccountNumber, toAccountNumber, money));
 
     }
 
