@@ -30,7 +30,7 @@ public class InboxWriter : IInboxWriter
             AttemptCount = 0,
             ReceivedAt = DateTime.UtcNow,
         };
-
+        
         _context.InboxMessages.Add(inboxMessage);
 
         await _context.SaveChangesAsync(ct);

@@ -3,8 +3,8 @@ using MediatR;
 namespace AccountService.Application.IntegrationEvents.Transactions;
 
 public record TransferCreatedIntegrationEvent(Guid TransactionId,
-    Guid FromAccountId,
-    Guid ToAccountId,
+    string FromAccountNumber,
+    string ToAccountNumber,
     decimal Amount,
     Currency Currency) : INotification;
 

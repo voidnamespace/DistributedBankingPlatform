@@ -95,8 +95,8 @@ public class Account : Entity
         if (!IsActive)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            Id,
-            toAccount.Id,
+            AccountNumber.Value,
+            toAccount.AccountNumber.Value,
             money.Amount,
             money.Currency,
             "FromAccount is inactive"
@@ -106,8 +106,8 @@ public class Account : Entity
         if (!toAccount.IsActive)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-                Id,
-                toAccount.Id,
+                AccountNumber.Value,
+                toAccount.AccountNumber.Value,
                 money.Amount,
                 money.Currency,
                 "ToAccount is inactive "
@@ -117,8 +117,8 @@ public class Account : Entity
         if (Balance.Amount < money.Amount)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            Id,
-            toAccount.Id,
+            AccountNumber.Value,
+            toAccount.AccountNumber.Value,
             money.Amount,
             money.Currency,
             "Not enough money"
@@ -128,8 +128,8 @@ public class Account : Entity
         if(Balance.Currency != money.Currency)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            Id,
-            toAccount.Id,
+            AccountNumber.Value,
+            toAccount.AccountNumber.Value,
             money.Amount,
             money.Currency,
             "Wrong currency"
@@ -141,8 +141,8 @@ public class Account : Entity
         toAccount.IncreaseBalance(money);
 
         AddDomainEvent(new TransferSuccessDomainEvent(transactionId,
-            Id,
-            toAccount.Id,
+            AccountNumber.Value,
+            toAccount.AccountNumber.Value,
             money.Amount,
             money.Currency
         ));

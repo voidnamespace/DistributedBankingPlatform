@@ -24,8 +24,8 @@ public class TransferSuccessDomainEventHandler
         var domainEvent = notification.DomainEvent;
 
         var integrationEvent = new TransferSuccessIntegrationEvent(domainEvent.TransactionId,
-            domainEvent.FromAccountId,
-            domainEvent.ToAccountId,
+            domainEvent.FromAccountNumber,
+            domainEvent.ToAccountNumber,
             domainEvent.Amount,
             domainEvent.Currency
         );

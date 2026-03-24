@@ -54,8 +54,6 @@ public class OutboxProcessor : BackgroundService
                     {
                         var type = IntegrationEventMap.GetType(msg.Type);
 
-                        
-
                         if (type == null)
                         {
                             throw new InvalidOperationException(
@@ -71,7 +69,9 @@ public class OutboxProcessor : BackgroundService
                             throw new InvalidOperationException(
                                 $"Cannot deserialize message payload: {msg.Id}");
                         }
+
                         _logger.LogInformation("integration event type = {Type}", integrationEvent.GetType().FullName);
+
                         await publisher.PublishAsync(
                             integrationEvent,
                             stoppingToken);

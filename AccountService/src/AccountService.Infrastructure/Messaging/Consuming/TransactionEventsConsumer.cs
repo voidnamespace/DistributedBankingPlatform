@@ -24,11 +24,6 @@ public class TransactionEventsConsumer : BackgroundService
     private IConnection? _connection;
     private IModel? _channel;
 
-    private static readonly Dictionary<string, string> EventTypes = new()
-    {
-    { "transaction.created", "TransferCreatedIntegrationEvent" }
-    };
-
     public TransactionEventsConsumer(
         IServiceScopeFactory scopeFactory,
         IOptions<TransactionEventsConsumerOptions> options,
@@ -95,6 +90,13 @@ public class TransactionEventsConsumer : BackgroundService
         {
             try
             {
+                var json = Encoding.UTF8.GetString(ea.Body.ToArray());
+
+                _logger.LogInformation(
+                    "RabbitMQ message received. RoutingKey: {RoutingKey}, Body: {Body}",
+                    ea.RoutingKey,
+                    json);
+
                 using var scope = _scopeFactory.CreateScope();
 
                 var inboxWriter = scope.ServiceProvider
@@ -114,15 +116,14 @@ public class TransactionEventsConsumer : BackgroundService
                     return;
                 }
 
-                var json = Encoding.UTF8.GetString(ea.Body.ToArray());
+                var eventType = ea.RoutingKey;
 
-                if (!EventTypes.TryGetValue(ea.RoutingKey, out var typeName))
-                {
-                    _logger.LogWarning("Unknown event type for routing key {RoutingKey}", ea.RoutingKey);
-                    _channel.BasicAck(ea.DeliveryTag, false);
-                    return;
-                }
-                await inboxWriter.SaveAsync(Guid.Parse(ea.BasicProperties.MessageId), typeName, json, stoppingToken);
+                await inboxWriter.SaveAsync(
+                    messageId,
+                    eventType, 
+                    json, 
+                    stoppingToken);
+
                 _channel.BasicAck(ea.DeliveryTag, false);
 
                 _logger.LogInformation("Message stored in Inbox: {MessageId}", messageId);

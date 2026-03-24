@@ -25,12 +25,6 @@ public class OutboxProcessor : BackgroundService
     {
         _logger.LogInformation("OutboxProcessor started");
 
-        var map = new Dictionary<string, Type>
-        {
-            ["transfer.created"] = typeof(TransferCreatedIntegrationEvent),
-            ["transfer.failed"] = typeof(TransferFailedIntegrationEvent),
-            ["transfer.success"] = typeof(TransferSuccessIntegrationEvent)
-        };
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -57,12 +51,9 @@ public class OutboxProcessor : BackgroundService
                 {
                     try
                     {
-                        if (!map.TryGetValue(msg.Type, out var eventType))
-                        {
-                            throw new Exception($"Unknown type: {msg.Type}");
-                        }
+                        var eventType = IntegrationEventTypeMap.GetType(msg.Type);
 
-                        var routingKey = RoutingKeyMap.Get(eventType);
+                        var routingKey = IntegrationEventTypeMap.GetName(eventType);
 
                         await publisher.PublishAsync(
                             msg.Payload,
@@ -79,8 +70,9 @@ public class OutboxProcessor : BackgroundService
                     }
                 }
 
+                if (batch.Count > 0)
+                    await db.SaveChangesAsync(stoppingToken);
 
-            
             }
             catch (Exception ex)
             {
