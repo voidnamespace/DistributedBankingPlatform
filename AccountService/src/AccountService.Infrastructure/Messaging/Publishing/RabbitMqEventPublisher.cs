@@ -10,25 +10,28 @@ namespace AccountService.Infrastructure.Messaging.Publishing;
 public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 {
 
-    private readonly RabbitMqOptions _options;
+    private readonly RabbitMqOptions _connectionOptions;
+    private readonly AccountEventsPublisherOptions _publisherOptions;
     private readonly IConnection _connection;
     private readonly IModel _channel;
     private readonly ILogger<RabbitMqEventPublisher> _logger;
 
-    private const string ExchangeName = "account.transaction.events";
+    
 
-    public RabbitMqEventPublisher(IOptions<RabbitMqOptions> options,
+    public RabbitMqEventPublisher(IOptions<RabbitMqOptions> connectionOptions,
+        IOptions<AccountEventsPublisherOptions> publisherOptions,
         ILogger<RabbitMqEventPublisher> logger)
     {
-        _options = options.Value;
+        _connectionOptions = connectionOptions.Value;
+        _publisherOptions = publisherOptions.Value;
         _logger = logger;
 
         var factory = new ConnectionFactory
         {
-            HostName = _options.Host,
-            Port = _options.Port,
-            UserName = _options.User,
-            Password = _options.Password,
+            HostName = _connectionOptions.Host,
+            Port = _connectionOptions.Port,
+            UserName = _connectionOptions.User,
+            Password = _connectionOptions.Password,
             DispatchConsumersAsync = true
         };
 
@@ -36,7 +39,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
         _channel = _connection.CreateModel();
 
         _channel.ExchangeDeclare(
-            exchange: ExchangeName,
+            exchange: _publisherOptions.Exchange,
             type: ExchangeType.Topic,
             durable: true);
     }
@@ -56,7 +59,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
         props.ContentType = "application/json";
 
         _channel.BasicPublish(
-            exchange: ExchangeName,
+            exchange: _publisherOptions.Exchange,
             routingKey: routingKey,
             basicProperties: props,
             body: body);

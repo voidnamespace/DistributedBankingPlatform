@@ -24,6 +24,7 @@ public static class DI
 
         services.Configure<TransactionEventsConsumerOptions>(
             configuration.GetSection("TransactionEvents"));
+
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddHostedService<AuthEventsConsumer>();
         services.AddHostedService<TransactionEventsConsumer>();
@@ -33,6 +34,8 @@ public static class DI
         services.AddScoped<IOutboxWriter, OutboxWriter>();
         services.Configure<RabbitMqOptions>(
             configuration.GetSection("RabbitMq"));
+        services.Configure<AccountEventsPublisherOptions>(
+    configuration.GetSection("AccountEventsPublisher"));
 
         services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 

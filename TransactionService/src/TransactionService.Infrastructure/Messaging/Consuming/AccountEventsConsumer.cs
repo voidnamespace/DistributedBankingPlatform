@@ -6,7 +6,9 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using TransactionService.Application.IntegrationEvents;
+using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Messaging.Options;
+using TransactionService.Infrastructure.Messaging.Routing;
 using TransactionService.Infrastructure.Persistence.Inbox;
 
 namespace TransactionService.Infrastructure.Messaging.Consuming;
@@ -23,11 +25,6 @@ public class AccountEventsConsumer : BackgroundService
     private  IConnection? _connection;
     private  IModel? _channel;
 
-    private static readonly Dictionary<string, Type> EventTypes = new()
-    {
-        ["transfer.failed"] = typeof(TransferFailedIntegrationEvent),
-        ["transfer.success"] = typeof(TransferSuccessIntegrationEvent)
-    };
     public AccountEventsConsumer(IServiceScopeFactory scopeFactory,
         IOptions<AccountEventsConsumerOptions> consumerOptions,
         IOptions<RabbitMqOptions> connectionOptions,
@@ -50,7 +47,7 @@ public class AccountEventsConsumer : BackgroundService
                 var factory = new ConnectionFactory
                 {
                     HostName = _connectionOptions.Value.Host,
-                    UserName = _connectionOptions.Value.User,
+                    UserName = _connectionOptions.Value.Username,
                     Password = _connectionOptions.Value.Password,
                     DispatchConsumersAsync = true,
                 };
@@ -81,6 +78,11 @@ public class AccountEventsConsumer : BackgroundService
             exclusive: false,
             autoDelete: false);
 
+        _channel.QueueBind(
+           queue: _consumerOptions.Value.Queue,
+           exchange: _consumerOptions.Value.Exchange,
+           routingKey: "transaction.*");
+
         var consumer = new AsyncEventingBasicConsumer(_channel);
 
         consumer.Received += async (_, ea) =>
@@ -96,7 +98,7 @@ public class AccountEventsConsumer : BackgroundService
                 using var scope = _scopeFactory.CreateScope();
 
                 var inboxWriter = scope.ServiceProvider
-                    .GetRequiredService<InboxWriter>();
+                        .GetRequiredService<IInboxWriter>();
 
                 if (string.IsNullOrEmpty(ea.BasicProperties.MessageId))
                 {
@@ -107,11 +109,8 @@ public class AccountEventsConsumer : BackgroundService
 
                 var messageId = Guid.Parse(ea.BasicProperties.MessageId);
 
-                var typeName = ea.RoutingKey switch
-                {
-                    "transfer.created" => "TransferCreatedIntegrationEvent",
-                    _ => null
-                };
+                var typeName = ea.RoutingKey;
+
                 if (typeName == null)
                 {
                     _logger.LogWarning("Invalid type {Type}", typeName);
@@ -119,12 +118,7 @@ public class AccountEventsConsumer : BackgroundService
                     return;
                 }
 
-                if (!EventTypes.TryGetValue(typeName, out var type))
-                {
-                    _logger.LogWarning("Unknown event type {Type}", typeName);
-                    _channel.BasicAck(ea.DeliveryTag, false);
-                    return;
-                }
+                var type = IntegrationEventMap.GetType(ea.RoutingKey);
 
                 await inboxWriter.SaveAsync(messageId, typeName, json, stoppingToken);
 
