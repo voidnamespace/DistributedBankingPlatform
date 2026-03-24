@@ -14,23 +14,23 @@ namespace AccountService.Infrastructure.Messaging.Consuming;
 public class AuthEventsConsumer : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly AuthEventsConsumerOptions _options;
+    private readonly AuthEventsConsumerOptions _consumerOptions;
     private readonly ILogger<AuthEventsConsumer> _logger;
-    private readonly RabbitMqOptions _rabbitMqOptions;
+    private readonly RabbitMqOptions _connectionOptions;
 
     private IConnection? _connection;
     private IModel? _channel;
 
     public AuthEventsConsumer(
     IServiceScopeFactory scopeFactory,
-    IOptions<AuthEventsConsumerOptions> options,
+    IOptions<AuthEventsConsumerOptions> consumerOptions,
     ILogger<AuthEventsConsumer> logger,
-    IOptions<RabbitMqOptions> rabbitMqOptions)
+    IOptions<RabbitMqOptions> connectionOptions)
     {
         _scopeFactory = scopeFactory;
-        _options = options.Value;
+        _consumerOptions = consumerOptions.Value;
         _logger = logger;
-        _rabbitMqOptions = rabbitMqOptions.Value;
+        _connectionOptions = connectionOptions.Value;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -41,9 +41,9 @@ public class AuthEventsConsumer : BackgroundService
             {
                 var factory = new ConnectionFactory
                 {
-                    HostName = _rabbitMqOptions.Host,
-                    UserName = _rabbitMqOptions.User,
-                    Password = _rabbitMqOptions.Password,
+                    HostName = _connectionOptions.Host,
+                    UserName = _connectionOptions.Username,
+                    Password = _connectionOptions.Password,
                     DispatchConsumersAsync = true
                 };
 
@@ -67,19 +67,19 @@ public class AuthEventsConsumer : BackgroundService
             return;
 
         _channel.ExchangeDeclare(
-            exchange: _options.Exchange,
+            exchange: _consumerOptions.Exchange,
             type: ExchangeType.Topic,
             durable: true);
 
         _channel.QueueDeclare(
-            queue: _options.Queue,
+            queue: _consumerOptions.Queue,
             durable: true,
             exclusive: false,
             autoDelete: false);
 
         _channel.QueueBind(
-            queue: _options.Queue,
-            exchange: _options.Exchange,
+            queue: _consumerOptions.Queue,
+            exchange: _consumerOptions.Exchange,
             routingKey: "user.*");
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
@@ -136,7 +136,7 @@ public class AuthEventsConsumer : BackgroundService
         };
 
         _channel.BasicConsume(
-            queue: _options.Queue,
+            queue: _consumerOptions.Queue,
             autoAck: false,
             consumer: consumer);
 

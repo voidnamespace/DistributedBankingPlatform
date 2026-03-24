@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using TransactionService.Infrastructure.Data;
+using TransactionService.Infrastructure.Messaging.Routing;
 
 namespace TransactionService.Infrastructure.Persistence.Inbox;
 
@@ -12,6 +13,14 @@ public class InboxProcessor : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<InboxProcessor> _logger;
+
+    internal static class JsonDefaults
+    {
+        public static readonly JsonSerializerOptions Options = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+    }
 
     public InboxProcessor(IServiceScopeFactory scopeFactory,
         ILogger<InboxProcessor> logger)
@@ -51,8 +60,7 @@ public class InboxProcessor : BackgroundService
             {
                 try
                 {
-                    var type = Type.GetType(
-                        $"AccountService(???).Application.IntegrationEvents.{message.Type}, AccountService.Application"); // how it works
+                    var type = IntegrationEventMap.GetType(message.Type);
 
                     if (type is null)
                     {
@@ -68,7 +76,8 @@ public class InboxProcessor : BackgroundService
                     }
                     var integrationEvent = JsonSerializer.Deserialize(
                         message.Payload,
-                        type);
+                        type,
+                        JsonDefaults.Options);
 
                     if (integrationEvent is INotification notification)
                     {

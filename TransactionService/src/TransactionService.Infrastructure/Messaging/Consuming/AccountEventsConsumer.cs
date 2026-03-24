@@ -20,8 +20,7 @@ public class AccountEventsConsumer : BackgroundService
     private readonly IOptions<AccountEventsConsumerOptions> _consumerOptions;
     private readonly IOptions<RabbitMqOptions> _connectionOptions;
     private readonly ILogger<AccountEventsConsumer> _logger;
-   
-    
+
     private  IConnection? _connection;
     private  IModel? _channel;
 
@@ -65,6 +64,7 @@ public class AccountEventsConsumer : BackgroundService
         }
         if (_channel is null)
             return;
+
 
         _channel.ExchangeDeclare(
             exchange: _consumerOptions.Value.Exchange,

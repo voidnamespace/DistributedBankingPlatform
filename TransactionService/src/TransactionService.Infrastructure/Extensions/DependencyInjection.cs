@@ -5,6 +5,7 @@ using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Messaging.Consuming;
 using TransactionService.Infrastructure.Messaging.Options;
 using TransactionService.Infrastructure.Messaging.Publishing;
+using TransactionService.Infrastructure.Persistence.Inbox;
 using TransactionService.Infrastructure.Persistence.Outbox;
 using TransactionService.Infrastructure.Persistence.UnitOfWork;
 using TransactionService.Infrastructure.Repositories;
@@ -31,9 +32,12 @@ public static class DependencyInjection
             configuration.GetSection("TransactionEventsPublisher"));
 
         services.Configure<AccountEventsConsumerOptions>(
-    configuration.GetSection("AccountEvents"));
+            configuration.GetSection("AccountEvents"));
 
         services.AddHostedService<AccountEventsConsumer>();
+
+        services.AddScoped<IInboxWriter, InboxWriter>();
+        services.AddHostedService<InboxProcessor>();
 
         services.AddScoped<IOutboxWriter, OutboxWriter>();
         services.AddHostedService<OutboxProcessor>();

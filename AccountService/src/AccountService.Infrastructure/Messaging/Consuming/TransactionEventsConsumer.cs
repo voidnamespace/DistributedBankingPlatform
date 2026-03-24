@@ -45,7 +45,7 @@ public class TransactionEventsConsumer : BackgroundService
                 var factory = new ConnectionFactory
                 {
                     HostName = _rabbitMqOptions.Host,
-                    UserName = _rabbitMqOptions.User,
+                    UserName = _rabbitMqOptions.Username,
                     Password = _rabbitMqOptions.Password,
                     DispatchConsumersAsync = true
                 };
