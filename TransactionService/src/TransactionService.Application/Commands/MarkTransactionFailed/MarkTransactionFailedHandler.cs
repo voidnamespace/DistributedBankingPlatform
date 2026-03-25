@@ -1,7 +1,8 @@
-﻿using TransactionService.Application.Interfaces;
+﻿using MediatR;
+using TransactionService.Application.Interfaces;
 namespace TransactionService.Application.Commands.MarkTransactionFailed;
 
-public class MarkTransactionFailedHandler
+public class MarkTransactionFailedHandler : IRequestHandler<MarkTransactionFailedCommand>
 {
 
     private readonly ITransactionRepository _repository;
@@ -21,7 +22,7 @@ public class MarkTransactionFailedHandler
             throw new KeyNotFoundException("asd");
 
 
-        transaction.Complete();
+        transaction.Fail();
         await _unitOfWork.SaveChangesAsync(ct);
 
     }

@@ -1,10 +1,8 @@
 ﻿using MediatR;
-using TransactionService.Domain.Enums;
 using TransactionService.Application.Interfaces;
-
 namespace TransactionService.Application.Queries.CheckTransferStatus;
 
-public class CheckTransferStatusHandler : IRequestHandler<CheckTransferStatusQuery, TransactionStatus>
+public class CheckTransferStatusHandler : IRequestHandler<CheckTransferStatusQuery, string>
 {
     private readonly ITransactionRepository _repository;
 
@@ -13,14 +11,14 @@ public class CheckTransferStatusHandler : IRequestHandler<CheckTransferStatusQue
         _repository = repository;
     }
 
-    public async Task<TransactionStatus> Handle (CheckTransferStatusQuery query, CancellationToken ct)
+    public async Task<string> Handle (CheckTransferStatusQuery query, CancellationToken ct)
     {
         var transaction = await _repository.GetByIdAsync(query.TransactionId, ct);
 
         if (transaction == null)
             throw new KeyNotFoundException($"Transaction with id {query.TransactionId} not found");
 
-        return transaction.Status;
+        return transaction.Status.ToString();
     }
 
 }

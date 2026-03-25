@@ -24,7 +24,7 @@ public class TransferFailedDomainEventHandler : INotificationHandler<DomainEvent
             domainEvent.FromAccountNumber,
             domainEvent.ToAccountNumber,
             domainEvent.Amount,
-            domainEvent.Currency
+            (int)domainEvent.Currency
         );
 
         await _outboxWriter.EnqueueAsync(integrationEvent, ct);

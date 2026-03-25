@@ -74,10 +74,13 @@ public class InboxProcessor : BackgroundService
 
                         continue;
                     }
+                    _logger.LogInformation("MappedType = {type}", type.FullName);
+                    _logger.LogInformation("Assembly = {assembly}", type.Assembly.FullName);
+                    _logger.LogInformation("Payload RAW = {payload}", message.Payload);
                     var integrationEvent = JsonSerializer.Deserialize(
-                        message.Payload,
-                        type,
-                        JsonDefaults.Options);
+                         message.Payload,
+                         type,
+                         JsonDefaults.Options);
 
                     if (integrationEvent is INotification notification)
                     {

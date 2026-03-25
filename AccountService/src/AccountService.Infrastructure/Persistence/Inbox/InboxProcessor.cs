@@ -85,9 +85,9 @@ public class InboxProcessor : BackgroundService
                             "Currency enum runtime type = {Type}",
                             evt.Currency.GetType().AssemblyQualifiedName);
                         _logger.LogInformation(
-        "Currency enum assembly = {Assembly}",
-        evt.Currency.GetType().AssemblyQualifiedName);
-                    }
+                            "Currency enum assembly = {Assembly}",
+                            evt.Currency.GetType().AssemblyQualifiedName);
+                          }
 
                     if (integrationEvent is INotification notification)
                     {

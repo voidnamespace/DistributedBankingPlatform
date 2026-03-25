@@ -23,7 +23,8 @@ public class CreateTransferHandler
         CreateTransferCommand cmd,
         CancellationToken ct)
     {
-        var money = new MoneyVO(cmd.Amount, cmd.Currency);
+        Currency currency = (Currency)cmd.Currency;
+        var money = new MoneyVO(cmd.Amount, currency);
 
         var transaction = new Transaction(
             fromAccountNumber: cmd.FromAccountNumber,

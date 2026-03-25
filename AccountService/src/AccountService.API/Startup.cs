@@ -63,7 +63,15 @@ public class Startup
         app.UseHttpsRedirection();
 
         app.UseSwaggerConfiguration();
-
+        if (env.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "AuthService API V1");
+                c.RoutePrefix = string.Empty;
+            });
+        }
         app.UseIpRateLimiting();
 
         app.UseAuthentication();

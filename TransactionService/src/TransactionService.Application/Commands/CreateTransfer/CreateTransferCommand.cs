@@ -6,5 +6,5 @@ public record CreateTransferCommand(
     string FromAccountNumber,
     string ToAccountNumber,
     decimal Amount,
-    Currency Currency
+    int Currency
 ) : IRequest<Guid>;

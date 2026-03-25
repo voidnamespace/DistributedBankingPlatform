@@ -5,5 +5,5 @@ public record CreateTransferRequest(
     string FromAccountNumber,
     string ToAccountNumber,
     decimal Amount,
-    Currency Currency
+    int Currency
 );

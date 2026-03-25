@@ -6,4 +6,4 @@ public record TransferSuccessIntegrationEvent(Guid TransactionId,
     string FromAccountNumber,
     string ToAccountNumber,
     decimal Amount,
-    Currency Currency) : INotification;
+    int Currency) : INotification;
