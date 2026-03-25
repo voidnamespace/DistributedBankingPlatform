@@ -26,7 +26,7 @@ public class AccountController : ControllerBase
         _mediator = mediator; 
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> CreateAccount(
         CreateAccountRequest request,
@@ -44,7 +44,7 @@ public class AccountController : ControllerBase
         return Accepted();
     }
 
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     [HttpGet("all")]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
@@ -52,7 +52,7 @@ public class AccountController : ControllerBase
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet("{accountId:guid}")]
     public async Task<IActionResult> GetById(Guid accountId, CancellationToken ct)
     {
@@ -62,7 +62,7 @@ public class AccountController : ControllerBase
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet("by-number/{accountNumber}")]
     public async Task<IActionResult> GetByAccountNumber(
         string accountNumber,
@@ -79,7 +79,7 @@ public class AccountController : ControllerBase
         return Ok(result);
     }
 
-   // [Authorize]
+    [Authorize]
     [HttpPost("{accountNumber}/deposit")]
     public async Task <IActionResult> Deposit(string accountNumber,
     [FromBody] DepositRequest request, CancellationToken ct)
@@ -94,7 +94,7 @@ public class AccountController : ControllerBase
         return Ok();
     }
 
-  //  [Authorize]
+    [Authorize]
     [HttpPatch("{accountNumber}/withdraw")]
     public async Task<IActionResult> Withdraw(
     string accountNumber,
@@ -115,7 +115,7 @@ public class AccountController : ControllerBase
         return Ok();
     }
 
-  //  [Authorize]
+    [Authorize]
     [HttpDelete("{accountId:guid}")]
     public async Task <IActionResult> DeleteAccount(Guid accountId, CancellationToken ct)
     {
@@ -126,7 +126,7 @@ public class AccountController : ControllerBase
         return NoContent();
     }
 
-   // [Authorize]
+    [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetMyAccount(CancellationToken ct)
     {
@@ -140,7 +140,7 @@ public class AccountController : ControllerBase
         return Ok(result);
     }
 
-   // [Authorize]
+    [Authorize]
     [HttpPatch("{accountId:guid}/activate")]
     public async Task<IActionResult> ActivateAccount(
     Guid accountId,

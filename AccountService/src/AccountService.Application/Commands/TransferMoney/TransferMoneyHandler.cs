@@ -1,10 +1,12 @@
 ﻿using AccountService.Application.IntegrationEvents.Transactions;
 using AccountService.Application.Interfaces;
 using AccountService.Application.Interfaces.Messaging;
+using AccountService.Domain.Enums;
 using AccountService.Domain.ValueObjects;
+using MediatR;
 namespace AccountService.Application.Commands.TransferMoney;
 
-public class TransferMoneyHandler
+public class TransferMoneyHandler : IRequestHandler<TransferMoneyCommand>
 {
 
     private readonly IAccountRepository _accountRepository;
@@ -21,38 +23,44 @@ public class TransferMoneyHandler
 
     public async Task Handle(TransferMoneyCommand command, CancellationToken ct)
     {
-            if (command.FromAccountId == command.ToAccountId)
-                throw new ArgumentException("Not able to tranfer to same account");
-            if (command.Amount <= 0)
-                throw new ArgumentException("Amount must be greater than 0");
+        if (command.FromAccountNumber == command.ToAccountNumber)
+            throw new ArgumentException("Not able to tranfer to same account");
+        if (command.Amount <= 0)
+            throw new ArgumentException("Amount must be greater than 0");
 
-            var fromAccVO = new AccountNumberVO(command.FromAccountId.ToString());
-            var toAccVo = new AccountNumberVO(command.ToAccountId.ToString());
+        var fromAccVO = new AccountNumberVO(command.FromAccountNumber.ToString());
+        var toAccVo = new AccountNumberVO(command.ToAccountNumber.ToString());
 
-            var fromAccount = await _accountRepository.GetByAccountNumberAsync(fromAccVO, ct);
-            var toAccount = await _accountRepository.GetByAccountNumberAsync(toAccVo, ct);
+        var fromAccount = await _accountRepository.GetByAccountNumberAsync(fromAccVO, ct);
+        var toAccount = await _accountRepository.GetByAccountNumberAsync(toAccVo, ct);
 
         if (fromAccount == null || toAccount == null)
         {
-            
+
             await _outboxWriter.EnqueueAsync(new TransferFailedIntegrationEvent(
                 command.TransactionId,
-                command.FromAccountId,
-                command.ToAccountId,
+                command.FromAccountNumber,
+                command.ToAccountNumber,
                 command.Amount,
                 command.Currency
             ), ct);
-             
+
             return;
         }
 
-            var moneyVO = new MoneyVO(command.Amount, command.Currency);
+        if (!Enum.IsDefined(typeof(Currency), command.Currency))
+        {
+            throw new ArgumentException("Invalid currency value");
+        }
 
-            fromAccount.TransferTo(toAccount, moneyVO, command.TransactionId);
+        var currency = (Currency)command.Currency;
+        var moneyVO = new MoneyVO(command.Amount, currency);
+
+        fromAccount.TransferTo(toAccount, moneyVO, command.TransactionId);
 
 
-            await _unitOfWork.SaveChangesAsync(ct);
-       
+        await _unitOfWork.SaveChangesAsync(ct);
+
     }
 
 }

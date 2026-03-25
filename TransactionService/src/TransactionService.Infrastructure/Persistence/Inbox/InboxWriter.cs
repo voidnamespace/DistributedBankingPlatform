@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Data;
 namespace TransactionService.Infrastructure.Persistence.Inbox;
@@ -21,6 +22,16 @@ public class InboxWriter : IInboxWriter
         string payload,
         CancellationToken ct)
     {
+        var exists = await _context.InboxMessages
+                    .AnyAsync(x => x.Id == messageId, ct);
+
+        if (exists)
+        {
+            _logger.LogInformation("Duplicate message skipped: {MessageId}", messageId);
+            return;
+        }
+
+
         var inboxMessage = new InboxMessage
         {
             Id = messageId,
@@ -30,7 +41,7 @@ public class InboxWriter : IInboxWriter
             AttemptCount = 0,
             ReceivedAt = DateTime.UtcNow,
         };
-
+        
         _context.InboxMessages.Add(inboxMessage);
 
         await _context.SaveChangesAsync(ct);

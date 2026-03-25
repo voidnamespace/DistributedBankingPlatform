@@ -23,11 +23,12 @@ public class CreateTransferHandler
         CreateTransferCommand cmd,
         CancellationToken ct)
     {
-        var money = new MoneyVO(cmd.Amount, cmd.Currency);
+        Currency currency = (Currency)cmd.Currency;
+        var money = new MoneyVO(cmd.Amount, currency);
 
         var transaction = new Transaction(
-            fromAccountId: cmd.FromAccountId,
-            toAccountId: cmd.ToAccountId,
+            fromAccountNumber: cmd.FromAccountNumber,
+            toAccountNumber: cmd.ToAccountNumber,
             money: money);
 
         await _repository.AddAsync(transaction, ct);

@@ -1,5 +1,6 @@
 ﻿using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Data;
+using AccountService.Infrastructure.Messaging.Routing;
 using System.Text.Json;
 namespace AccountService.Infrastructure.Persistence.Outbox;
 
@@ -19,7 +20,7 @@ public class OutboxWriter : IOutboxWriter
         var message = new OutboxMessage
         {
             Id = Guid.NewGuid(),
-            Type = typeof(T).FullName!,
+            Type = IntegrationEventTypeMap.GetName(typeof(T)),
             Payload = JsonSerializer.Serialize(integrationEvent),
             OccurredOnUtc = DateTime.UtcNow,
             AttemptCount = 0

@@ -4,7 +4,6 @@ public interface IEventPublisher
 {
     Task PublishAsync<T>(
         T message,
-        string routingKey,
         CancellationToken ct = default);
 
 }

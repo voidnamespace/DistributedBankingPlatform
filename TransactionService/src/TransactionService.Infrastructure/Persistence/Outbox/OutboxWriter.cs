@@ -2,6 +2,7 @@
 using System.Text.Json;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Data;
+using TransactionService.Infrastructure.Messaging.Routing;
 namespace TransactionService.Infrastructure.Persistence.Outbox;
 
 public class OutboxWriter : IOutboxWriter
@@ -21,7 +22,7 @@ public class OutboxWriter : IOutboxWriter
         var message = new OutboxMessage
         {
             Id = Guid.NewGuid(),
-            Type = typeof(T).AssemblyQualifiedName!,
+            Type = IntegrationEventMap.GetName(typeof(T)),
             Payload = JsonSerializer.Serialize(integrationEvent),
             CreatedAt = DateTime.UtcNow,
             AttemptCount = 0,

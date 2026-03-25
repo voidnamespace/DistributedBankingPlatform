@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 namespace AccountService.Infrastructure.Persistence.Outbox;
 
 public class OutboxProcessor : BackgroundService
@@ -25,12 +26,6 @@ public class OutboxProcessor : BackgroundService
     {
         _logger.LogInformation("OutboxProcessor started");
 
-        var map = new Dictionary<string, Type>
-        {
-            ["transfer.created"] = typeof(TransferCreatedIntegrationEvent),
-            ["transfer.failed"] = typeof(TransferFailedIntegrationEvent),
-            ["transfer.success"] = typeof(TransferSuccessIntegrationEvent)
-        };
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -57,16 +52,26 @@ public class OutboxProcessor : BackgroundService
                 {
                     try
                     {
-                        if (!map.TryGetValue(msg.Type, out var eventType))
+                        var eventType = IntegrationEventTypeMap.GetType(msg.Type);
+
+                        if (eventType == null)
                         {
-                            throw new Exception($"Unknown type: {msg.Type}");
+                            throw new InvalidOperationException(
+                                $"Cannot resolve message type: {msg.Type}");
                         }
 
-                        var routingKey = RoutingKeyMap.Get(eventType);
+                        var integrationEvent = JsonSerializer.Deserialize(
+                            msg.Payload,
+                            eventType);
+
+                        if (integrationEvent == null)
+                        {
+                            throw new InvalidOperationException(
+                                $"Cannot deserialize message payload: {msg.Id}");
+                        }
 
                         await publisher.PublishAsync(
-                            msg.Payload,
-                            routingKey,
+                            integrationEvent,
                             stoppingToken);
 
                         msg.ProcessedOnUtc = DateTime.UtcNow;
@@ -79,8 +84,9 @@ public class OutboxProcessor : BackgroundService
                     }
                 }
 
+                if (batch.Count > 0)
+                    await db.SaveChangesAsync(stoppingToken);
 
-            
             }
             catch (Exception ex)
             {

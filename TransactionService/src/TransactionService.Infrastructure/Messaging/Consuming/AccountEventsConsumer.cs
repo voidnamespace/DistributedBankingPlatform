@@ -1,11 +1,14 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using TransactionService.Application.IntegrationEvents;
+using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Messaging.Options;
+using TransactionService.Infrastructure.Messaging.Routing;
 using TransactionService.Infrastructure.Persistence.Inbox;
 
 namespace TransactionService.Infrastructure.Messaging.Consuming;
@@ -14,24 +17,21 @@ public class AccountEventsConsumer : BackgroundService
 {
 
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly AccountEventsConsumerOptions _options;
+    private readonly IOptions<AccountEventsConsumerOptions> _consumerOptions;
+    private readonly IOptions<RabbitMqOptions> _connectionOptions;
     private readonly ILogger<AccountEventsConsumer> _logger;
-   
-    
+
     private  IConnection? _connection;
     private  IModel? _channel;
 
-    private static readonly Dictionary<string, Type> EventTypes = new()
-    {
-        ["transfer.failed"] = typeof(TransferFailedIntegrationEvent),
-        ["transfer.success"] = typeof(TransferSuccessIntegrationEvent)
-    };
     public AccountEventsConsumer(IServiceScopeFactory scopeFactory,
-        AccountEventsConsumerOptions options,
+        IOptions<AccountEventsConsumerOptions> consumerOptions,
+        IOptions<RabbitMqOptions> connectionOptions,
         ILogger<AccountEventsConsumer> logger)
     {
         _scopeFactory = scopeFactory;
-        _options = options;
+        _consumerOptions = consumerOptions;
+        _connectionOptions = connectionOptions;
         _logger = logger;
     }
 
@@ -45,9 +45,9 @@ public class AccountEventsConsumer : BackgroundService
             {
                 var factory = new ConnectionFactory
                 {
-                    HostName = _options.Host,
-                    UserName = _options.Username,
-                    Password = _options.Password,
+                    HostName = _connectionOptions.Value.Host,
+                    UserName = _connectionOptions.Value.Username,
+                    Password = _connectionOptions.Value.Password,
                     DispatchConsumersAsync = true,
                 };
                 _connection = factory.CreateConnection();
@@ -65,17 +65,23 @@ public class AccountEventsConsumer : BackgroundService
         if (_channel is null)
             return;
 
+
         _channel.ExchangeDeclare(
-            exchange: _options.Exchange,
+            exchange: _consumerOptions.Value.Exchange,
             type: ExchangeType.Topic,
             durable: true
             );
 
         _channel.QueueDeclare(
-            queue: _options.Queue,
+            queue: _consumerOptions.Value.Queue,
             durable: true,
             exclusive: false,
             autoDelete: false);
+
+        _channel.QueueBind(
+           queue: _consumerOptions.Value.Queue,
+           exchange: _consumerOptions.Value.Exchange,
+           routingKey: "transaction.*");
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
 
@@ -92,7 +98,7 @@ public class AccountEventsConsumer : BackgroundService
                 using var scope = _scopeFactory.CreateScope();
 
                 var inboxWriter = scope.ServiceProvider
-                    .GetRequiredService<InboxWriter>();
+                        .GetRequiredService<IInboxWriter>();
 
                 if (string.IsNullOrEmpty(ea.BasicProperties.MessageId))
                 {
@@ -103,11 +109,8 @@ public class AccountEventsConsumer : BackgroundService
 
                 var messageId = Guid.Parse(ea.BasicProperties.MessageId);
 
-                var typeName = ea.RoutingKey switch
-                {
-                    "transfer.created" => "TransferCreatedIntegrationEvent",
-                    _ => null
-                };
+                var typeName = ea.RoutingKey;
+
                 if (typeName == null)
                 {
                     _logger.LogWarning("Invalid type {Type}", typeName);
@@ -115,12 +118,7 @@ public class AccountEventsConsumer : BackgroundService
                     return;
                 }
 
-                if (!EventTypes.TryGetValue(typeName, out var type))
-                {
-                    _logger.LogWarning("Unknown event type {Type}", typeName);
-                    _channel.BasicAck(ea.DeliveryTag, false);
-                    return;
-                }
+                var type = IntegrationEventMap.GetType(ea.RoutingKey);
 
                 await inboxWriter.SaveAsync(messageId, typeName, json, stoppingToken);
 
@@ -139,7 +137,7 @@ public class AccountEventsConsumer : BackgroundService
             }
         };
         _channel.BasicConsume(
-        queue: _options.Queue,
+        queue: _consumerOptions.Value.Queue,
         autoAck: false,
         consumer: consumer);
 

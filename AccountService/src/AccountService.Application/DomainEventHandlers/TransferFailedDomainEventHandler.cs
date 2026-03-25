@@ -20,11 +20,11 @@ public class TransferFailedDomainEventHandler : INotificationHandler<DomainEvent
     {
         var domainEvent = notification.DomainEvent;
 
-        var integrationEvent = new TransferFailedIntegrationEvent(domainEvent.ToAccountId,
-            domainEvent.FromAccountId,
-            domainEvent.ToAccountId,
+        var integrationEvent = new TransferFailedIntegrationEvent(domainEvent.TransactionId,
+            domainEvent.FromAccountNumber,
+            domainEvent.ToAccountNumber,
             domainEvent.Amount,
-            domainEvent.Currency
+            (int)domainEvent.Currency
         );
 
         await _outboxWriter.EnqueueAsync(integrationEvent, ct);

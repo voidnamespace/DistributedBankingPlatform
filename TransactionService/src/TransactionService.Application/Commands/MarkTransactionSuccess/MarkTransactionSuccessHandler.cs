@@ -1,7 +1,8 @@
-﻿using TransactionService.Application.Interfaces;
+﻿using MediatR;
+using TransactionService.Application.Interfaces;
 namespace TransactionService.Application.Commands.MarkTransactionSuccess;
 
-public class MarkTransactionSuccessHandler
+public class MarkTransactionSuccessHandler : IRequestHandler<MarkTransactionSuccessCommand>
 {
     private readonly ITransactionRepository _repository;
     private readonly IUnitOfWork _unitOfWork;

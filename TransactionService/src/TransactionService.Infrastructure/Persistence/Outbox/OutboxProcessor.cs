@@ -1,11 +1,11 @@
-﻿using MediatR;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Data;
+using TransactionService.Infrastructure.Messaging.Routing;
 namespace TransactionService.Infrastructure.Persistence.Outbox;
 
 public class OutboxProcessor : BackgroundService
@@ -43,10 +43,13 @@ public class OutboxProcessor : BackgroundService
                 {
                     try
                     {
-                        var type = Type.GetType(msg.Type);
+                        var type = IntegrationEventMap.GetType(msg.Type);
 
                         if (type == null)
-                            throw new Exception($"Unknown type: {msg.Type}");
+                        {
+                            throw new InvalidOperationException(
+                                $"Cannot resolve message type: {msg.Type}");
+                        }
 
                         var integrationEvent = JsonSerializer.Deserialize(
                             msg.Payload,
@@ -55,10 +58,18 @@ public class OutboxProcessor : BackgroundService
                         if (integrationEvent == null)
                             throw new Exception("Deserialization returned null");
 
-                        await publisher.PublishAsync(integrationEvent, stoppingToken);
+                        _logger.LogInformation("integration event type = {Type}", integrationEvent.GetType().FullName);
+
+                        await publisher.PublishAsync(
+                            integrationEvent, 
+                            stoppingToken);
 
                         msg.ProcessedAt = DateTime.UtcNow;
                         msg.Error = null;
+
+                        _logger.LogInformation(
+                            "Outbox message published. Id={Id}",
+                            msg.Id);
                     }
                     catch (Exception ex)
                     {

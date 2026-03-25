@@ -3,7 +3,7 @@ using TransactionService.Domain.Events;
 namespace TransactionService.Application.Common;
 
 public class DomainEventNotification<TDomainEvent> : INotification
-    where TDomainEvent : IDomainEvent  // impressive, explain?
+    where TDomainEvent : IDomainEvent  
 {
     public TDomainEvent DomainEvent { get; }
 

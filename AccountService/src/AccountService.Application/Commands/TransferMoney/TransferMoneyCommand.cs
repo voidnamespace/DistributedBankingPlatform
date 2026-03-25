@@ -4,8 +4,8 @@ using MediatR;
 namespace AccountService.Application.Commands.TransferMoney;
 
 public record TransferMoneyCommand (Guid TransactionId,
-    Guid FromAccountId,
-    Guid ToAccountId,
+    string FromAccountNumber,
+    string ToAccountNumber,
     decimal Amount,
-    Currency Currency) : IRequest;
+    int Currency) : IRequest;
 

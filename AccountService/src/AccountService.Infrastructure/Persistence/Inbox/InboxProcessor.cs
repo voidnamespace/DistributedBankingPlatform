@@ -1,4 +1,6 @@
-﻿using AccountService.Infrastructure.Data;
+﻿using AccountService.Application.IntegrationEvents.Transactions;
+using AccountService.Application.Interfaces.Messaging;
+using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Routing;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +15,14 @@ public class InboxProcessor : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<InboxProcessor> _logger;
+
+    internal static class JsonDefaults
+    {
+        public static readonly JsonSerializerOptions Options = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+    }
 
     public InboxProcessor(
         IServiceScopeFactory scopeFactory,
@@ -53,32 +63,31 @@ public class InboxProcessor : BackgroundService
             {
                 try
                 {
-                    if (!AuthConsumerRoutingMap.TryGet(message.Type, out var type))
-                    {
-                        _logger.LogWarning(
-                            "Inbox message type not found. Id={Id} Type={Type}",
-                            message.Id,
-                            message.Type);
+                    var type = IntegrationEventTypeMap.GetType(message.Type);
 
-                        continue;
-                    }
-
-                    if (type is null)
-                    {
-                        message.Error = "Type not found";
-                        message.AttemptCount++;
-
-                        _logger.LogWarning(
-                            "Inbox message type not found. Id={Id} Type={Type}",
-                            message.Id,
-                            message.Type);
-
-                        continue;
-                    }
+                    _logger.LogInformation(
+                        "Resolved integration event CLR type = {Type}",
+                        type.AssemblyQualifiedName);
 
                     var integrationEvent = JsonSerializer.Deserialize(
                         message.Payload,
-                        type);
+                        type,
+                        JsonDefaults.Options);
+
+                    if (integrationEvent is TransferCreatedIntegrationEvent evt)
+                    {
+                        _logger.LogInformation(
+                            "DESERIALIZED EVENT: Amount={Amount}, Currency={Currency}",
+                            evt.Amount,
+                            evt.Currency);
+
+                        _logger.LogInformation(
+                            "Currency enum runtime type = {Type}",
+                            evt.Currency.GetType().AssemblyQualifiedName);
+                        _logger.LogInformation(
+                            "Currency enum assembly = {Assembly}",
+                            evt.Currency.GetType().AssemblyQualifiedName);
+                          }
 
                     if (integrationEvent is INotification notification)
                     {

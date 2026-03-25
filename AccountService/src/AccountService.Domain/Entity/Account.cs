@@ -95,44 +95,40 @@ public class Account : Entity
         if (!IsActive)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            Id,
-            toAccount.Id,
+            AccountNumber.Value,
+            toAccount.AccountNumber.Value,
             money.Amount,
-            money.Currency,
-            "FromAccount is inactive"
+            money.Currency
         ));
             return;
         }
         if (!toAccount.IsActive)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-                Id,
-                toAccount.Id,
+                AccountNumber.Value,
+                toAccount.AccountNumber.Value,
                 money.Amount,
-                money.Currency,
-                "ToAccount is inactive "
+                money.Currency
             ));
             return;
         }
         if (Balance.Amount < money.Amount)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            Id,
-            toAccount.Id,
+            AccountNumber.Value,
+            toAccount.AccountNumber.Value,
             money.Amount,
-            money.Currency,
-            "Not enough money"
+            money.Currency
         ));
             return;
         }
         if(Balance.Currency != money.Currency)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            Id,
-            toAccount.Id,
+            AccountNumber.Value,
+            toAccount.AccountNumber.Value,
             money.Amount,
-            money.Currency,
-            "Wrong currency"
+            money.Currency
         ));
             return;
         }
@@ -141,8 +137,8 @@ public class Account : Entity
         toAccount.IncreaseBalance(money);
 
         AddDomainEvent(new TransferSuccessDomainEvent(transactionId,
-            Id,
-            toAccount.Id,
+            AccountNumber.Value,
+            toAccount.AccountNumber.Value,
             money.Amount,
             money.Currency
         ));

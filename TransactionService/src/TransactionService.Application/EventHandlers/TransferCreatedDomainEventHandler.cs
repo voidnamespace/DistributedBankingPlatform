@@ -15,21 +15,19 @@ public class TransferCreatedDomainEventHandler : INotificationHandler<DomainEven
         _outbox = outbox; 
     }
 
-    public async Task Handle(DomainEventNotification<TransferCreatedDomainEvent> notification, CancellationToken ct)
+    public async Task Handle(
+    DomainEventNotification<TransferCreatedDomainEvent> notification,
+    CancellationToken ct)
     {
         var domainEvent = notification.DomainEvent;
 
-        var amount = domainEvent.Money.Amount;
-        var currency = domainEvent.Money.Currency;
-
-
         var integrationEvent = new TransferCreatedIntegrationEvent(
             domainEvent.TransactionId,
-            domainEvent.FromAccountId,
-            domainEvent.ToAccountId,
-            amount,
-            currency
-            );
+            domainEvent.FromAccountNumber,
+            domainEvent.ToAccountNumber,
+            domainEvent.Money.Amount,
+            (int)domainEvent.Money.Currency
+        );
 
         await _outbox.EnqueueAsync(integrationEvent, ct);
     }
