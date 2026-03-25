@@ -8,14 +8,12 @@ internal static class IntegrationEventTypeMap
 {
     private static readonly Dictionary<Type, string> TypeToName = new()
     {
-        // Auth events
         { typeof(UserCreatedIntegrationEvent), "user.created" },
         { typeof(UserDeletedIntegrationEvent), "user.deleted" },
         { typeof(UserActivatedIntegrationEvent), "user.activated" },
         { typeof(UserDeactivatedIntegrationEvent), "user.deactivated" },
 
 
-        // Transaction events
         { typeof(TransferCreatedIntegrationEvent), "transaction.created" },
         { typeof(TransferSuccessIntegrationEvent), "transaction.success" },
         { typeof(TransferFailedIntegrationEvent), "transaction.failed" }

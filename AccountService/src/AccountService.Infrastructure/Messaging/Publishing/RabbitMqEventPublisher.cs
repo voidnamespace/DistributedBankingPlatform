@@ -1,5 +1,6 @@
 ﻿using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Messaging.Options;
+using AccountService.Infrastructure.Messaging.Routing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -47,9 +48,10 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
     public Task PublishAsync<T>(
        T message,
-       string routingKey,
        CancellationToken ct = default)
     {
+        var routingKey = IntegrationEventTypeMap.GetName(message!.GetType());
+
         var body = Encoding.UTF8.GetBytes(
             JsonSerializer.Serialize(message));
 

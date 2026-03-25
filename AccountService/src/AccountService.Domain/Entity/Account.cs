@@ -98,8 +98,7 @@ public class Account : Entity
             AccountNumber.Value,
             toAccount.AccountNumber.Value,
             money.Amount,
-            money.Currency,
-            "FromAccount is inactive"
+            money.Currency
         ));
             return;
         }
@@ -109,8 +108,7 @@ public class Account : Entity
                 AccountNumber.Value,
                 toAccount.AccountNumber.Value,
                 money.Amount,
-                money.Currency,
-                "ToAccount is inactive "
+                money.Currency
             ));
             return;
         }
@@ -120,8 +118,7 @@ public class Account : Entity
             AccountNumber.Value,
             toAccount.AccountNumber.Value,
             money.Amount,
-            money.Currency,
-            "Not enough money"
+            money.Currency
         ));
             return;
         }
@@ -131,8 +128,7 @@ public class Account : Entity
             AccountNumber.Value,
             toAccount.AccountNumber.Value,
             money.Amount,
-            money.Currency,
-            "Wrong currency"
+            money.Currency
         ));
             return;
         }

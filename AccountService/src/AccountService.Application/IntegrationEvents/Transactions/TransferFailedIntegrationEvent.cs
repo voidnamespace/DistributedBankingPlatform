@@ -1,5 +1,4 @@
-﻿using AccountService.Domain.Enums;
-using MediatR;
+﻿using MediatR;
 namespace AccountService.Application.IntegrationEvents.Transactions;
 
 public sealed record TransferFailedIntegrationEvent(Guid TransactionId,

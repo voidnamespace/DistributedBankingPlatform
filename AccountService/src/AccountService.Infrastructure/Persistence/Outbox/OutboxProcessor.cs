@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 namespace AccountService.Infrastructure.Persistence.Outbox;
 
 public class OutboxProcessor : BackgroundService
@@ -53,11 +54,24 @@ public class OutboxProcessor : BackgroundService
                     {
                         var eventType = IntegrationEventTypeMap.GetType(msg.Type);
 
-                        var routingKey = IntegrationEventTypeMap.GetName(eventType);
+                        if (eventType == null)
+                        {
+                            throw new InvalidOperationException(
+                                $"Cannot resolve message type: {msg.Type}");
+                        }
+
+                        var integrationEvent = JsonSerializer.Deserialize(
+                            msg.Payload,
+                            eventType);
+
+                        if (integrationEvent == null)
+                        {
+                            throw new InvalidOperationException(
+                                $"Cannot deserialize message payload: {msg.Id}");
+                        }
 
                         await publisher.PublishAsync(
-                            msg.Payload,
-                            routingKey,
+                            integrationEvent,
                             stoppingToken);
 
                         msg.ProcessedOnUtc = DateTime.UtcNow;
