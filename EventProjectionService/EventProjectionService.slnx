@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/EventProjectionService.API/EventProjectionService.API.csproj" />
+  <Project Path="src/EventProjectionService.Application/EventProjectionService.Application.csproj" />
+  <Project Path="src/EventProjectionService.Domain/EventProjectionService.Domain.csproj" />
+  <Project Path="src/EventProjectionService.Infrastructure/EventProjectionService.Infrastructure.csproj" />
+</Solution>
