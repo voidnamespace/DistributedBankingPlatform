@@ -17,6 +17,11 @@ public static class DependencyInjection
 
         services.Configure<RabbitMqOptions>(
             configuration.GetSection("RabbitMQ"));
+        services.Configure<AuthEventsConsumerOptions>(
+            configuration.GetSection("AuthEvents"));
+
+        services.Configure<ProjectionEventsConsumerOptions>(
+            configuration.GetSection("ProjectionEvents"));
 
         services.AddSingleton<MongoDbContext>();
 
