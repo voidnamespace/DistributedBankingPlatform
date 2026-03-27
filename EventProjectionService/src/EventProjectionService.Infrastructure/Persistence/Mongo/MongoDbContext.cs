@@ -6,14 +6,17 @@ namespace EventProjectionService.Infrastructure.Persistence.Mongo;
 public class MongoDbContext
 {
     private readonly IMongoDatabase _database;
+    private readonly MongoOptions _options;
 
     public MongoDbContext(IOptions<MongoOptions> options)
     {
-        var client = new MongoClient(options.Value.ConnectionString);
+        _options = options.Value;
 
-        _database = client.GetDatabase(options.Value.DatabaseName);
+        var client = new MongoClient(_options.ConnectionString);
+
+        _database = client.GetDatabase(_options.Database);
     }
 
     public IMongoCollection<StoredEvent> Events =>
-        _database.GetCollection<StoredEvent>("events");
+        _database.GetCollection<StoredEvent>(_options.Collection);
 }

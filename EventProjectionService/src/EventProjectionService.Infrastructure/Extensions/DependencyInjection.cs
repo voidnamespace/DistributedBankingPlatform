@@ -23,7 +23,7 @@ public static class DependencyInjection
         services.Configure<ProjectionEventsConsumerOptions>(
             configuration.GetSection("ProjectionEvents"));
 
-        services.AddSingleton<MongoDbContext>();
+        services.AddScoped<MongoDbContext>();
 
         services.AddScoped<MongoEventRepository>();
 

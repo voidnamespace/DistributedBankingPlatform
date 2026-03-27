@@ -35,42 +35,63 @@ public class ProjectionEventsConsumer : BackgroundService
         _queueOptions = queueOptions;
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var factory = new ConnectionFactory
-        {
-            HostName = _connectionOptions.Value.Host,
-            UserName = _connectionOptions.Value.Username,
-            Password = _connectionOptions.Value.Password
-        };
-
-        _connection = factory.CreateConnection();
-        _channel = _connection.CreateModel();
-
-        _channel.ExchangeDeclare(
-            exchange: _authEventsConsumerOptions.Value.Exchange,
-            type: ExchangeType.Topic, 
-            durable: true);
-
-
-        _channel.QueueDeclare(
-            queue: _queueOptions.Value.Queue,
-            durable: true,
-            exclusive: false,
-            autoDelete: false);
-
-        _channel.QueueBind(
-            queue :_queueOptions.Value.Queue, 
-            exchange: _authEventsConsumerOptions.Value.Exchange, 
-            routingKey: "user.*");
-
-
-        var consumer = new EventingBasicConsumer(_channel);
-
-        consumer.Received += async (_, ea) =>
+        while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
+                var factory = new ConnectionFactory
+                {
+                    HostName = _connectionOptions.Value.Host,
+                    UserName = _connectionOptions.Value.Username,
+                    Password = _connectionOptions.Value.Password
+                };
+
+                _connection = factory.CreateConnection();
+                _channel = _connection.CreateModel();
+
+                _channel.BasicQos(0, 1, false);
+
+                break;
+            }
+            catch
+            {
+                await Task.Delay(3000, stoppingToken);
+            }
+        }
+            if (_channel is null)
+                return;
+
+            _channel.ExchangeDeclare(
+            exchange: _authEventsConsumerOptions.Value.Exchange,
+            type: ExchangeType.Topic,
+            durable: true);
+
+
+            _channel.QueueDeclare(
+                queue: _queueOptions.Value.Queue,
+                durable: true,
+                exclusive: false,
+                autoDelete: false);
+
+            _channel.QueueBind(
+                queue: _queueOptions.Value.Queue,
+                exchange: _authEventsConsumerOptions.Value.Exchange,
+                routingKey: "user.*");
+
+
+            var consumer = new EventingBasicConsumer(_channel);
+
+        consumer.Received += async (_, ea) =>
+        {
+            if (stoppingToken.IsCancellationRequested)
+                return;
+
+            try
+            {
+                _logger.LogInformation("EVENT RECEIVED {routingKey}", ea.RoutingKey);
+
                 var body = ea.Body.ToArray();
                 var payload = Encoding.UTF8.GetString(body);
 
@@ -101,12 +122,13 @@ public class ProjectionEventsConsumer : BackgroundService
         };
 
         _channel.BasicConsume(
-            queue: _queueOptions.Value.Queue,
-            autoAck: false,
-            consumer: consumer);
+                queue: _queueOptions.Value.Queue,
+                autoAck: false,
+                consumer: consumer);
 
-        return Task.CompletedTask;
-    }
+            await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+    
 
     public override void Dispose()
     {
