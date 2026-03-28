@@ -19,7 +19,10 @@ public static class DependencyInjection
             configuration.GetSection("RabbitMQ"));
         services.Configure<AuthEventsConsumerOptions>(
             configuration.GetSection("AuthEvents"));
-
+        services.Configure<AccountEventsConsumerOptions>(
+            configuration.GetSection("AccountEvents"));
+        services.Configure<TransactionEventsConsumerOptions>(
+            configuration.GetSection("TransactionEvents"));
         services.Configure<AuditLogEventsConsumerOptions>(
             configuration.GetSection("AuditLogEvents"));
 

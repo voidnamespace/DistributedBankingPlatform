@@ -17,6 +17,8 @@ public class AuditLogEventsConsumer : BackgroundService
     private readonly IOptions<RabbitMqOptions> _connectionOptions;
     private readonly IOptions<AuthEventsConsumerOptions> _authEventsConsumerOptions;
     private readonly IOptions<AuditLogEventsConsumerOptions> _queueOptions;
+    private readonly IOptions<AccountEventsConsumerOptions> _accountEventsConsumerOptions;
+    private readonly IOptions<TransactionEventsConsumerOptions> _transactionEventsConsumerOptions;
 
     private IConnection? _connection;
     private IModel? _channel;
@@ -26,13 +28,17 @@ public class AuditLogEventsConsumer : BackgroundService
         IOptions<RabbitMqOptions> connectionOptions,
         ILogger<AuditLogEventsConsumer> logger,
         IOptions<AuthEventsConsumerOptions> authEventsConsumerOptions,
-        IOptions<AuditLogEventsConsumerOptions> queueOptions)
+        IOptions<AuditLogEventsConsumerOptions> queueOptions,
+        IOptions<AccountEventsConsumerOptions> accountEventsConsumerOptions,
+        IOptions<TransactionEventsConsumerOptions> transactionEventsConsumerOptions)
     {
         _scopeFactory = scopeFactory;
         _connectionOptions = connectionOptions;
         _logger = logger;
         _authEventsConsumerOptions = authEventsConsumerOptions;
         _queueOptions = queueOptions;
+        _accountEventsConsumerOptions = accountEventsConsumerOptions;
+        _transactionEventsConsumerOptions = transactionEventsConsumerOptions;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -67,8 +73,18 @@ public class AuditLogEventsConsumer : BackgroundService
             exchange: _authEventsConsumerOptions.Value.Exchange,
             type: ExchangeType.Topic,
             durable: true);
+            
+           _channel.ExchangeDeclare(
+            exchange: _accountEventsConsumerOptions.Value.Exchange,
+            type: ExchangeType.Topic,
+            durable: true);
 
-
+           _channel.ExchangeDeclare(
+            exchange: _transactionEventsConsumerOptions.Value.Exchange,
+            type: ExchangeType.Topic,
+            durable: true);
+                
+                
             _channel.QueueDeclare(
                 queue: _queueOptions.Value.Queue,
                 durable: true,
@@ -78,8 +94,17 @@ public class AuditLogEventsConsumer : BackgroundService
             _channel.QueueBind(
                 queue: _queueOptions.Value.Queue,
                 exchange: _authEventsConsumerOptions.Value.Exchange,
-                routingKey: "user.*");
+                routingKey: "#");
 
+            _channel.QueueBind(
+            queue: _queueOptions.Value.Queue,
+            exchange: _accountEventsConsumerOptions.Value.Exchange,
+            routingKey: "#");
+
+            _channel.QueueBind(
+                queue: _queueOptions.Value.Queue,
+                exchange: _transactionEventsConsumerOptions.Value.Exchange,
+                routingKey: "#");
 
             var consumer = new EventingBasicConsumer(_channel);
 
