@@ -87,13 +87,13 @@ services:
       retries: 5
 
 
-  projection-mongodb:
+  auditlog-mongodb:
     image: mongo:7
-    container_name: projection-mongodb
+    container_name: auditlog-mongodb
     ports:
       - "27017:27017"
     volumes:
-      - projection_mongo_data:/data/db
+      - auditlog_mongo_data:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 })"]
       interval: 10s
@@ -108,4 +108,4 @@ volumes:
   auth_pgdata:
   account_pgdata:
   transaction_pgdata:
-  projection_mongo_data:
+  auditlog_mongo_data:
