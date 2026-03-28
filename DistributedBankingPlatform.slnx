@@ -27,4 +27,5 @@
     <Project Path="TransactionService/src/TransactionService.Domain/TransactionService.Domain.csproj" />
     <Project Path="TransactionService/src/TransactionService.Infrastructure/TransactionService.Infrastructure.csproj" />
   </Folder>
+  <Project Path="GatewayService/GatewayService.csproj" />
 </Solution>
