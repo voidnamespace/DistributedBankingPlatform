@@ -1,9 +1,12 @@
-﻿namespace AuthService.Domain.Events;
+﻿using AuthService.Domain.ValueObjects;
+
+namespace AuthService.Domain.Events;
 
 public sealed record UserCreatedDomainEvent(
     Guid UserId,
-    string Email
+    EmailVO Email
 ) : IDomainEvent
 {
     public DateTime OccurredOn { get; } = DateTime.UtcNow;
 }
+

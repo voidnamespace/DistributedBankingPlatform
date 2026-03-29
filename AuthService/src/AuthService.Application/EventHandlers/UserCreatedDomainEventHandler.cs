@@ -34,7 +34,7 @@ public class UserCreatedDomainEventHandler
 
         var integrationEvent = new UserCreatedIntegrationEvent(
             domainEvent.UserId,
-            domainEvent.Email);
+            domainEvent.Email.Value);
 
         await _outbox.EnqueueAsync(
             integrationEvent,
