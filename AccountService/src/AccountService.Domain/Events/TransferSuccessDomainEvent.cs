@@ -5,4 +5,3 @@ public sealed record TransferSuccessDomainEvent(Guid TransactionId, string FromA
 {
     public DateTime OccurredOn { get; } = DateTime.UtcNow;
 }
-
