@@ -1,4 +1,5 @@
 ﻿using AccountService.Domain.ValueObjects;
+
 namespace AccountService.Domain.Events;
 
 public sealed record BalanceChangedDomainEvent(

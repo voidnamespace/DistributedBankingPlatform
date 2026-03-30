@@ -2,5 +2,5 @@
 
 public sealed class AccountEventsPublisherOptions
 {
-    public string Exchange { get; init; } = "account.transaction.events";
+    public string Exchange { get; init; } = default!;
 }

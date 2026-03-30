@@ -2,6 +2,7 @@
 using AccountService.Domain.Exceptions;
 using AccountService.Domain.Enums;
 using AccountService.Domain.Events;
+
 namespace AccountService.Domain.Entity;
 
 public class Account : Entity
@@ -95,40 +96,37 @@ public class Account : Entity
         if (!IsActive)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            AccountNumber.Value,
-            toAccount.AccountNumber.Value,
-            money.Amount,
-            money.Currency
+            AccountNumber,
+            toAccount.AccountNumber,
+            money
+            
         ));
             return;
         }
         if (!toAccount.IsActive)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-                AccountNumber.Value,
-                toAccount.AccountNumber.Value,
-                money.Amount,
-                money.Currency
+                AccountNumber,
+                toAccount.AccountNumber,
+                money
             ));
             return;
         }
         if (Balance.Amount < money.Amount)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            AccountNumber.Value,
-            toAccount.AccountNumber.Value,
-            money.Amount,
-            money.Currency
+            AccountNumber,
+            toAccount.AccountNumber,
+            money
         ));
             return;
         }
         if(Balance.Currency != money.Currency)
         {
             AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            AccountNumber.Value,
-            toAccount.AccountNumber.Value,
-            money.Amount,
-            money.Currency
+            AccountNumber,
+            toAccount.AccountNumber,
+            money
         ));
             return;
         }
@@ -137,10 +135,9 @@ public class Account : Entity
         toAccount.IncreaseBalance(money);
 
         AddDomainEvent(new TransferSuccessDomainEvent(transactionId,
-            AccountNumber.Value,
-            toAccount.AccountNumber.Value,
-            money.Amount,
-            money.Currency
+            AccountNumber,
+            toAccount.AccountNumber,
+            money
         ));
     }
 
@@ -163,6 +160,5 @@ public class Account : Entity
 
         UpdatedAt = DateTime.UtcNow;
     }
-
 
 }

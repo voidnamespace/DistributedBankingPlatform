@@ -3,6 +3,7 @@ using AccountService.Application.IntegrationEvents.Transactions;
 using AccountService.Application.Interfaces.Messaging;
 using AccountService.Domain.Events;
 using MediatR;
+
 namespace AccountService.Application.DomainEventHandlers;
 
 public class TransferFailedDomainEventHandler : INotificationHandler<DomainEventNotification<TransferFailedDomainEvent>>
@@ -21,10 +22,10 @@ public class TransferFailedDomainEventHandler : INotificationHandler<DomainEvent
         var domainEvent = notification.DomainEvent;
 
         var integrationEvent = new TransferFailedIntegrationEvent(domainEvent.TransactionId,
-            domainEvent.FromAccountNumber,
-            domainEvent.ToAccountNumber,
-            domainEvent.Amount,
-            (int)domainEvent.Currency
+            domainEvent.FromAccountNumber.Value,
+            domainEvent.ToAccountNumber.Value,
+            domainEvent.Money.Amount,
+            (int)domainEvent.Money.Currency
         );
 
         await _outboxWriter.EnqueueAsync(integrationEvent, ct);

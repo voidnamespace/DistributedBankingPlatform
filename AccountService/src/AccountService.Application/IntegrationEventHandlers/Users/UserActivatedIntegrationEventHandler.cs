@@ -1,6 +1,7 @@
 ﻿using AccountService.Application.IntegrationEvents.Users;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.IntegrationEventHandlers.Users;
 
 public class UserActivatedIntegrationEventHandler

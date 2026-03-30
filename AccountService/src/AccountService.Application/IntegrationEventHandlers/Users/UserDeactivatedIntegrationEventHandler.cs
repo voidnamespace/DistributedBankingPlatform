@@ -1,5 +1,4 @@
 ﻿using AccountService.Application.Commands.DeactivateAccountEventChain;
-using AccountService.Application.Commands.DeleteAccountEventChain;
 using AccountService.Application.IntegrationEvents.Users;
 using MediatR;
 using Microsoft.Extensions.Logging;

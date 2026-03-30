@@ -1,8 +1,8 @@
-﻿using AccountService.Domain.Enums;
-using MediatR;
+﻿using MediatR;
+
 namespace AccountService.Application.IntegrationEvents.Transactions;
 
-public record TransferSuccessIntegrationEvent(Guid TransactionId,
+public sealed record TransferSuccessIntegrationEvent(Guid TransactionId,
     string FromAccountNumber,
     string ToAccountNumber,
     decimal Amount,

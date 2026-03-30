@@ -1,4 +1,5 @@
-﻿using AccountService.Application.IntegrationEvents.Transactions;
+﻿using AccountService.Application.IntegrationEvents.Accounts;
+using AccountService.Application.IntegrationEvents.Transactions;
 using AccountService.Application.IntegrationEvents.Users;
 using System.Reflection.Metadata;
 
@@ -12,6 +13,8 @@ internal static class IntegrationEventTypeMap
         { typeof(UserDeletedIntegrationEvent), "user.deleted" },
         { typeof(UserActivatedIntegrationEvent), "user.activated" },
         { typeof(UserDeactivatedIntegrationEvent), "user.deactivated" },
+
+        { typeof(AccountCreatedIntegrationEvent), "account.created" },
 
 
         { typeof(TransferCreatedIntegrationEvent), "transaction.created" },

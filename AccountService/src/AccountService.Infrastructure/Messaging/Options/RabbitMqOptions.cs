@@ -4,7 +4,7 @@ namespace AccountService.Infrastructure.Messaging.Options;
 public sealed class RabbitMqOptions
 {
     public string Host { get; init; } = default!;
-    public int Port { get; init; } = 5672;
-    public string Username { get; init; } = "guest";
-    public string Password { get; init; } = "guest";
+    public int Port { get; init; } = default!;
+    public string Username { get; init; } = default!;
+    public string Password { get; init; } = default!;
 }

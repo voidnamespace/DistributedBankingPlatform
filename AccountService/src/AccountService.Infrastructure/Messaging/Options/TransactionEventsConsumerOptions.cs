@@ -2,6 +2,6 @@
 
 public class TransactionEventsConsumerOptions
 {
-    public string Exchange { get; init; } = "transaction.service.exchange";
-    public string Queue { get; init; } = "account.transaction.events";
+    public string Exchange { get; init; } = default!;
+    public string Queue { get; init; } = default!;
 }
