@@ -7,6 +7,7 @@ using AccountService.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+
 namespace AccountService.API;
 
 public class Startup

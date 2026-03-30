@@ -5,6 +5,7 @@ using AccountService.Infrastructure.Data;
 using AccountService.Application.Common;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+
 namespace AccountService.Infrastructure.Persistence;
 
 public class UnitOfWork : IUnitOfWork

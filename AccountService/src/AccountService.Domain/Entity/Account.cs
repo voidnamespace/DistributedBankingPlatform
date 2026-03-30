@@ -2,8 +2,6 @@
 using AccountService.Domain.Events;
 using AccountService.Domain.Exceptions;
 using AccountService.Domain.ValueObjects;
-using System.Security.Principal;
-using System.Transactions;
 
 namespace AccountService.Domain.Entity;
 
@@ -43,12 +41,18 @@ public class Account : Entity
     {
         IsActive = true;
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new AccountActivatedDomainEvent(UserId,
+            Id));
     }
 
     public void Deactivate()
     {
         IsActive = false;
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new AccountDeactivatedDomainEvent(UserId, 
+            Id));
     }
 
     public void Withdraw(MoneyVO moneyVO)
@@ -65,12 +69,16 @@ public class Account : Entity
         if (moneyVO.Amount > Balance.Amount)
             throw new DomainException("Insufficient balance");
 
+        var oldBalance = Balance;
+
         Balance = new MoneyVO(
             Balance.Amount - moneyVO.Amount,
             Balance.Currency
         );
 
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new BalanceChangedDomainEvent(UserId, Id, oldBalance, Balance));
     }
 
     public void Deposit(MoneyVO moneyVO)
@@ -84,10 +92,14 @@ public class Account : Entity
         if (moneyVO.Amount <= 0)
             throw new DomainException("Amount must be greater than zero");
 
+        var oldBalance = Balance;
+
         Balance = new MoneyVO(
             Balance.Amount + moneyVO.Amount, Balance.Currency
             );
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new BalanceChangedDomainEvent(UserId, Id, oldBalance, Balance));
     }
 
 
@@ -151,22 +163,44 @@ public class Account : Entity
 
     private void IncreaseBalance(MoneyVO money)
     {
+        var oldBalance = Balance;
+
         Balance = new MoneyVO(
             Balance.Amount + money.Amount,
             Balance.Currency
         );
 
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new BalanceChangedDomainEvent(
+            UserId,
+            Id,
+            oldBalance,
+            Balance
+        ));
     }
 
     private void DecreaseBalance(MoneyVO money)
     {
+        var oldBalance = Balance;
+
         Balance = new MoneyVO(
             Balance.Amount - money.Amount,
             Balance.Currency
         );
 
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new BalanceChangedDomainEvent(
+            UserId,
+            Id,
+            oldBalance,
+            Balance
+        ));
     }
 
+    public void Delete()
+    {
+        AddDomainEvent(new AccountDeletedDomainEvent(UserId, Id));
+    }
 }

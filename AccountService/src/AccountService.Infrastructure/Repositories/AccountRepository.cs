@@ -3,6 +3,7 @@ using AccountService.Infrastructure.Data;
 using AccountService.Domain.Entity;
 using Microsoft.EntityFrameworkCore;
 using AccountService.Domain.ValueObjects;
+
 namespace AccountService.Infrastructure.Repositories;
 
 public class AccountRepository : IAccountRepository
@@ -53,5 +54,4 @@ public class AccountRepository : IAccountRepository
             .Where(a => a.UserId == userId)
             .ToListAsync(ct);
     }
-
 }

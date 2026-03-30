@@ -2,6 +2,7 @@
 using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Routing;
 using System.Text.Json;
+
 namespace AccountService.Infrastructure.Persistence.Outbox;
 
 public class OutboxWriter : IOutboxWriter

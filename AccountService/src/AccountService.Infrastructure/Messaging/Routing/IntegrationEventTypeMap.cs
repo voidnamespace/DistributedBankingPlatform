@@ -1,7 +1,6 @@
 ﻿using AccountService.Application.IntegrationEvents.Accounts;
 using AccountService.Application.IntegrationEvents.Transactions;
 using AccountService.Application.IntegrationEvents.Users;
-using System.Reflection.Metadata;
 
 namespace AccountService.Infrastructure.Messaging.Routing;
 
@@ -15,7 +14,9 @@ internal static class IntegrationEventTypeMap
         { typeof(UserDeactivatedIntegrationEvent), "user.deactivated" },
 
         { typeof(AccountCreatedIntegrationEvent), "account.created" },
-
+        { typeof(AccountActivatedIntegrationEvent), "account.activated" },
+        { typeof(AccountDeactivatedIntegrationEvent), "account.deactivated" },
+        { typeof(AccountDeletedIntegrationEvent), "account.deleted" },
 
         { typeof(TransferCreatedIntegrationEvent), "transaction.created" },
         { typeof(TransferSuccessIntegrationEvent), "transaction.success" },
