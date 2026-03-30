@@ -17,6 +17,7 @@ internal static class IntegrationEventTypeMap
         { typeof(AccountActivatedIntegrationEvent), "account.activated" },
         { typeof(AccountDeactivatedIntegrationEvent), "account.deactivated" },
         { typeof(AccountDeletedIntegrationEvent), "account.deleted" },
+        { typeof(BalanceChangedIntegrationEvent), "account.balance" },
 
         { typeof(TransferCreatedIntegrationEvent), "transaction.created" },
         { typeof(TransferSuccessIntegrationEvent), "transaction.success" },
