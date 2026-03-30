@@ -1,6 +1,6 @@
-﻿using AccountService.Application.DTOs;
-using AccountService.Domain.Enums;
+﻿using AccountService.Domain.Enums;
 using MediatR;
+
 namespace AccountService.Application.Commands.WithdrawMoney;
 
 public record WithdrawMoneyCommand(

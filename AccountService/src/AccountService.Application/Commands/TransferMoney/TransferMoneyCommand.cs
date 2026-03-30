@@ -1,5 +1,4 @@
-﻿using AccountService.Domain.Enums;
-using MediatR;
+﻿using MediatR;
 
 namespace AccountService.Application.Commands.TransferMoney;
 
@@ -8,4 +7,3 @@ public record TransferMoneyCommand (Guid TransactionId,
     string ToAccountNumber,
     decimal Amount,
     int Currency) : IRequest;
-

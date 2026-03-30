@@ -1,8 +1,6 @@
 ﻿using AccountService.Application.Commands.ActivateAccount;
 using AccountService.Application.Commands.CreateAccount;
 using AccountService.Application.Commands.DeleteAccount;
-using AccountService.Application.Commands.DepositMoney;
-using AccountService.Application.Commands.WithdrawMoney;
 using AccountService.Application.DTOs;
 using AccountService.Application.Queries.GetAllAccounts;
 using AccountService.Application.Queries.GetByAccountNumberAccount;
@@ -12,6 +10,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+
 namespace AccountService.API.Controllers;
 
 [ApiController]
@@ -77,42 +76,6 @@ public class AccountController : ControllerBase
         );
 
         return Ok(result);
-    }
-
-    [Authorize]
-    [HttpPost("{accountNumber}/deposit")]
-    public async Task <IActionResult> Deposit(string accountNumber,
-    [FromBody] DepositRequest request, CancellationToken ct)
-    {
-        var userId = Guid.Parse(
-        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var command = new DepositMoneyCommand(
-            request.Amount,
-            request.Currency,
-            accountNumber);
-        await _mediator.Send(command,ct);
-        return Ok();
-    }
-
-    [Authorize]
-    [HttpPatch("{accountNumber}/withdraw")]
-    public async Task<IActionResult> Withdraw(
-    string accountNumber,
-    [FromBody] WithdrawRequest request,
-    CancellationToken ct)
-    {
-        var userId = Guid.Parse(
-        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var command = new WithdrawMoneyCommand(
-            request.Amount,
-            request.Currency,
-            accountNumber,
-            userId
-        );
-
-        await _mediator.Send(command, ct);
-
-        return Ok();
     }
 
     [Authorize]

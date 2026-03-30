@@ -2,6 +2,7 @@
 using AccountService.Domain.ValueObjects;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.Commands.WithdrawMoney;
 
 public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>

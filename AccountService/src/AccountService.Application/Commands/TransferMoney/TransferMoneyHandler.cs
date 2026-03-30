@@ -4,6 +4,7 @@ using AccountService.Application.Interfaces.Messaging;
 using AccountService.Domain.Enums;
 using AccountService.Domain.ValueObjects;
 using MediatR;
+
 namespace AccountService.Application.Commands.TransferMoney;
 
 public class TransferMoneyHandler : IRequestHandler<TransferMoneyCommand>
@@ -58,10 +59,7 @@ public class TransferMoneyHandler : IRequestHandler<TransferMoneyCommand>
 
         fromAccount.TransferTo(toAccount, moneyVO, command.TransactionId);
 
-
         await _unitOfWork.SaveChangesAsync(ct);
 
     }
-
 }
-

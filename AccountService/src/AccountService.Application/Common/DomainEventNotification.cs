@@ -1,5 +1,6 @@
 ﻿using AccountService.Domain.Events;
 using MediatR;
+
 namespace AccountService.Application.Common;
 
 public class DomainEventNotification<TDomainEvent>
