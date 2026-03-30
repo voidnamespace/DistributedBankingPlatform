@@ -44,7 +44,7 @@ public static class DependencyInjection
         services.AddSingleton<IRedisService, RedisService>();
 
         services.Configure<RabbitMqOptions>(
-            configuration.GetSection("RabbitMQ"));
+            configuration.GetSection("RabbitMq"));
 
         services.Configure<AuthEventsPublisherOptions>(
             configuration.GetSection("AuthEventsPublisher"));

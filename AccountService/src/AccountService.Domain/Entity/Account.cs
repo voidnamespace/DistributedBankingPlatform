@@ -1,7 +1,9 @@
-﻿using AccountService.Domain.ValueObjects;
-using AccountService.Domain.Exceptions;
-using AccountService.Domain.Enums;
+﻿using AccountService.Domain.Enums;
 using AccountService.Domain.Events;
+using AccountService.Domain.Exceptions;
+using AccountService.Domain.ValueObjects;
+using System.Security.Principal;
+using System.Transactions;
 
 namespace AccountService.Domain.Entity;
 
@@ -27,8 +29,14 @@ public class Account : Entity
         AccountNumber = accountNumberVO;
         Balance = new MoneyVO(0, currency); 
         CreatedAt = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
         IsActive = true;
+
+        AddDomainEvent(new AccountCreatedDomainEvent(UserId,
+                Id,
+                AccountNumber,
+                Balance,
+                CreatedAt
+            ));
     }
 
     public void Activate()

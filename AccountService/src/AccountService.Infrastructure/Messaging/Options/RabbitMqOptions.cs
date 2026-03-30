@@ -1,5 +1,4 @@
-﻿
-namespace AccountService.Infrastructure.Messaging.Options;
+﻿namespace AccountService.Infrastructure.Messaging.Options;
 
 public sealed class RabbitMqOptions
 {
