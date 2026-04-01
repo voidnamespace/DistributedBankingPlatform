@@ -25,10 +25,19 @@ public class TransactionDbContext : DbContext
         {
             builder.HasKey(x => x.TransactionId);
 
+            builder.OwnsOne(x => x.FromAccountNumber, fromAccountNumber =>
+            {
+                fromAccountNumber.Property(x => x.Value).HasColumnName("FromAccountNumber");
+            });
+
+            builder.OwnsOne(x => x.ToAccountNumber, toAccountNumber =>
+            {
+                toAccountNumber.Property(x => x.Value).HasColumnName("ToAccountNumber");
+            });
+
             builder.OwnsOne(x => x.Money, money =>
             {
                 money.Property(x => x.Amount).HasColumnName("Amount");
-                money.Property(x => x.Currency).HasColumnName("Currency");
                 money.Property(x => x.Currency)
                 .HasColumnName("Currency")
                 .HasConversion<string>();  

@@ -3,6 +3,7 @@ using TransactionService.Application.Interfaces;
 using TransactionService.Domain.Entities;
 using TransactionService.Domain.Enums;
 using TransactionService.Domain.ValueObjects;
+
 namespace TransactionService.Application.Commands.CreateTransfer;
 
 public class CreateTransferHandler
@@ -25,11 +26,13 @@ public class CreateTransferHandler
     {
         Currency currency = (Currency)cmd.Currency;
         var money = new MoneyVO(cmd.Amount, currency);
+        var fromAccountNumber = new AccountNumberVO(cmd.FromAccountNumber);
+        var toAccountNumber = new AccountNumberVO(cmd.ToAccountNumber);
 
-        var transaction = new Transaction(
-            fromAccountNumber: cmd.FromAccountNumber,
-            toAccountNumber: cmd.ToAccountNumber,
-            money: money);
+        var transaction = Transaction.CreateTransfer(
+            fromAccountNumber,
+            toAccountNumber,
+            money);       
 
         await _repository.AddAsync(transaction, ct);
         await _unitOfWork.SaveChangesAsync(ct);

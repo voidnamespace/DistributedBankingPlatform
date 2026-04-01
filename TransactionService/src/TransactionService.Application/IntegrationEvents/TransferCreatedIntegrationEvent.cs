@@ -6,4 +6,5 @@ public sealed record TransferCreatedIntegrationEvent(
     string FromAccountNumber,
     string ToAccountNumber,
     decimal Amount,
-    int Currency) : INotification;
+    int Currency,
+    int Type) : INotification;

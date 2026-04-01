@@ -3,6 +3,7 @@ using System.Text.Json;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Data;
 using TransactionService.Infrastructure.Messaging.Routing;
+
 namespace TransactionService.Infrastructure.Persistence.Outbox;
 
 public class OutboxWriter : IOutboxWriter
@@ -34,7 +35,5 @@ public class OutboxWriter : IOutboxWriter
 
         return Task.CompletedTask;
     }
-
-
 
 }

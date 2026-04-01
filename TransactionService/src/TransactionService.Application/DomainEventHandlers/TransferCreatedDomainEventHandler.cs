@@ -3,7 +3,8 @@ using TransactionService.Application.Common;
 using TransactionService.Application.IntegrationEvents;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Domain.Events;
-namespace TransactionService.Application.EventHandlers;
+
+namespace TransactionService.Application.DomainEventHandlers;
 
 public class TransferCreatedDomainEventHandler : INotificationHandler<DomainEventNotification<TransferCreatedDomainEvent>>
 {
@@ -23,10 +24,11 @@ public class TransferCreatedDomainEventHandler : INotificationHandler<DomainEven
 
         var integrationEvent = new TransferCreatedIntegrationEvent(
             domainEvent.TransactionId,
-            domainEvent.FromAccountNumber,
-            domainEvent.ToAccountNumber,
+            (string)domainEvent.FromAccountNumber.Value,
+            (string)domainEvent.ToAccountNumber.Value,
             domainEvent.Money.Amount,
-            (int)domainEvent.Money.Currency
+            (int)domainEvent.Money.Currency,
+            (int)domainEvent.Type
         );
 
         await _outbox.EnqueueAsync(integrationEvent, ct);

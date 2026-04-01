@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TransactionService.Application.Commands.CreateTransfer;
+using TransactionService.Application.Commands.CreateWithdrawal;
 using TransactionService.Application.DTOs;
 using TransactionService.Application.Queries.CheckTransferStatus;
+
 namespace TransactionService.API.Controllers;
 
 [ApiController]
@@ -16,6 +18,7 @@ public class TransactionController : ControllerBase
     {
         _mediator = mediator;
     }
+
     [Authorize]
     [HttpPost("transfer")]
     public async Task<IActionResult> Transfer(
@@ -45,6 +48,20 @@ public class TransactionController : ControllerBase
         return Ok(status);
     }
 
+    [HttpPost("withdrawal")]
+    public async Task<IActionResult> Withdrawal(
+        [FromBody] CreateWithdrawalRequest request,
+        CancellationToken ct)
+    {
+        var command = new CreateWithdrawalCommand(
+            request.AccountNumber,
+            request.Amount,
+            request.Currency);
+
+        await _mediator.Send(command, ct);
+
+        return Accepted();
+    }
 
 
 

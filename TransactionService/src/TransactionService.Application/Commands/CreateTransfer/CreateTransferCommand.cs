@@ -1,5 +1,5 @@
 ﻿using MediatR;
-using TransactionService.Domain.Enums;
+
 namespace TransactionService.Application.Commands.CreateTransfer;
 
 public record CreateTransferCommand(

@@ -3,10 +3,9 @@ using TransactionService.Domain.ValueObjects;
 
 namespace TransactionService.Domain.Events;
 
-public sealed record TransferCreatedDomainEvent(
+public sealed record WithdrawalCreatedDomainEvent(
     Guid TransactionId, 
     AccountNumberVO FromAccountNumber, 
-    AccountNumberVO ToAccountNumber, 
     MoneyVO Money,
     TransactionType Type) : IDomainEvent
 {

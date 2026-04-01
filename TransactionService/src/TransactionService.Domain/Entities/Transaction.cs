@@ -9,9 +9,9 @@ public class Transaction : Entity
 {
     public Guid TransactionId { get; private set; }
 
-    public string FromAccountId { get; private set; } = default!;
+    public AccountNumberVO FromAccountNumber { get; private set; } = default!;
 
-    public string ToAccountId { get; private set; } = default!;
+    public AccountNumberVO ToAccountNumber { get; private set; } = default!;
 
     public MoneyVO Money { get; private set; } = null!;
 
@@ -23,22 +23,58 @@ public class Transaction : Entity
 
     private Transaction() { }
 
+    public static Transaction CreateWithdrawal(
+    AccountNumberVO fromAccountNumber,
+    MoneyVO money)
+    {
+        var transaction = new Transaction();
 
-    public Transaction (string fromAccountNumber, string toAccountNumber, MoneyVO money)
+        transaction.TransactionId = Guid.NewGuid();
+        transaction.FromAccountNumber = fromAccountNumber;
+        transaction.Money = money;
+        transaction.Type = TransactionType.Withdraw;
+        transaction.Status = TransactionStatus.Processing;
+        transaction.CreatedAt = DateTime.UtcNow;
+
+        transaction.AddDomainEvent(new WithdrawalCreatedDomainEvent(
+            transaction.TransactionId, 
+            transaction.FromAccountNumber, 
+            transaction.Money,
+            transaction.Type));
+
+        return transaction;
+    }
+    
+    public static Transaction CreateTransfer(
+        AccountNumberVO fromAccountNumber,
+        AccountNumberVO toAccountNumber,
+        MoneyVO money)
     {
         if (fromAccountNumber == toAccountNumber)
             throw new DomainException("Accounts must be different");
 
-        TransactionId = Guid.NewGuid();
-        FromAccountId = fromAccountNumber;
-        ToAccountId = toAccountNumber;
-        Money = money;
-        Status = TransactionStatus.Processing;
-        CreatedAt = DateTime.UtcNow;
+        var transaction = new Transaction();
 
-        AddDomainEvent(new TransferCreatedDomainEvent(TransactionId, fromAccountNumber, toAccountNumber, money));
+        transaction.TransactionId = Guid.NewGuid();
+        transaction.FromAccountNumber = fromAccountNumber;
+        transaction.ToAccountNumber = toAccountNumber;
+        transaction.Money = money;
+        transaction.Type = TransactionType.Transfer;
+        transaction.Status = TransactionStatus.Processing;
+        transaction.CreatedAt = DateTime.UtcNow;
 
+        transaction.AddDomainEvent(new TransferCreatedDomainEvent(
+            transaction.TransactionId,
+            transaction.FromAccountNumber,
+            transaction.ToAccountNumber,
+            transaction.Money,
+            TransactionType.Transfer));
+
+        return transaction;
     }
+
+
+
 
     public void StartProcessing()
     {
