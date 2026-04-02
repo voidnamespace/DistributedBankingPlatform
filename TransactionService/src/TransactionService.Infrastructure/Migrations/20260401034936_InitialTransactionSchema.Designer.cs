@@ -12,8 +12,8 @@ using TransactionService.Infrastructure.Data;
 namespace TransactionService.Infrastructure.Migrations
 {
     [DbContext(typeof(TransactionDbContext))]
-    [Migration("20260323135250_ReplaceAccountIdWithAccountNumberInTransactions")]
-    partial class ReplaceAccountIdWithAccountNumberInTransactions
+    [Migration("20260401034936_InitialTransactionSchema")]
+    partial class InitialTransactionSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,16 +34,8 @@ namespace TransactionService.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("FromAccountId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
-
-                    b.Property<string>("ToAccountId")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
@@ -128,6 +120,42 @@ namespace TransactionService.Infrastructure.Migrations
 
             modelBuilder.Entity("TransactionService.Domain.Entities.Transaction", b =>
                 {
+                    b.OwnsOne("TransactionService.Domain.ValueObjects.AccountNumberVO", "FromAccountNumber", b1 =>
+                        {
+                            b1.Property<Guid>("TransactionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("FromAccountNumber");
+
+                            b1.HasKey("TransactionId");
+
+                            b1.ToTable("Transactions");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TransactionId");
+                        });
+
+                    b.OwnsOne("TransactionService.Domain.ValueObjects.AccountNumberVO", "ToAccountNumber", b1 =>
+                        {
+                            b1.Property<Guid>("TransactionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("ToAccountNumber");
+
+                            b1.HasKey("TransactionId");
+
+                            b1.ToTable("Transactions");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TransactionId");
+                        });
+
                     b.OwnsOne("TransactionService.Domain.ValueObjects.MoneyVO", "Money", b1 =>
                         {
                             b1.Property<Guid>("TransactionId")
@@ -150,7 +178,13 @@ namespace TransactionService.Infrastructure.Migrations
                                 .HasForeignKey("TransactionId");
                         });
 
+                    b.Navigation("FromAccountNumber")
+                        .IsRequired();
+
                     b.Navigation("Money")
+                        .IsRequired();
+
+                    b.Navigation("ToAccountNumber")
                         .IsRequired();
                 });
 #pragma warning restore 612, 618

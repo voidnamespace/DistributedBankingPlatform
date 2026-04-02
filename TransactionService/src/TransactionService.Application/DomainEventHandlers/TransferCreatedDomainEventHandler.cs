@@ -27,8 +27,7 @@ public class TransferCreatedDomainEventHandler : INotificationHandler<DomainEven
             (string)domainEvent.FromAccountNumber.Value,
             (string)domainEvent.ToAccountNumber.Value,
             domainEvent.Money.Amount,
-            (int)domainEvent.Money.Currency,
-            (int)domainEvent.Type
+            (int)domainEvent.Money.Currency
         );
 
         await _outbox.EnqueueAsync(integrationEvent, ct);

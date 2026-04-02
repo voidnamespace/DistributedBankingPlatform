@@ -43,7 +43,8 @@ public class TransferMoneyHandler : IRequestHandler<TransferMoneyCommand>
                 command.FromAccountNumber,
                 command.ToAccountNumber,
                 command.Amount,
-                command.Currency
+                command.Currency,
+                command.TransactionType
             ), ct);
 
             return;

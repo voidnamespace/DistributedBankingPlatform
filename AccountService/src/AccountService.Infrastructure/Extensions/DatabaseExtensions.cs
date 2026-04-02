@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AccountService.Infrastructure.Data;
+
 namespace AccountService.Infrastructure.Extensions;
 
 public static class DatabaseExtensions
@@ -15,8 +16,8 @@ public static class DatabaseExtensions
                 "Connection string 'AccountDb' not found");
 
         services.AddDbContext<AccountDbContext>(options =>
-    options.UseNpgsql(cs, b =>
-        b.MigrationsAssembly(typeof(AccountDbContext).Assembly.FullName)));
+                 options.UseNpgsql(cs, b =>
+                 b.MigrationsAssembly(typeof(AccountDbContext).Assembly.FullName)));
 
 
         return services;

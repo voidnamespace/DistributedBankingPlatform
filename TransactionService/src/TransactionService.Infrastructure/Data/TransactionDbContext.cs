@@ -55,7 +55,7 @@ public class TransactionDbContext : DbContext
             b.Property(x => x.AttemptCount).IsRequired();
 
             b.HasIndex(x => x.ProcessedAt);
-            b.HasIndex(x => x.ProcessedAt);
+
         });
         modelBuilder.Entity<OutboxMessage>(b =>
         {

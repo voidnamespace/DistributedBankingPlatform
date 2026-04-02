@@ -19,9 +19,9 @@ internal static class IntegrationEventTypeMap
         { typeof(AccountDeletedIntegrationEvent), "account.deleted" },
         { typeof(BalanceChangedIntegrationEvent), "account.balance" },
 
-        { typeof(TransferCreatedIntegrationEvent), "transaction.created" },
-        { typeof(TransferSuccessIntegrationEvent), "transaction.success" },
-        { typeof(TransferFailedIntegrationEvent), "transaction.failed" }
+        { typeof(TransferCreatedIntegrationEvent), "transfer.created" },
+        { typeof(TransferSuccessIntegrationEvent), "transfer.success" },
+        { typeof(TransferFailedIntegrationEvent), "transfer.failed" }
     };
     
     private static readonly Dictionary<string, Type> NameToType =

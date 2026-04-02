@@ -6,9 +6,9 @@ public static class IntegrationEventMap
 {
     private static readonly Dictionary<Type, string> TypeToName = new()
     {
-        { typeof(TransferCreatedIntegrationEvent), "transaction.created" },
-        { typeof(TransferSuccessIntegrationEvent), "transaction.success" },
-        { typeof(TransferFailedIntegrationEvent), "transaction.failed" }
+        { typeof(TransferCreatedIntegrationEvent), "transfer.created" },
+        { typeof(TransferSuccessIntegrationEvent), "transfer.success" },
+        { typeof(TransferFailedIntegrationEvent), "transfer.failed" }
     };
 
     private static readonly Dictionary<string, Type> NameToType =

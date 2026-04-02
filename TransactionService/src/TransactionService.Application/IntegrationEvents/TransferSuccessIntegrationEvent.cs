@@ -1,9 +1,9 @@
 ﻿using MediatR;
+
 namespace TransactionService.Application.IntegrationEvents;
 
 public sealed record TransferSuccessIntegrationEvent(Guid TransactionId,
     string FromAccountNumber,
     string ToAccountNumber,
     decimal Amount,
-    int Currency,
-    int Type) : INotification;
+    int Currency) : INotification;
