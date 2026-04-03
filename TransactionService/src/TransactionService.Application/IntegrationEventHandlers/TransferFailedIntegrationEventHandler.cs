@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using TransactionService.Application.Commands.MarkTransactionFailed;
-using TransactionService.Application.IntegrationEvents;
+using TransactionService.Application.IntegrationEvents.Transfer;
 namespace TransactionService.Application.IntegrationEventHandlers;
 
 public class TransferFailedIntegrationEventHandler : INotificationHandler<TransferFailedIntegrationEvent>

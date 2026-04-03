@@ -81,10 +81,7 @@ public class AccountEventsConsumer : BackgroundService
            exchange: _consumerOptions.Value.Exchange,
            routingKey: "transfer.*");
 
-        _channel.QueueBind(
-           queue: _consumerOptions.Value.Queue,
-           exchange: _consumerOptions.Value.Exchange,
-           routingKey: "account.balance");
+        
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
 
