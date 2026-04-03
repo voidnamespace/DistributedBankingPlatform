@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TransactionService.API.Extensions;
 using TransactionService.Application.Commands.CreateTransfer;
-using TransactionService.Application.EventHandlers;
 using TransactionService.Infrastructure.Data;
 using TransactionService.Infrastructure.Extensions;
+using TransactionService.Application.DomainEventHandlers;
+
 namespace TransactionService.API;
 
 public class Startup

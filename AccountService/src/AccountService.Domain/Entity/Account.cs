@@ -22,11 +22,14 @@ public class Account : Entity
     private Account() { }
     public Account (Guid userId, AccountNumberVO accountNumberVO, Currency currency)
     {
+        var now = DateTime.UtcNow;
+
         Id = Guid.NewGuid();
         UserId = userId;
         AccountNumber = accountNumberVO;
-        Balance = new MoneyVO(0, currency); 
-        CreatedAt = DateTime.UtcNow;
+        Balance = new MoneyVO(0, currency);
+        CreatedAt = now;
+        UpdatedAt = now;
         IsActive = true;
 
         AddDomainEvent(new AccountCreatedDomainEvent(UserId,

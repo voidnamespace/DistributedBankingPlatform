@@ -39,8 +39,7 @@ public class Transaction : Entity
         transaction.AddDomainEvent(new WithdrawalCreatedDomainEvent(
             transaction.TransactionId, 
             transaction.FromAccountNumber, 
-            transaction.Money,
-            transaction.Type));
+            transaction.Money));
 
         return transaction;
     }
@@ -67,8 +66,7 @@ public class Transaction : Entity
             transaction.TransactionId,
             transaction.FromAccountNumber,
             transaction.ToAccountNumber,
-            transaction.Money,
-            TransactionType.Transfer));
+            transaction.Money));
 
         return transaction;
     }

@@ -1,9 +1,10 @@
 ﻿using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Data;
-using AccountService.Infrastructure.Persistence.Inbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Threading.Channels;
+
+namespace AccountService.Infrastructure.Persistence.Inbox;
+
 public class InboxWriter : IInboxWriter
 {
     private readonly AccountDbContext _context;

@@ -1,4 +1,4 @@
-﻿using AccountService.Application.IntegrationEvents.Transactions;
+﻿using AccountService.Application.IntegrationEvents.Transactions.Transfer;
 using AccountService.Application.Interfaces;
 using AccountService.Application.Interfaces.Messaging;
 using AccountService.Domain.Enums;
@@ -43,8 +43,7 @@ public class TransferMoneyHandler : IRequestHandler<TransferMoneyCommand>
                 command.FromAccountNumber,
                 command.ToAccountNumber,
                 command.Amount,
-                command.Currency,
-                command.TransactionType
+                command.Currency
             ), ct);
 
             return;

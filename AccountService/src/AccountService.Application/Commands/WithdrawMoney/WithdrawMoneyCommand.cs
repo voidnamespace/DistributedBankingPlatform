@@ -1,11 +1,9 @@
-﻿using AccountService.Domain.Enums;
-using MediatR;
+﻿using MediatR;
 
 namespace AccountService.Application.Commands.WithdrawMoney;
 
-public record WithdrawMoneyCommand(
+public record WithdrawMoneyCommand(Guid TransactionId,
+    string FromAccountNumber,
     decimal Amount,
-    Currency Currency,
-    string AccountNumber,
-    Guid UserId
+    int Currency
 ) : IRequest;

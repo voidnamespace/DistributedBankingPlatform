@@ -1,5 +1,6 @@
 ﻿using AccountService.Application.IntegrationEvents.Accounts;
-using AccountService.Application.IntegrationEvents.Transactions;
+using AccountService.Application.IntegrationEvents.Transactions.Transfer;
+using AccountService.Application.IntegrationEvents.Transactions.Withdrawal;
 using AccountService.Application.IntegrationEvents.Users;
 
 namespace AccountService.Infrastructure.Messaging.Routing;
@@ -21,7 +22,11 @@ internal static class IntegrationEventTypeMap
 
         { typeof(TransferCreatedIntegrationEvent), "transfer.created" },
         { typeof(TransferSuccessIntegrationEvent), "transfer.success" },
-        { typeof(TransferFailedIntegrationEvent), "transfer.failed" }
+        { typeof(TransferFailedIntegrationEvent), "transfer.failed" },
+
+        { typeof(WithdrawalCreatedIntegrationEvent), "withdrawal.created" },
+        { typeof(WithdrawalSuccessIntegrationEvent), "withdrawal.success" },
+        { typeof(WithdrawalFailedIntegrationEvent), "withdrawal.failed" },
     };
     
     private static readonly Dictionary<string, Type> NameToType =

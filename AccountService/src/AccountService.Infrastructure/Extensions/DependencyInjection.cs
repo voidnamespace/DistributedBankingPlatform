@@ -1,7 +1,6 @@
 ﻿using AccountService.Application.Interfaces;
 using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Messaging.Consuming;
-using AccountService.Infrastructure.Messaging.Options;
 using AccountService.Infrastructure.Messaging.Publishing;
 using AccountService.Infrastructure.Persistence;
 using AccountService.Infrastructure.Persistence.Inbox;
@@ -20,20 +19,20 @@ public static class DI
         services.AddDatabaseConfiguration(configuration);
 
         services.AddRepositories();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddMessaging(configuration);
 
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
+
         services.AddHostedService<AuthEventsConsumer>();
         services.AddHostedService<TransactionEventsConsumer>();
-        services.AddHostedService<InboxProcessor>();
-        services.AddHostedService<OutboxProcessor>();
 
         services.AddScoped<IInboxWriter, InboxWriter>();
         services.AddScoped<IOutboxWriter, OutboxWriter>();
-        
 
-        services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
+        services.AddHostedService<InboxProcessor>();
+        services.AddHostedService<OutboxProcessor>();
 
         return services;
     }

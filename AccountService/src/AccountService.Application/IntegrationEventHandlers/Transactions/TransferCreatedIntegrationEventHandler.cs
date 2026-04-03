@@ -1,5 +1,5 @@
 ﻿using AccountService.Application.Commands.TransferMoney;
-using AccountService.Application.IntegrationEvents.Transactions;
+using AccountService.Application.IntegrationEvents.Transactions.Transfer;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
