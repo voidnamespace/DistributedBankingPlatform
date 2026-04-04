@@ -58,9 +58,9 @@ public class TransactionController : ControllerBase
             request.Amount,
             request.Currency);
 
-        await _mediator.Send(command, ct);
+        var transactionId = await _mediator.Send(command, ct);
 
-        return Accepted();
+        return Accepted(new { transactionId });
     }
 
 

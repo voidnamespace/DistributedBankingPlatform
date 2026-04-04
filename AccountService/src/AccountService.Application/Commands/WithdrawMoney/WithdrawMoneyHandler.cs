@@ -45,7 +45,7 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
             (Currency)command.Currency
         );
 
-        if (command.Amount < acc.Balance.Amount)
+        if (command.Amount > acc.Balance.Amount)
         {
             await _outboxWriter.EnqueueAsync(new WithdrawalFailedIntegrationEvent(
                 command.TransactionId,

@@ -3,6 +3,6 @@
 namespace TransactionService.Application.Commands.CreateWithdrawal;
 
 public sealed record CreateWithdrawalCommand(
-    string AccountNumber,
+    string FromAccountNumber,
     decimal Amount,
     int Currency) : IRequest<Guid>;

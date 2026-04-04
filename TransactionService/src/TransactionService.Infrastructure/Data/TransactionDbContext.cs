@@ -27,12 +27,16 @@ public class TransactionDbContext : DbContext
 
             builder.OwnsOne(x => x.FromAccountNumber, fromAccountNumber =>
             {
-                fromAccountNumber.Property(x => x.Value).HasColumnName("FromAccountNumber");
+                fromAccountNumber.Property(x => x.Value)
+                .HasColumnName("FromAccountNumber")
+                .IsRequired(false);
             });
 
             builder.OwnsOne(x => x.ToAccountNumber, toAccountNumber =>
             {
-                toAccountNumber.Property(x => x.Value).HasColumnName("ToAccountNumber");
+                toAccountNumber.Property(x => x.Value)
+                .HasColumnName("ToAccountNumber")
+                .IsRequired(false);
             });
 
             builder.OwnsOne(x => x.Money, money =>

@@ -1,6 +1,6 @@
 ﻿using MediatR;
 using TransactionService.Application.Common;
-using TransactionService.Application.IntegrationEvents;
+using TransactionService.Application.IntegrationEvents.Transfer;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Domain.Events;
 
@@ -32,7 +32,6 @@ public class TransferCreatedDomainEventHandler : INotificationHandler<DomainEven
 
         await _outbox.EnqueueAsync(integrationEvent, ct);
     }
-
 
 
 }

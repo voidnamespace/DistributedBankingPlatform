@@ -2,7 +2,7 @@
 using AccountService.Domain.Events;
 using AccountService.Application.Interfaces.Messaging;
 using AccountService.Application.Common;
-using AccountService.Application.IntegrationEvents.Transactions;
+using AccountService.Application.IntegrationEvents.Transactions.Transfer;
 
 namespace AccountService.Application.DomainEventHandlers;
 

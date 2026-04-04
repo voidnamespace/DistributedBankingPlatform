@@ -84,7 +84,7 @@ public class TransactionEventsConsumer : BackgroundService
         _channel.QueueBind(
             queue: _options.Queue,
             exchange: _options.Exchange,
-            routingKey: "transfer.*");
+            routingKey: "withdrawal.*");
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
 

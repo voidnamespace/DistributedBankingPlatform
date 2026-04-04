@@ -1,4 +1,5 @@
 ﻿using TransactionService.Application.IntegrationEvents.Transfer;
+using TransactionService.Application.IntegrationEvents.Withdrawal;
 
 namespace TransactionService.Infrastructure.Messaging.Routing;
 
@@ -10,7 +11,7 @@ public static class IntegrationEventMap
         { typeof(TransferSuccessIntegrationEvent), "transfer.success" },
         { typeof(TransferFailedIntegrationEvent), "transfer.failed" },
 
-        { typeof(WithdrawCrea), "withdrawal.created" },
+        { typeof(WithdrawalCreatedIntegrationEvent), "withdrawal.created" },
         { typeof(WithdrawalSuccessIntegrationEvent), "withdrawal.success" },
         { typeof(WithdrawalFailedIntegrationEvent), "withdrawal.failed" },
     };
