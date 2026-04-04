@@ -1,5 +1,6 @@
 ﻿using MediatR;
+
 namespace TransactionService.Application.Commands.MarkTransactionSuccess;
 
-public record MarkTransactionSuccessCommand(Guid TransactionId) : IRequest;
+public sealed record MarkTransactionSuccessCommand(Guid TransactionId) : IRequest;
 

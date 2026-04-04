@@ -22,7 +22,8 @@ public class Startup
         services.AddMediatR(cfg => 
         cfg.RegisterServicesFromAssemblies(
             typeof(CreateTransferCommand).Assembly,
-            typeof(TransferCreatedDomainEventHandler).Assembly
+            typeof(TransferCreatedDomainEventHandler).Assembly,
+            typeof(WithdrawalCreatedDomainEventHandler).Assembly
         ));
         services.AddApi(Configuration);
     }

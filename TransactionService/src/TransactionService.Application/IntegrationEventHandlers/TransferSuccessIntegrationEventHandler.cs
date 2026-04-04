@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using TransactionService.Application.Commands.MarkTransactionSuccess;
 using TransactionService.Application.IntegrationEvents.Transfer;
+
 namespace TransactionService.Application.IntegrationEventHandlers;
 
 public class TransferSuccessIntegrationEventHandler : INotificationHandler<TransferSuccessIntegrationEvent>

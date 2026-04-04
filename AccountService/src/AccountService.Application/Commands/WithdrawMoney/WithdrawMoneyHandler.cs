@@ -35,6 +35,8 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
             command.Amount,
             command.Currency);
 
+
+
         var accNum = new AccountNumberVO(command.FromAccountNumber);
 
         var acc = await _accountRepository.GetByAccountNumberAsync(accNum, ct)
@@ -44,6 +46,12 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
             command.Amount,
             (Currency)command.Currency
         );
+
+        _logger.LogInformation(
+    "Withdraw debug: acc={AccountNumber}, balance={Balance}, withdraw={Withdraw}",
+    acc.AccountNumber.Value,
+    acc.Balance.Amount,
+    command.Amount);
 
         if (command.Amount > acc.Balance.Amount)
         {
@@ -56,7 +64,7 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
             return;
         }
 
-        acc.Withdraw(money);
+        acc.Withdraw(money, command.TransactionId);
 
         await _unitOfWork.SaveChangesAsync(ct);
 

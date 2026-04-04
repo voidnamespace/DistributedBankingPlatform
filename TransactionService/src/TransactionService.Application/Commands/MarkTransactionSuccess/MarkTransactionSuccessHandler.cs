@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using TransactionService.Application.Interfaces;
+
 namespace TransactionService.Application.Commands.MarkTransactionSuccess;
 
 public class MarkTransactionSuccessHandler : IRequestHandler<MarkTransactionSuccessCommand>

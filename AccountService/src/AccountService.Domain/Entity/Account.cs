@@ -2,6 +2,7 @@
 using AccountService.Domain.Events;
 using AccountService.Domain.Exceptions;
 using AccountService.Domain.ValueObjects;
+using System.Transactions;
 
 namespace AccountService.Domain.Entity;
 
@@ -58,7 +59,7 @@ public class Account : Entity
             Id));
     }
 
-    public void Withdraw(MoneyVO moneyVO)
+    public void Withdraw(MoneyVO moneyVO, Guid transactionId)
     {
         if (!IsActive)
             throw new DomainException("Account is inactive");
@@ -80,7 +81,12 @@ public class Account : Entity
         );
 
         UpdatedAt = DateTime.UtcNow;
-
+        
+        AddDomainEvent(new WithdrawalSuccessDomainEvent(
+        transactionId,
+        AccountNumber,
+        moneyVO
+    ));
         AddDomainEvent(new BalanceChangedDomainEvent(UserId, Id, oldBalance, Balance));
     }
 
