@@ -3,6 +3,7 @@
 namespace TransactionService.Application.IntegrationEvents.Transfer;
 
 public sealed record TransferCreatedIntegrationEvent(
+    Guid InitiatorId,
     Guid TransactionId,
     string FromAccountNumber,
     string ToAccountNumber,

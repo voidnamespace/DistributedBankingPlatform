@@ -30,6 +30,7 @@ public class CreateTransferHandler
         var toAccountNumber = new AccountNumberVO(cmd.ToAccountNumber);
 
         var transaction = Transaction.CreateTransfer(
+            cmd.InitiatorId,
             fromAccountNumber,
             toAccountNumber,
             money);       

@@ -23,6 +23,7 @@ public class TransferCreatedDomainEventHandler : INotificationHandler<DomainEven
         var domainEvent = notification.DomainEvent;
 
         var integrationEvent = new TransferCreatedIntegrationEvent(
+            domainEvent.InitiatorId,
             domainEvent.TransactionId,
             (string)domainEvent.FromAccountNumber.Value,
             (string)domainEvent.ToAccountNumber.Value,

@@ -25,7 +25,9 @@ public class TransferCreatedIntegrationEventHandler : INotificationHandler<Trans
             "TransferCreatedIntegrationEvent received {TransactionId}",
             notification.TransactionId);
 
-        var command = new TransferMoneyCommand(notification.TransactionId,
+        var command = new TransferMoneyCommand(
+            notification.InitiatorId,
+            notification.TransactionId,
             notification.FromAccountNumber, 
             notification.ToAccountNumber, 
             notification.Amount, 

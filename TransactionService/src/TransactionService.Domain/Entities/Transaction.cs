@@ -9,6 +9,8 @@ public class Transaction : Entity
 {
     public Guid TransactionId { get; private set; }
 
+    public Guid InitiatorId { get; private set; }
+
     public AccountNumberVO FromAccountNumber { get; private set; } = default!;
 
     public AccountNumberVO ToAccountNumber { get; private set; } = default!;
@@ -67,6 +69,7 @@ public class Transaction : Entity
 
 
     public static Transaction CreateTransfer(
+        Guid initiatorId,
         AccountNumberVO fromAccountNumber,
         AccountNumberVO toAccountNumber,
         MoneyVO money)
@@ -76,7 +79,8 @@ public class Transaction : Entity
 
         var transaction = new Transaction();
 
-        transaction.TransactionId = Guid.NewGuid();
+        transaction.InitiatorId = initiatorId;
+        transaction.TransactionId = Guid.NewGuid();    
         transaction.FromAccountNumber = fromAccountNumber;
         transaction.ToAccountNumber = toAccountNumber;
         transaction.Money = money;
@@ -85,6 +89,7 @@ public class Transaction : Entity
         transaction.CreatedAt = DateTime.UtcNow;
 
         transaction.AddDomainEvent(new TransferCreatedDomainEvent(
+            transaction.InitiatorId,
             transaction.TransactionId,
             transaction.FromAccountNumber,
             transaction.ToAccountNumber,

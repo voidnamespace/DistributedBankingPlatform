@@ -2,7 +2,9 @@
 
 namespace AccountService.Application.Commands.TransferMoney;
 
-public record TransferMoneyCommand (Guid TransactionId,
+public record TransferMoneyCommand (
+    Guid InitiatorId,
+    Guid TransactionId,
     string FromAccountNumber,
     string ToAccountNumber,
     decimal Amount,
