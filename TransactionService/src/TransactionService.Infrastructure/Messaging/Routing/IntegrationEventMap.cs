@@ -1,4 +1,5 @@
-﻿using TransactionService.Application.IntegrationEvents.Transfer;
+﻿using TransactionService.Application.IntegrationEvents.Deposit;
+using TransactionService.Application.IntegrationEvents.Transfer;
 using TransactionService.Application.IntegrationEvents.Withdrawal;
 
 namespace TransactionService.Infrastructure.Messaging.Routing;
@@ -14,6 +15,10 @@ public static class IntegrationEventMap
         { typeof(WithdrawalCreatedIntegrationEvent), "withdrawal.created" },
         { typeof(WithdrawalSuccessIntegrationEvent), "withdrawal.success" },
         { typeof(WithdrawalFailedIntegrationEvent), "withdrawal.failed" },
+
+        { typeof(DepositCreatedIntegrationEvent), "deposit.created" },
+
+
     };
 
     private static readonly Dictionary<string, Type> NameToType =

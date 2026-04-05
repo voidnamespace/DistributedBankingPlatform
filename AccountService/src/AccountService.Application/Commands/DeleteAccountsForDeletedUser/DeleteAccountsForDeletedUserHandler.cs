@@ -1,25 +1,26 @@
 ﻿using AccountService.Application.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.Commands.DeleteAccountEventChain;
 
-public class DeleteAccountEventChainHandler : IRequestHandler<DeleteAccountEventChainCommand>
+public class DeleteAccountsForDeletedUserHandler : IRequestHandler<DeleteAccountsForDeletedUserCommand>
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<DeleteAccountEventChainHandler> _logger;
+    private readonly ILogger<DeleteAccountsForDeletedUserHandler> _logger;
 
-    public DeleteAccountEventChainHandler(
+    public DeleteAccountsForDeletedUserHandler(
         IAccountRepository accountRepository,
         IUnitOfWork unitOfWork,
-        ILogger<DeleteAccountEventChainHandler> logger)
+        ILogger<DeleteAccountsForDeletedUserHandler> logger)
     {
         _accountRepository = accountRepository;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
-    public async Task Handle(DeleteAccountEventChainCommand command, CancellationToken ct)
+    public async Task Handle(DeleteAccountsForDeletedUserCommand command, CancellationToken ct)
     {
         _logger.LogInformation(
             "DeleteAccountEventChainCommand received for user {UserId}",

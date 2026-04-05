@@ -3,24 +3,24 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 namespace AccountService.Application.Commands.DeactivateAccountEventChain;
 
-public class DeactivateAccountEventChainHandler
-    : IRequestHandler<DeactivateAccountEventChainCommand>
+public class DeactivateAccountsForDeactivatedUserHandler
+    : IRequestHandler<DeactivateAccountsForDeactivatedUserCommand>
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<DeactivateAccountEventChainHandler> _logger;
+    private readonly ILogger<DeactivateAccountsForDeactivatedUserHandler> _logger;
 
-    public DeactivateAccountEventChainHandler(
+    public DeactivateAccountsForDeactivatedUserHandler(
         IAccountRepository accountRepository,
         IUnitOfWork unitOfWork,
-        ILogger<DeactivateAccountEventChainHandler> logger)
+        ILogger<DeactivateAccountsForDeactivatedUserHandler> logger)
     {
         _accountRepository = accountRepository;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
-    public async Task Handle(DeactivateAccountEventChainCommand command, CancellationToken ct)
+    public async Task Handle(DeactivateAccountsForDeactivatedUserCommand command, CancellationToken ct)
     {
         _logger.LogInformation(
             "DeactivateAccountEventChainCommand received for user {UserId}",

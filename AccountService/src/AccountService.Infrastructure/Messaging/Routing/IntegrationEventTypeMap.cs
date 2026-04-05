@@ -1,4 +1,5 @@
 ﻿using AccountService.Application.IntegrationEvents.Accounts;
+using AccountService.Application.IntegrationEvents.Transactions.Deposit;
 using AccountService.Application.IntegrationEvents.Transactions.Transfer;
 using AccountService.Application.IntegrationEvents.Transactions.Withdrawal;
 using AccountService.Application.IntegrationEvents.Users;
@@ -27,6 +28,8 @@ internal static class IntegrationEventTypeMap
         { typeof(WithdrawalCreatedIntegrationEvent), "withdrawal.created" },
         { typeof(WithdrawalSuccessIntegrationEvent), "withdrawal.success" },
         { typeof(WithdrawalFailedIntegrationEvent), "withdrawal.failed" },
+
+        { typeof(DepositCreatedIntegrationEvent), "deposit.created" },
     };
     
     private static readonly Dictionary<string, Type> NameToType =

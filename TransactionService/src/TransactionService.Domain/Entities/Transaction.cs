@@ -43,7 +43,29 @@ public class Transaction : Entity
 
         return transaction;
     }
-    
+    public static Transaction CreateDeposit(
+        AccountNumberVO toAccountNumber,
+        MoneyVO money)
+    {
+        var transaction = new Transaction();
+
+        transaction.TransactionId = Guid.NewGuid();
+        transaction.ToAccountNumber = toAccountNumber;
+        transaction.Money = money;
+        transaction.Type = TransactionType.Deposit;
+        transaction.Status = TransactionStatus.Processing;
+        transaction.CreatedAt = DateTime.UtcNow;
+
+        transaction.AddDomainEvent(new DepositCreatedDomainEvent(
+            transaction.TransactionId,
+            transaction.ToAccountNumber,
+            transaction.Money));
+
+        return transaction;
+    }
+
+
+
     public static Transaction CreateTransfer(
         AccountNumberVO fromAccountNumber,
         AccountNumberVO toAccountNumber,

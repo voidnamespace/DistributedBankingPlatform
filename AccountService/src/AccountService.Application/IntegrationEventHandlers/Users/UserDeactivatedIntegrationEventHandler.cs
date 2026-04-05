@@ -27,7 +27,7 @@ public class UserDeactivatedIntegrationEventHandler
             "UserDeactivatedIntegrationEvent received for user {UserId}",
             notification.UserId);
 
-        var command = new DeactivateAccountEventChainCommand(notification.UserId);
+        var command = new DeactivateAccountsForDeactivatedUserCommand(notification.UserId);
 
         await _mediator.Send(command, ct);
 

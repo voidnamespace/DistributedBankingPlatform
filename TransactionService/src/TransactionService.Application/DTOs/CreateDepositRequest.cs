@@ -1,6 +1,6 @@
 ﻿namespace TransactionService.Application.DTOs;
 
-public sealed record CreateWithdrawalRequest(
-    string AccountNumber,
+public sealed record CreateDepositRequest(
+    string ToAccountNumber, 
     decimal Amount,
     int Currency);

@@ -14,7 +14,9 @@ public class WithdrawalCreatedIntegrationEventHandler : INotificationHandler<Wit
         _mediator = mediator;
     }
 
-    public async Task Handle(WithdrawalCreatedIntegrationEvent notification, CancellationToken ct)
+    public async Task Handle(
+        WithdrawalCreatedIntegrationEvent notification, 
+        CancellationToken ct)
     {
 
         var command = new WithdrawMoneyCommand(

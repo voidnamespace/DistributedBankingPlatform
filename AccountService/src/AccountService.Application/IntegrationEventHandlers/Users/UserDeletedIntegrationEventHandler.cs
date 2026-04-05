@@ -27,7 +27,7 @@ public class UserDeletedIntegrationEventHandler
             "UserDeletedIntegrationEvent received for user {UserId}",
             notification.UserId);
 
-        var command = new DeleteAccountEventChainCommand(notification.UserId);
+        var command = new DeleteAccountsForDeletedUserCommand(notification.UserId);
 
         await _mediator.Send(command, ct);
 

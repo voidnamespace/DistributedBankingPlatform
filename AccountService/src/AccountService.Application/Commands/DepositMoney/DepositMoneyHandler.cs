@@ -1,4 +1,5 @@
 ﻿using AccountService.Application.Interfaces;
+using AccountService.Domain.Enums;
 using AccountService.Domain.ValueObjects;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -24,27 +25,30 @@ public class DepositMoneyHandler : IRequestHandler<DepositMoneyCommand>
     {
         _logger.LogInformation(
             "DepositMoneyCommand received for account {AccountNumber}, amount {Amount} {Currency}",
-            command.AccountNumber,
+            command.ToAccountNumber,
             command.Amount,
             command.Currency);
 
-        var accNum = new AccountNumberVO(command.AccountNumber);
+        var accNum = new AccountNumberVO(command.ToAccountNumber);
 
         var acc = await _accountRepository.GetByAccountNumberAsync(accNum, ct)
             ?? throw new KeyNotFoundException("No such acc");
 
         var money = new MoneyVO(
             command.Amount,
-            command.Currency
+            (Currency)command.Currency
         );
 
-        acc.Deposit(money);
+
+
+
+        acc.Deposit(money, command.TransactionId);
 
         await _unitOfWork.SaveChangesAsync(ct);
 
         _logger.LogInformation(
             "Deposit completed for account {AccountNumber}, amount {Amount} {Currency}",
-            command.AccountNumber,
+            command.ToAccountNumber,
             command.Amount,
             command.Currency);
     }

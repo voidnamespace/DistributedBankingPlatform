@@ -2,5 +2,5 @@
 
 namespace AccountService.Application.Commands.DeleteAccountEventChain;
 
-public record DeleteAccountEventChainCommand(Guid UserId) : IRequest;
+public record DeleteAccountsForDeletedUserCommand(Guid UserId) : IRequest;
 

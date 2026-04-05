@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TransactionService.Application.Commands.CreateDeposit;
 using TransactionService.Application.Commands.CreateTransfer;
 using TransactionService.Application.Commands.CreateWithdrawal;
 using TransactionService.Application.DTOs;
@@ -63,6 +64,20 @@ public class TransactionController : ControllerBase
         return Accepted(new { transactionId });
     }
 
+    [HttpPost("deposit")]
+    public async Task<IActionResult> Deposit(
+        [FromBody] CreateDepositRequest request,
+        CancellationToken ct)
+    {
+        var command = new CreateDepositCommand(
+            request.ToAccountNumber,
+            request.Amount,
+            request.Currency);
 
+        var transactionId = await _mediator.Send(command, ct);
+
+        return Accepted(new { transactionId });
+
+    }
 
 }

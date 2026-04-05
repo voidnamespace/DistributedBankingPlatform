@@ -90,7 +90,7 @@ public class Account : Entity
         AddDomainEvent(new BalanceChangedDomainEvent(UserId, Id, oldBalance, Balance));
     }
 
-    public void Deposit(MoneyVO moneyVO)
+    public void Deposit(MoneyVO moneyVO, Guid transactionId)
     {
         if (!IsActive)
             throw new DomainException("Account is inactive");
@@ -107,6 +107,11 @@ public class Account : Entity
             Balance.Amount + moneyVO.Amount, Balance.Currency
             );
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new DepositSuccessDomainEvent(
+            transactionId,
+            AccountNumber,
+            moneyVO));
 
         AddDomainEvent(new BalanceChangedDomainEvent(UserId, Id, oldBalance, Balance));
     }
