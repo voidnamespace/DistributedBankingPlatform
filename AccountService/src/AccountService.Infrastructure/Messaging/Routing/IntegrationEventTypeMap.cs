@@ -30,6 +30,7 @@ internal static class IntegrationEventTypeMap
         { typeof(WithdrawalFailedIntegrationEvent), "withdrawal.failed" },
 
         { typeof(DepositCreatedIntegrationEvent), "deposit.created" },
+        { typeof(DepositSuccessIntegrationEvent), "deposit.success" },
     };
     
     private static readonly Dictionary<string, Type> NameToType =

@@ -17,7 +17,7 @@ public static class IntegrationEventMap
         { typeof(WithdrawalFailedIntegrationEvent), "withdrawal.failed" },
 
         { typeof(DepositCreatedIntegrationEvent), "deposit.created" },
-
+        { typeof(DepositSuccessIntegrationEvent), "deposit.success" },
 
     };
 

@@ -1,15 +1,15 @@
 ﻿using MediatR;
 using TransactionService.Application.Interfaces;
 
-namespace TransactionService.Application.Commands.MarkWithdrawalSuccess;
+namespace TransactionService.Application.Commands.MarkDepositSuccess;
 
-public class MarkWithdrawalSuccessHandler : IRequestHandler<MarkWithdrawalSuccessCommand>
+public class MarkDepositSuccessHandler : IRequestHandler<MarkDepositSuccessCommand>
 {
     private readonly ITransactionRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public MarkWithdrawalSuccessHandler(
-        ITransactionRepository repository, 
+    public MarkDepositSuccessHandler(
+        ITransactionRepository repository,
         IUnitOfWork unitOfWork)
     {
         _repository = repository;
@@ -17,7 +17,7 @@ public class MarkWithdrawalSuccessHandler : IRequestHandler<MarkWithdrawalSucces
     }
 
     public async Task Handle(
-        MarkWithdrawalSuccessCommand command,
+        MarkDepositSuccessCommand command,
         CancellationToken ct)
     {
         var transaction = await _repository.GetByIdAsync(command.TransactionId, ct);
@@ -25,6 +25,6 @@ public class MarkWithdrawalSuccessHandler : IRequestHandler<MarkWithdrawalSucces
             throw new KeyNotFoundException("asd");
 
         transaction.Complete();
-        await _unitOfWork.SaveChangesAsync(ct);
+        await _unitOfWork.SaveChangesAsync(ct); 
     }
 }
