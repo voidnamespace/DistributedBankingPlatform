@@ -129,38 +129,45 @@ public class Account : Entity
 
         if (!IsActive)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
+            AddDomainEvent(new TransferFailedDomainEvent(
+                transactionId,
             AccountNumber,
             toAccount.AccountNumber,
-            money
-            
+            money,
+            "FromAccountInactive"  
         ));
             return;
         }
         if (!toAccount.IsActive)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
+            AddDomainEvent(new TransferFailedDomainEvent(
+                transactionId,
                 AccountNumber,
                 toAccount.AccountNumber,
-                money
+                money,
+                "ToAccountIsInactive"
             ));
             return;
         }
         if (Balance.Amount < money.Amount)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            AccountNumber,
-            toAccount.AccountNumber,
-            money
+            AddDomainEvent(new TransferFailedDomainEvent(
+                transactionId,
+                AccountNumber,
+                toAccount.AccountNumber,
+                money,
+                "LowBalance"
         ));
             return;
         }
         if(Balance.Currency != money.Currency)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            AccountNumber,
-            toAccount.AccountNumber,
-            money
+            AddDomainEvent(new TransferFailedDomainEvent(
+                transactionId,
+                AccountNumber,
+                toAccount.AccountNumber,
+                money,
+                "CurrencyMissmatch"
         ));
             return;
         }

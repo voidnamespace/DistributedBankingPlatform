@@ -26,11 +26,13 @@ public class Transaction : Entity
     private Transaction() { }
 
     public static Transaction CreateWithdrawal(
-    AccountNumberVO fromAccountNumber,
-    MoneyVO money)
+        Guid initiatorId,
+        AccountNumberVO fromAccountNumber,
+        MoneyVO money)
     {
         var transaction = new Transaction();
 
+        transaction.InitiatorId = initiatorId;
         transaction.TransactionId = Guid.NewGuid();
         transaction.FromAccountNumber = fromAccountNumber;
         transaction.Money = money;
@@ -39,6 +41,7 @@ public class Transaction : Entity
         transaction.CreatedAt = DateTime.UtcNow;
 
         transaction.AddDomainEvent(new WithdrawalCreatedDomainEvent(
+            transaction.InitiatorId,
             transaction.TransactionId, 
             transaction.FromAccountNumber, 
             transaction.Money));

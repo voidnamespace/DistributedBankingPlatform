@@ -11,18 +11,15 @@ namespace AccountService.Application.Commands.DepositMoney;
 public class DepositMoneyHandler : IRequestHandler<DepositMoneyCommand>
 {
     private readonly IAccountRepository _accountRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<DepositMoneyHandler> _logger;
     private readonly IOutboxWriter _outboxWriter;
 
     public DepositMoneyHandler(
         IAccountRepository accountRepository,
-        IUnitOfWork unitOfWork,
         ILogger<DepositMoneyHandler> logger,
         IOutboxWriter outboxWriter)
     {
         _accountRepository = accountRepository;
-        _unitOfWork = unitOfWork;
         _logger = logger;
         _outboxWriter = outboxWriter;
     }
@@ -48,8 +45,6 @@ public class DepositMoneyHandler : IRequestHandler<DepositMoneyCommand>
                 command.Amount,
                 command.Currency), ct);
 
-            await _unitOfWork.SaveChangesAsync(ct);
-
             return;
         }
 
@@ -61,8 +56,6 @@ public class DepositMoneyHandler : IRequestHandler<DepositMoneyCommand>
                 command.Amount,
                 command.Currency), ct);
 
-            await _unitOfWork.SaveChangesAsync(ct);
-
             return;
         }
 
@@ -72,8 +65,6 @@ public class DepositMoneyHandler : IRequestHandler<DepositMoneyCommand>
         );
 
         acc.Deposit(money, command.TransactionId);
-
-        await _unitOfWork.SaveChangesAsync(ct);
 
         _logger.LogInformation(
             "Deposit completed for account {AccountNumber}, amount {Amount} {Currency}",

@@ -22,6 +22,7 @@ public class WithdrawalCreatedDomainEventHandler : INotificationHandler<DomainEv
         var domainEvent = notification.DomainEvent;
 
         var integrationEvent = new WithdrawalCreatedIntegrationEvent(
+            domainEvent.InitiatorId,
             domainEvent.TransactionId,
             (string)domainEvent.FromAccountNumber.Value,
             domainEvent.Money.Amount,

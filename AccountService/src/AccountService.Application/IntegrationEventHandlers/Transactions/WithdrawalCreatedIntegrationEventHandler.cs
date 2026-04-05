@@ -20,6 +20,7 @@ public class WithdrawalCreatedIntegrationEventHandler : INotificationHandler<Wit
     {
 
         var command = new WithdrawMoneyCommand(
+            notification.InitiatorId,
             notification.TransactionId,
             notification.FromAccountNumber,
             notification.Amount,

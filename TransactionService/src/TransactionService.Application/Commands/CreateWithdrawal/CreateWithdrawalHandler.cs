@@ -31,6 +31,7 @@ public class CreateWithdrawalHandler
         var fromAccountNumber = new AccountNumberVO(cmd.FromAccountNumber);
 
         var transaction = Transaction.CreateWithdrawal(
+            cmd.InitiatorId,
             fromAccountNumber,
             money);
         

@@ -6,7 +6,8 @@ public sealed record TransferFailedDomainEvent(
     Guid TransactionId, 
     AccountNumberVO FromAccountNumber, 
     AccountNumberVO ToAccountNumber,
-    MoneyVO Money) : IDomainEvent
+    MoneyVO Money,
+    string Reason) : IDomainEvent
 {
     public DateTime OccurredOn { get; } = DateTime.UtcNow;
 }

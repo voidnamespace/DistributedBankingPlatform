@@ -6,4 +6,5 @@ public sealed record WithdrawalFailedIntegrationEvent(
     Guid TransactionId,
     string FromAccountNumber,
     decimal Amount,
-    int Currency) : INotification;
+    int Currency,
+    string Reason) : INotification;

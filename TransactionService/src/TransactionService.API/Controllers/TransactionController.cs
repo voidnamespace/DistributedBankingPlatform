@@ -54,13 +54,17 @@ public class TransactionController : ControllerBase
         var status = await _mediator.Send(query, ct);
         return Ok(status);
     }
-
+    [Authorize]
     [HttpPost("withdrawal")]
     public async Task<IActionResult> Withdrawal(
         [FromBody] CreateWithdrawalRequest request,
         CancellationToken ct)
     {
+        var initiatorId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
         var command = new CreateWithdrawalCommand(
+            initiatorId,
             request.AccountNumber,
             request.Amount,
             request.Currency);

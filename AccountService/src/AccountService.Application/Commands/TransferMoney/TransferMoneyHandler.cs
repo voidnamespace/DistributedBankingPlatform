@@ -1,7 +1,6 @@
 ﻿using AccountService.Application.IntegrationEvents.Transactions.Transfer;
 using AccountService.Application.Interfaces;
 using AccountService.Application.Interfaces.Messaging;
-using AccountService.Domain.Entity;
 using AccountService.Domain.Enums;
 using AccountService.Domain.ValueObjects;
 using MediatR;
@@ -12,14 +11,11 @@ public class TransferMoneyHandler : IRequestHandler<TransferMoneyCommand>
 {
 
     private readonly IAccountRepository _accountRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IOutboxWriter _outboxWriter;
     public TransferMoneyHandler(IAccountRepository accountRepository,
-        IUnitOfWork unitOfWork,
         IOutboxWriter outboxWriter)
     {
         _accountRepository = accountRepository;
-        _unitOfWork = unitOfWork;
         _outboxWriter = outboxWriter;
     }
 
@@ -93,20 +89,27 @@ public class TransferMoneyHandler : IRequestHandler<TransferMoneyCommand>
             return;
         }
 
-        if (!Enum.IsDefined(typeof(Currency), command.Currency))
+        var currency = (Currency)command.Currency;
+
+        if (currency != fromAccount.Balance.Currency)
         {
             await PublishTransferFailed(command,
-                "InvalidCurrency",
+                "SourceCurrencyMismatch",
                 ct);
             return;
         }
 
-        var currency = (Currency)command.Currency;
+        if (currency != toAccount.Balance.Currency)
+        {
+            await PublishTransferFailed(command,
+                "DestinationCurrencyMismatch",
+                ct);
+            return;
+        }
+
         var moneyVO = new MoneyVO(command.Amount, currency);
 
         fromAccount.TransferTo(toAccount, moneyVO, command.TransactionId);
-
-        await _unitOfWork.SaveChangesAsync(ct);
 
     }
 

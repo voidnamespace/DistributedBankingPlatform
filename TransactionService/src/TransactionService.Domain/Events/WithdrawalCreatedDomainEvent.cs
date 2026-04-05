@@ -3,6 +3,7 @@
 namespace TransactionService.Domain.Events;
 
 public sealed record WithdrawalCreatedDomainEvent(
+    Guid InitiatorId,
     Guid TransactionId, 
     AccountNumberVO FromAccountNumber, 
     MoneyVO Money) : IDomainEvent
