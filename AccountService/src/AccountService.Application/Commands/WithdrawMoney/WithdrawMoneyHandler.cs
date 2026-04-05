@@ -35,23 +35,36 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
             command.Amount,
             command.Currency);
 
-
-
         var accNum = new AccountNumberVO(command.FromAccountNumber);
 
         var acc = await _accountRepository.GetByAccountNumberAsync(accNum, ct)
             ?? throw new KeyNotFoundException("No such acc");
 
-        var money = new MoneyVO(
-            command.Amount,
-            (Currency)command.Currency
-        );
+        if (command.Amount <= 0)
+        {
+            await _outboxWriter.EnqueueAsync(new WithdrawalFailedIntegrationEvent(
+                command.TransactionId,
+                command.FromAccountNumber,
+                command.Amount,
+                command.Currency), ct);
 
-        _logger.LogInformation(
-    "Withdraw debug: acc={AccountNumber}, balance={Balance}, withdraw={Withdraw}",
-    acc.AccountNumber.Value,
-    acc.Balance.Amount,
-    command.Amount);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            return;
+        }
+
+        if ((Currency)command.Currency != acc.Balance.Currency)
+        {
+            await _outboxWriter.EnqueueAsync(new WithdrawalFailedIntegrationEvent(
+                command.TransactionId,
+                command.FromAccountNumber,
+                command.Amount,
+                command.Currency), ct);
+
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            return;
+        }
 
         if (command.Amount > acc.Balance.Amount)
         {
@@ -61,8 +74,15 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
                 command.Amount,
                 command.Currency), ct);
 
+            await _unitOfWork.SaveChangesAsync(ct);
+
             return;
         }
+
+        var money = new MoneyVO(
+            command.Amount,
+            (Currency)command.Currency
+        );
 
         acc.Withdraw(money, command.TransactionId);
 

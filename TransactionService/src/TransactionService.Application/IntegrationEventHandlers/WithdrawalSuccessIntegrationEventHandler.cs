@@ -6,7 +6,6 @@ namespace TransactionService.Application.IntegrationEventHandlers;
 
 public class WithdrawalSuccessIntegrationEventHandler : INotificationHandler<WithdrawalSuccessIntegrationEvent>
 {
-
     private readonly IMediator _mediator;
 
     public WithdrawalSuccessIntegrationEventHandler(IMediator mediator)
@@ -22,6 +21,5 @@ public class WithdrawalSuccessIntegrationEventHandler : INotificationHandler<Wit
 
         await _mediator.Send(command, ct);
     }
-
 
 }
