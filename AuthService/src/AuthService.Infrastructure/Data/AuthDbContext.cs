@@ -3,6 +3,7 @@ using AuthService.Domain.Enums;
 using AuthService.Domain.ValueObjects;
 using AuthService.Infrastructure.Persistence.Outbox;
 using Microsoft.EntityFrameworkCore;
+
 namespace AuthService.Infrastructure.Data;
 
 public class AuthDbContext : DbContext

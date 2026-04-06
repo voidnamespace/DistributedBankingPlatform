@@ -1,5 +1,6 @@
 using AuthService.Domain.Entities;
 using AuthService.Domain.ValueObjects;
+
 namespace AuthService.Application.Interfaces;
 
 public interface IUserRepository

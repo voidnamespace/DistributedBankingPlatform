@@ -1,4 +1,5 @@
 ﻿using AuthService.Domain.Events;
+
 namespace AuthService.Domain.Entities;
 
 public abstract class Entity

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+
 namespace AuthService.Infrastructure.Data;
 
 public class AuthDbContextFactory : IDesignTimeDbContextFactory<AuthDbContext>

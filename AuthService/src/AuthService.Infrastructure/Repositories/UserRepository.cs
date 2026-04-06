@@ -3,6 +3,7 @@ using AuthService.Domain.Entities;
 using AuthService.Domain.ValueObjects;
 using AuthService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+
 namespace AuthService.Infrastructure.Repositories;
 
 public class UserRepository : IUserRepository

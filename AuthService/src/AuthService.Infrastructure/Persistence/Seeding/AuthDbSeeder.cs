@@ -3,6 +3,7 @@ using AuthService.Domain.Enums;
 using AuthService.Domain.ValueObjects;
 using AuthService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+
 namespace AuthService.Infrastructure.Persistence.Seeding;
 
 public class AuthDbSeeder
