@@ -34,8 +34,7 @@ public class Startup
 
         services.AddTransient(
             typeof(IPipelineBehavior<,>),
-            typeof(ValidationBehavior<,>)
-);
+            typeof(ValidationBehavior<,>));
 
         services.AddApi(Configuration);
     }

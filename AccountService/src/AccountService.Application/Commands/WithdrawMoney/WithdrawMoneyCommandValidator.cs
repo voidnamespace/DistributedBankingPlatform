@@ -1,14 +1,17 @@
-﻿using FluentValidation;
-using TransactionService.Domain.Enums;
+﻿using AccountService.Domain.Enums;
+using FluentValidation;
 
-namespace TransactionService.Application.Commands.CreateWithdrawal;
+namespace AccountService.Application.Commands.WithdrawMoney;
 
-public class CreateWithdrawalCommandValidator 
-    : AbstractValidator<CreateWithdrawalCommand>
+public class WithdrawMoneyCommandValidator 
+    : AbstractValidator<WithdrawMoneyCommand>
 {
-    public CreateWithdrawalCommandValidator()
+    public WithdrawMoneyCommandValidator()
     {
         RuleFor(x => x.InitiatorId)
+            .NotEmpty();
+
+        RuleFor(x => x.TransactionId)
             .NotEmpty();
 
         RuleFor(x => x.FromAccountNumber)

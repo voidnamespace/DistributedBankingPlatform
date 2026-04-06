@@ -1,10 +1,14 @@
 ﻿using AccountService.API.Extensions;
 using AccountService.Application;
+using AccountService.Application.Commands.TransferMoney;
+using AccountService.Application.Common.Behaviors;
 using AccountService.Infrastructure.Data;
-using AspNetCoreRateLimit;
-using Microsoft.EntityFrameworkCore;
 using AccountService.Infrastructure.Extensions;
+using AspNetCoreRateLimit;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -23,6 +27,15 @@ public class Startup
     {
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly));
+
+        services.AddValidatorsFromAssemblyContaining<TransferMoneyCommandValidator>();
+
+
+        services.AddTransient(
+            typeof(IPipelineBehavior<,>),
+            typeof(ValidationBehavior<,>));
+
+
 
         services.AddInfrastructure(Configuration);
 

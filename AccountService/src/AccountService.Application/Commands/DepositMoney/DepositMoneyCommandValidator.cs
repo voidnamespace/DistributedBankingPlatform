@@ -1,13 +1,16 @@
-﻿using FluentValidation;
-using TransactionService.Domain.Enums;
+﻿using AccountService.Domain.Enums;
+using FluentValidation;
 
-namespace TransactionService.Application.Commands.CreateDeposit;
+namespace AccountService.Application.Commands.DepositMoney;
 
-public class CreateDepositCommandValidator 
-    : AbstractValidator<CreateDepositCommand>
+public class DepositMoneyCommandValidator
+    : AbstractValidator<DepositMoneyCommand>
 {
-    public CreateDepositCommandValidator()
+    public DepositMoneyCommandValidator()
     {
+        RuleFor(x => x.TransactionId)
+            .NotEmpty();
+
         RuleFor(x => x.ToAccountNumber)
             .NotEmpty()
             .Length(12);

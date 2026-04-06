@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using TransactionService.Domain.Enums;
 
 namespace TransactionService.Application.Commands.CreateTransfer;
 
@@ -20,7 +21,7 @@ public class CreateTransferCommandValidator
             .WithMessage("Amount must be greater than zero");
 
         RuleFor(x => x.Currency)
-            .IsInEnum()
+            .Must(value => Enum.IsDefined(typeof(Currency), value))
             .WithMessage("Invalid currency");
 
         RuleFor(x => x)
