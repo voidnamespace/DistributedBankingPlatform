@@ -1,9 +1,8 @@
 ﻿using MediatR;
 using AccountService.Domain.Events;
-using AccountService.Application.IntegrationEvents;
 using AccountService.Application.Interfaces.Messaging;
 using AccountService.Application.Common;
-using AccountService.Application.IntegrationEvents.Transactions;
+using AccountService.Application.IntegrationEvents.Transactions.Transfer;
 
 namespace AccountService.Application.DomainEventHandlers;
 
@@ -24,10 +23,10 @@ public class TransferSuccessDomainEventHandler
         var domainEvent = notification.DomainEvent;
 
         var integrationEvent = new TransferSuccessIntegrationEvent(domainEvent.TransactionId,
-            domainEvent.FromAccountNumber,
-            domainEvent.ToAccountNumber,
-            domainEvent.Amount,
-            (int)domainEvent.Currency
+            domainEvent.FromAccountNumber.Value,
+            domainEvent.ToAccountNumber.Value,
+            domainEvent.Money.Amount,
+            (int)domainEvent.Money.Currency
         );
 
         await _outboxWriter.EnqueueAsync(integrationEvent, ct);

@@ -1,7 +1,8 @@
 ﻿using AccountService.Application.Commands.TransferMoney;
-using AccountService.Application.IntegrationEvents.Transactions;
+using AccountService.Application.IntegrationEvents.Transactions.Transfer;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.IntegrationEventHandlers.Transactions;
     
 
@@ -24,9 +25,9 @@ public class TransferCreatedIntegrationEventHandler : INotificationHandler<Trans
             "TransferCreatedIntegrationEvent received {TransactionId}",
             notification.TransactionId);
 
-
-
-        var command = new TransferMoneyCommand(notification.TransactionId,
+        var command = new TransferMoneyCommand(
+            notification.InitiatorId,
+            notification.TransactionId,
             notification.FromAccountNumber, 
             notification.ToAccountNumber, 
             notification.Amount, 
@@ -40,4 +41,3 @@ public class TransferCreatedIntegrationEventHandler : INotificationHandler<Trans
 
     }
 }
-

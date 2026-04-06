@@ -3,6 +3,7 @@ using AccountService.Application.IntegrationEvents.Users;
 using AccountService.Domain.Enums;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.IntegrationEventHandlers.Users;
 
 public class UserCreatedIntegrationEventHandler

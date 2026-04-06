@@ -1,5 +1,6 @@
 ﻿using TransactionService.Domain.Exceptions;
 using TransactionService.Domain.Enums;
+
 namespace TransactionService.Domain.ValueObjects;
 
 public sealed class MoneyVO : IEquatable<MoneyVO>

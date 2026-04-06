@@ -1,5 +1,4 @@
-﻿using AccountService.Application.IntegrationEvents.Transactions;
-using AccountService.Application.Interfaces.Messaging;
+﻿using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+
 namespace AccountService.Infrastructure.Persistence.Outbox;
 
 public class OutboxProcessor : BackgroundService

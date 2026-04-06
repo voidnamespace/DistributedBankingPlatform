@@ -2,6 +2,6 @@
 
 public sealed class AuthEventsConsumerOptions
 {
-    public string Exchange { get; init; } = "auth.events";
-    public string Queue { get; init; } = "account.auth.events";
+    public string Exchange { get; init; } = default!;
+    public string Queue { get; init; } = default!;
 }

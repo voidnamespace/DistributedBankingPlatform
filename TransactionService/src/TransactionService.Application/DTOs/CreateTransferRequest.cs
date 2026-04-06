@@ -1,7 +1,6 @@
-﻿using TransactionService.Domain.Enums;
-namespace TransactionService.Application.DTOs;
+﻿namespace TransactionService.Application.DTOs;
 
-public record CreateTransferRequest(
+public sealed record CreateTransferRequest(
     string FromAccountNumber,
     string ToAccountNumber,
     decimal Amount,

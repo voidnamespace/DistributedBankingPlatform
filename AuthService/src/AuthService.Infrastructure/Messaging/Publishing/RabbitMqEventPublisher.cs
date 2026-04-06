@@ -33,7 +33,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
         {
             HostName = _connectionOptions.Host,
             Port = _connectionOptions.Port,
-            UserName = _connectionOptions.User,
+            UserName = _connectionOptions.Username,
             Password = _connectionOptions.Password,
             DispatchConsumersAsync = true
         };

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
+
 namespace AccountService.Infrastructure.Messaging.Publishing;
 
 public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable

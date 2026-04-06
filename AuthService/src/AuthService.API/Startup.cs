@@ -5,7 +5,7 @@ using AuthService.Infrastructure.Data;
 using AuthService.Infrastructure.Extensions;
 using AuthService.Infrastructure.Persistence.Seeding;
 using Microsoft.EntityFrameworkCore;
-using AuthService.Application.EventHandlers;
+using AuthService.Application.DomainEventHandlers;
 
 namespace AuthService.API;
 

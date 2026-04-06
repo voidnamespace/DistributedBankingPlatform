@@ -5,11 +5,9 @@ using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
-using TransactionService.Application.IntegrationEvents;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Messaging.Options;
 using TransactionService.Infrastructure.Messaging.Routing;
-using TransactionService.Infrastructure.Persistence.Inbox;
 
 namespace TransactionService.Infrastructure.Messaging.Consuming;
 
@@ -81,7 +79,18 @@ public class AccountEventsConsumer : BackgroundService
         _channel.QueueBind(
            queue: _consumerOptions.Value.Queue,
            exchange: _consumerOptions.Value.Exchange,
-           routingKey: "transaction.*");
+           routingKey: "transfer.*");
+
+        _channel.QueueBind(
+           queue: _consumerOptions.Value.Queue,
+           exchange: _consumerOptions.Value.Exchange,
+           routingKey: "withdrawal.*");
+
+        _channel.QueueBind(
+           queue: _consumerOptions.Value.Queue,
+           exchange: _consumerOptions.Value.Exchange,
+           routingKey: "deposit.*");
+
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
 

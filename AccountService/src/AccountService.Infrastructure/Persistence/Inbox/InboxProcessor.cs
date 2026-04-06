@@ -1,6 +1,4 @@
-﻿using AccountService.Application.IntegrationEvents.Transactions;
-using AccountService.Application.Interfaces.Messaging;
-using AccountService.Infrastructure.Data;
+﻿using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Routing;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -74,20 +72,7 @@ public class InboxProcessor : BackgroundService
                         type,
                         JsonDefaults.Options);
 
-                    if (integrationEvent is TransferCreatedIntegrationEvent evt)
-                    {
-                        _logger.LogInformation(
-                            "DESERIALIZED EVENT: Amount={Amount}, Currency={Currency}",
-                            evt.Amount,
-                            evt.Currency);
-
-                        _logger.LogInformation(
-                            "Currency enum runtime type = {Type}",
-                            evt.Currency.GetType().AssemblyQualifiedName);
-                        _logger.LogInformation(
-                            "Currency enum assembly = {Assembly}",
-                            evt.Currency.GetType().AssemblyQualifiedName);
-                          }
+                    
 
                     if (integrationEvent is INotification notification)
                     {

@@ -1,6 +1,8 @@
-﻿using AccountService.Application.IntegrationEvents.Transactions;
+﻿using AccountService.Application.IntegrationEvents.Accounts;
+using AccountService.Application.IntegrationEvents.Transactions.Deposit;
+using AccountService.Application.IntegrationEvents.Transactions.Transfer;
+using AccountService.Application.IntegrationEvents.Transactions.Withdrawal;
 using AccountService.Application.IntegrationEvents.Users;
-using System.Reflection.Metadata;
 
 namespace AccountService.Infrastructure.Messaging.Routing;
 
@@ -13,10 +15,23 @@ internal static class IntegrationEventTypeMap
         { typeof(UserActivatedIntegrationEvent), "user.activated" },
         { typeof(UserDeactivatedIntegrationEvent), "user.deactivated" },
 
+        { typeof(AccountCreatedIntegrationEvent), "account.created" },
+        { typeof(AccountActivatedIntegrationEvent), "account.activated" },
+        { typeof(AccountDeactivatedIntegrationEvent), "account.deactivated" },
+        { typeof(AccountDeletedIntegrationEvent), "account.deleted" },
+        { typeof(BalanceChangedIntegrationEvent), "account.balance" },
 
-        { typeof(TransferCreatedIntegrationEvent), "transaction.created" },
-        { typeof(TransferSuccessIntegrationEvent), "transaction.success" },
-        { typeof(TransferFailedIntegrationEvent), "transaction.failed" }
+        { typeof(TransferCreatedIntegrationEvent), "transfer.created" },
+        { typeof(TransferSuccessIntegrationEvent), "transfer.success" },
+        { typeof(TransferFailedIntegrationEvent), "transfer.failed" },
+
+        { typeof(WithdrawalCreatedIntegrationEvent), "withdrawal.created" },
+        { typeof(WithdrawalSuccessIntegrationEvent), "withdrawal.success" },
+        { typeof(WithdrawalFailedIntegrationEvent), "withdrawal.failed" },
+
+        { typeof(DepositCreatedIntegrationEvent), "deposit.created" },
+        { typeof(DepositSuccessIntegrationEvent), "deposit.success" },
+        { typeof(DepositFailedIntegrationEvent), "deposit.failed" },
     };
     
     private static readonly Dictionary<string, Type> NameToType =

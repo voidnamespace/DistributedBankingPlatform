@@ -1,4 +1,5 @@
 ﻿using AccountService.Domain.Enums;
+
 namespace AccountService.Application.DTOs;
 
 public class WithdrawRequest

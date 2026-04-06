@@ -1,9 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FluentValidation;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
 using TransactionService.API.Extensions;
+using TransactionService.API.Middleware;
 using TransactionService.Application.Commands.CreateTransfer;
-using TransactionService.Application.EventHandlers;
+using TransactionService.Application.Common.Behaviors;
+using TransactionService.Application.DomainEventHandlers;
 using TransactionService.Infrastructure.Data;
 using TransactionService.Infrastructure.Extensions;
+
 namespace TransactionService.API;
 
 public class Startup
@@ -21,14 +26,24 @@ public class Startup
         services.AddMediatR(cfg => 
         cfg.RegisterServicesFromAssemblies(
             typeof(CreateTransferCommand).Assembly,
-            typeof(TransferCreatedDomainEventHandler).Assembly
+            typeof(TransferCreatedDomainEventHandler).Assembly,
+            typeof(WithdrawalCreatedDomainEventHandler).Assembly
         ));
+
+        services.AddValidatorsFromAssemblyContaining<CreateTransferCommandValidator>();
+
+        services.AddTransient(
+            typeof(IPipelineBehavior<,>),
+            typeof(ValidationBehavior<,>));
+
         services.AddApi(Configuration);
     }
     
 
     public void Configure(WebApplication app, IWebHostEnvironment env)
     {
+        app.UseGlobalExceptionHandling();
+
         using (var scope = app.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<TransactionDbContext>();

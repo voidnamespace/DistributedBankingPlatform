@@ -4,6 +4,7 @@ using AuthService.Domain.Entities;
 using AuthService.Domain.ValueObjects;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AuthService.Application.Commands.RegisterUser;
 
 public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, RegisterResponse>
@@ -27,7 +28,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
         CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "Registering new user {Email}",
+            "RegisterUserCommand started {Email}",
             command.Email);
 
         if (command.Password != command.ConfirmPassword)
@@ -43,12 +44,20 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
             new EmailVO(command.Email.Trim()),
             new PasswordVO(command.Password));
 
+        _logger.LogInformation(
+            "User entity created {Email}",
+            command.Email);
+
         await _userRepository.CreateAsync(user, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "User registered successfully {UserId} {Email}",
+             "User saved to database {UserId}",
+             user.Id);
+
+        _logger.LogInformation(
+            "RegisterUserCommand completed {UserId} {Email}",
             user.Id,
             user.Email.Value);
 

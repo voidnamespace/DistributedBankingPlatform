@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using TransactionService.Application.Interfaces;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Messaging.Consuming;
-using TransactionService.Infrastructure.Messaging.Options;
 using TransactionService.Infrastructure.Messaging.Publishing;
 using TransactionService.Infrastructure.Persistence.Inbox;
 using TransactionService.Infrastructure.Persistence.Outbox;
@@ -20,27 +19,20 @@ public static class DependencyInjection
     {
         services.AddDatabaseConfiguration(configuration);
 
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        services.AddMessaging(configuration);
 
         services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 
-        services.Configure<RabbitMqOptions>(
-            configuration.GetSection("RabbitMq"));
-
-        services.Configure<TransactionEventsPublisherOptions>(
-            configuration.GetSection("TransactionEventsPublisher"));
-
-        services.Configure<AccountEventsConsumerOptions>(
-            configuration.GetSection("AccountEvents"));
-
-        services.AddHostedService<AccountEventsConsumer>();
-
         services.AddScoped<IInboxWriter, InboxWriter>();
-        services.AddHostedService<InboxProcessor>();
-
         services.AddScoped<IOutboxWriter, OutboxWriter>();
+
+        services.AddHostedService<InboxProcessor>();
         services.AddHostedService<OutboxProcessor>();
+        services.AddHostedService<AccountEventsConsumer>();  
 
         return services;
     }

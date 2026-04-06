@@ -1,11 +1,11 @@
-﻿using AccountService.Domain.Enums;
-using MediatR;
+﻿using MediatR;
 
 namespace AccountService.Application.Commands.TransferMoney;
 
-public record TransferMoneyCommand (Guid TransactionId,
+public record TransferMoneyCommand (
+    Guid InitiatorId,
+    Guid TransactionId,
     string FromAccountNumber,
     string ToAccountNumber,
     decimal Amount,
     int Currency) : IRequest;
-

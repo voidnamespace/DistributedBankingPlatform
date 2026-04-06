@@ -1,8 +1,0 @@
-﻿using MediatR;
-namespace AccountService.Application.IntegrationEvents.Transactions;
-
-public sealed record TransferFailedIntegrationEvent(Guid TransactionId,
-    string FromAccountNumber,
-    string ToAccountNumber,
-    decimal Amount,
-    int Currency) : INotification;

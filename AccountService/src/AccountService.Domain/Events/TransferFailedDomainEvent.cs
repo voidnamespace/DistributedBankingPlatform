@@ -1,10 +1,13 @@
-﻿
-using AccountService.Domain.Enums;
+﻿using AccountService.Domain.ValueObjects;
 
 namespace AccountService.Domain.Events;
 
-public sealed record TransferFailedDomainEvent(Guid TransactionId, string FromAccountNumber, string ToAccountNumber, decimal Amount, Currency Currency) : IDomainEvent
+public sealed record TransferFailedDomainEvent(
+    Guid TransactionId, 
+    AccountNumberVO FromAccountNumber, 
+    AccountNumberVO ToAccountNumber,
+    MoneyVO Money,
+    string Reason) : IDomainEvent
 {
     public DateTime OccurredOn { get; } = DateTime.UtcNow;
 }
-

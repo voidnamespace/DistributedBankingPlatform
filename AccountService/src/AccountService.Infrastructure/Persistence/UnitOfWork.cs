@@ -5,6 +5,7 @@ using AccountService.Infrastructure.Data;
 using AccountService.Application.Common;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+
 namespace AccountService.Infrastructure.Persistence;
 
 public class UnitOfWork : IUnitOfWork
@@ -41,7 +42,7 @@ public class UnitOfWork : IUnitOfWork
                             .MakeGenericType(domainEvent.GetType());
 
                 var notification =
-                        Activator.CreateInstance(notificationType, domainEvent);  
+                        Activator.CreateInstance(notificationType, domainEvent); 
 
 
                 await _mediator.Publish((INotification)notification!, ct);

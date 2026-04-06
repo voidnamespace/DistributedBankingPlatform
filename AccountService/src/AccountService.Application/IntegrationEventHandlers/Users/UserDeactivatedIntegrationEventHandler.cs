@@ -1,5 +1,4 @@
 ﻿using AccountService.Application.Commands.DeactivateAccountEventChain;
-using AccountService.Application.Commands.DeleteAccountEventChain;
 using AccountService.Application.IntegrationEvents.Users;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -28,7 +27,7 @@ public class UserDeactivatedIntegrationEventHandler
             "UserDeactivatedIntegrationEvent received for user {UserId}",
             notification.UserId);
 
-        var command = new DeactivateAccountEventChainCommand(notification.UserId);
+        var command = new DeactivateAccountsForDeactivatedUserCommand(notification.UserId);
 
         await _mediator.Send(command, ct);
 

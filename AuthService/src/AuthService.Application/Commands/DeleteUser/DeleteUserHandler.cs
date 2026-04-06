@@ -1,6 +1,4 @@
-﻿using AuthService.Application.IntegrationEvents;
-using AuthService.Application.Interfaces;
-using AuthService.Application.Interfaces.Messaging;
+﻿using AuthService.Application.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

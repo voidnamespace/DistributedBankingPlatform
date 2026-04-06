@@ -1,6 +1,7 @@
 using AuthService.Domain.Enums;
 using AuthService.Domain.Events;
 using AuthService.Domain.ValueObjects;
+
 namespace AuthService.Domain.Entities;
 
 public class User : Entity
@@ -30,7 +31,7 @@ public class User : Entity
         CreatedAt = DateTime.UtcNow;
 
         AddDomainEvent(
-            new UserCreatedDomainEvent(Id, Email.Value));
+            new UserCreatedDomainEvent(Id, Email));
     }
 
     public static User CreateAdmin(EmailVO email, PasswordVO password)

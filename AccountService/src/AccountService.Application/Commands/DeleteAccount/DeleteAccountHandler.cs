@@ -34,6 +34,8 @@ public class DeleteAccountHandler : IRequestHandler<DeleteAccountCommand>
         if (account.UserId != command.UserId)
             throw new InvalidOperationException("U can delete only your account");
 
+        account.Delete();
+
         await _accountRepository.DeleteAsync(account, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 

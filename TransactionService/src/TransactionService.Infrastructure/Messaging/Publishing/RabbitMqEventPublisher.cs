@@ -5,6 +5,7 @@ using System.Text.Json;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Messaging.Options;
 using TransactionService.Infrastructure.Messaging.Routing;
+
 namespace TransactionService.Infrastructure.Messaging.Publishing;
 
 public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable

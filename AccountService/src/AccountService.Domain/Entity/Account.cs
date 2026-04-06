@@ -1,7 +1,9 @@
-﻿using AccountService.Domain.ValueObjects;
-using AccountService.Domain.Exceptions;
-using AccountService.Domain.Enums;
+﻿using AccountService.Domain.Enums;
 using AccountService.Domain.Events;
+using AccountService.Domain.Exceptions;
+using AccountService.Domain.ValueObjects;
+using System.Transactions;
+
 namespace AccountService.Domain.Entity;
 
 public class Account : Entity
@@ -21,28 +23,43 @@ public class Account : Entity
     private Account() { }
     public Account (Guid userId, AccountNumberVO accountNumberVO, Currency currency)
     {
+        var now = DateTime.UtcNow;
+
         Id = Guid.NewGuid();
         UserId = userId;
         AccountNumber = accountNumberVO;
-        Balance = new MoneyVO(0, currency); 
-        CreatedAt = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
+        Balance = new MoneyVO(0, currency);
+        CreatedAt = now;
+        UpdatedAt = now;
         IsActive = true;
+
+        AddDomainEvent(new AccountCreatedDomainEvent(UserId,
+                Id,
+                AccountNumber,
+                Balance,
+                CreatedAt
+            ));
     }
 
     public void Activate()
     {
         IsActive = true;
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new AccountActivatedDomainEvent(UserId,
+            Id));
     }
 
     public void Deactivate()
     {
         IsActive = false;
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new AccountDeactivatedDomainEvent(UserId, 
+            Id));
     }
 
-    public void Withdraw(MoneyVO moneyVO)
+    public void Withdraw(MoneyVO moneyVO, Guid transactionId)
     {
         if (!IsActive)
             throw new DomainException("Account is inactive");
@@ -56,15 +73,24 @@ public class Account : Entity
         if (moneyVO.Amount > Balance.Amount)
             throw new DomainException("Insufficient balance");
 
+        var oldBalance = Balance;
+
         Balance = new MoneyVO(
             Balance.Amount - moneyVO.Amount,
             Balance.Currency
         );
 
         UpdatedAt = DateTime.UtcNow;
+        
+        AddDomainEvent(new WithdrawalSuccessDomainEvent(
+        transactionId,
+        AccountNumber,
+        moneyVO
+    ));
+        AddDomainEvent(new BalanceChangedDomainEvent(UserId, Id, oldBalance, Balance));
     }
 
-    public void Deposit(MoneyVO moneyVO)
+    public void Deposit(MoneyVO moneyVO, Guid transactionId)
     {
         if (!IsActive)
             throw new DomainException("Account is inactive");
@@ -75,10 +101,19 @@ public class Account : Entity
         if (moneyVO.Amount <= 0)
             throw new DomainException("Amount must be greater than zero");
 
+        var oldBalance = Balance;
+
         Balance = new MoneyVO(
             Balance.Amount + moneyVO.Amount, Balance.Currency
             );
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new DepositSuccessDomainEvent(
+            transactionId,
+            AccountNumber,
+            moneyVO));
+
+        AddDomainEvent(new BalanceChangedDomainEvent(UserId, Id, oldBalance, Balance));
     }
 
 
@@ -94,41 +129,45 @@ public class Account : Entity
 
         if (!IsActive)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            AccountNumber.Value,
-            toAccount.AccountNumber.Value,
-            money.Amount,
-            money.Currency
+            AddDomainEvent(new TransferFailedDomainEvent(
+                transactionId,
+            AccountNumber,
+            toAccount.AccountNumber,
+            money,
+            "FromAccountInactive"  
         ));
             return;
         }
         if (!toAccount.IsActive)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-                AccountNumber.Value,
-                toAccount.AccountNumber.Value,
-                money.Amount,
-                money.Currency
+            AddDomainEvent(new TransferFailedDomainEvent(
+                transactionId,
+                AccountNumber,
+                toAccount.AccountNumber,
+                money,
+                "ToAccountIsInactive"
             ));
             return;
         }
         if (Balance.Amount < money.Amount)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            AccountNumber.Value,
-            toAccount.AccountNumber.Value,
-            money.Amount,
-            money.Currency
+            AddDomainEvent(new TransferFailedDomainEvent(
+                transactionId,
+                AccountNumber,
+                toAccount.AccountNumber,
+                money,
+                "LowBalance"
         ));
             return;
         }
         if(Balance.Currency != money.Currency)
         {
-            AddDomainEvent(new TransferFailedDomainEvent(transactionId,
-            AccountNumber.Value,
-            toAccount.AccountNumber.Value,
-            money.Amount,
-            money.Currency
+            AddDomainEvent(new TransferFailedDomainEvent(
+                transactionId,
+                AccountNumber,
+                toAccount.AccountNumber,
+                money,
+                "CurrencyMissmatch"
         ));
             return;
         }
@@ -137,32 +176,52 @@ public class Account : Entity
         toAccount.IncreaseBalance(money);
 
         AddDomainEvent(new TransferSuccessDomainEvent(transactionId,
-            AccountNumber.Value,
-            toAccount.AccountNumber.Value,
-            money.Amount,
-            money.Currency
+            AccountNumber,
+            toAccount.AccountNumber,
+            money
         ));
     }
 
     private void IncreaseBalance(MoneyVO money)
     {
+        var oldBalance = Balance;
+
         Balance = new MoneyVO(
             Balance.Amount + money.Amount,
             Balance.Currency
         );
 
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new BalanceChangedDomainEvent(
+            UserId,
+            Id,
+            oldBalance,
+            Balance
+        ));
     }
 
     private void DecreaseBalance(MoneyVO money)
     {
+        var oldBalance = Balance;
+
         Balance = new MoneyVO(
             Balance.Amount - money.Amount,
             Balance.Currency
         );
 
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(new BalanceChangedDomainEvent(
+            UserId,
+            Id,
+            oldBalance,
+            Balance
+        ));
     }
 
-
+    public void Delete()
+    {
+        AddDomainEvent(new AccountDeletedDomainEvent(UserId, Id));
+    }
 }

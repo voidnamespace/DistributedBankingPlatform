@@ -1,8 +1,5 @@
 ﻿using AccountService.Application.Interfaces.Messaging;
-using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Options;
-using AccountService.Infrastructure.Persistence.Inbox;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -82,7 +79,17 @@ public class TransactionEventsConsumer : BackgroundService
         _channel.QueueBind(
             queue: _options.Queue,
             exchange: _options.Exchange,
-            routingKey: "transaction.*");
+            routingKey: "transfer.*");
+
+        _channel.QueueBind(
+            queue: _options.Queue,
+            exchange: _options.Exchange,
+            routingKey: "withdrawal.*");
+
+        _channel.QueueBind(
+            queue: _options.Queue,
+            exchange: _options.Exchange,
+            routingKey: "deposit.*");
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
 

@@ -40,7 +40,7 @@ public class UnitOfWork : IUnitOfWork
                             .MakeGenericType(domainEvent.GetType());
 
                 var notification =
-                        Activator.CreateInstance(notificationType, domainEvent);  // impressive, explain?
+                        Activator.CreateInstance(notificationType, domainEvent);  
 
 
                 await _mediator.Publish((INotification)notification!, ct);
