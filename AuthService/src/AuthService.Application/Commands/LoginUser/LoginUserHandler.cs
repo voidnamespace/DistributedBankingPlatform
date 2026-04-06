@@ -34,7 +34,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
         CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "Attempting login for {Email}",
+            "LoginUserCommand started {Email}",
             command.Email);
 
         if (string.IsNullOrWhiteSpace(command.Password) ||
@@ -92,6 +92,10 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
             IsRevoked = false
         };
 
+        _logger.LogInformation(
+             "Refresh token generated for {UserId}",
+             user.Id);
+
         await _refreshTokenRepository.CreateAsync(
             refreshToken,
             cancellationToken);
@@ -99,7 +103,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "User {UserId} successfully logged in",
+            "LoginUserCommand completed {UserId}",
             user.Id);
 
         return new LoginResponse

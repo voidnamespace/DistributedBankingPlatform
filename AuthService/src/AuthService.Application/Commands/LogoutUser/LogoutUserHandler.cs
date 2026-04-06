@@ -21,25 +21,25 @@ public class LogoutUserHandler : IRequestHandler<LogoutUserCommand>
     }
 
     public async Task Handle(
-        LogoutUserCommand request,
+        LogoutUserCommand command,
         CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "Attempting to logout user {UserId}",
-            request.userId);
+            "LogoutUserCommand started {UserId}",
+            command.UserId);
 
         await _refreshTokenRepository.RevokeAllUserTokensAsync(
-            request.userId,
+            command.UserId,
             cancellationToken);
 
         _logger.LogInformation(
-            "All refresh tokens revoked for user {UserId}",
-            request.userId);
+            "All refresh tokens revoked {UserId}",
+            command.UserId);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "User {UserId} successfully logged out",
-            request.userId);
+            "LogoutUserCommand completed {UserId}",
+            command.UserId);
     }
 }

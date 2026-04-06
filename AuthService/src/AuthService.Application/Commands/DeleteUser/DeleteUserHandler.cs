@@ -20,23 +20,23 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle(DeleteUserCommand request, CancellationToken cancellationToken)
+    public async Task Handle(DeleteUserCommand command, CancellationToken cancellationToken)
     {
         _logger.LogInformation(
             "Attempting to delete user {UserId}",
-            request.userId);
+            command.UserId);
 
         var user = await _userRepository.GetByIdAsync(
-                            request.userId,
+                            command.UserId,
                             cancellationToken);
 
         if (user == null)
         {
             _logger.LogWarning(
                 "Delete failed. User not found {UserId}",
-                request.userId);
+                command.UserId);
 
-            throw new KeyNotFoundException($"User with ID {request.userId} not found");
+            throw new KeyNotFoundException($"User with ID {command.UserId} not found");
         }
 
         user.Delete(); 
@@ -49,6 +49,6 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand>
 
         _logger.LogInformation(
             "User {UserId} successfully deleted",
-            request.userId);
+            command.UserId);
     }
 }

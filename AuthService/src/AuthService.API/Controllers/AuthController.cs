@@ -1,15 +1,15 @@
+using AuthService.API.Extensions;
 using AuthService.Application.Commands.DeleteUser;
 using AuthService.Application.Commands.LoginUser;
 using AuthService.Application.Commands.LogoutUser;
 using AuthService.Application.Commands.MakeRefreshToken;
 using AuthService.Application.Commands.RegisterUser;
 using AuthService.Application.DTOs;
-using AuthService.Application.Interfaces.Messaging;
 using AuthService.Application.Queries.GetAllUsers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace AuthService.API.Controllers;
 
@@ -29,7 +29,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterRequest request)
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         _logger.LogInformation(
             "Register request started for {Email}",
@@ -54,7 +54,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         _logger.LogInformation(
-            "Login attempt for {Email}",
+            "Login request started for {Email}",
             request.Email);
 
         var command = new LoginUserCommand(
@@ -65,7 +65,7 @@ public class AuthController : ControllerBase
         var response = await _mediator.Send(command);
 
         _logger.LogInformation(
-            "Login successful for {Email}",
+            "Login request completed for {Email}",
             request.Email);
 
         return Ok(response);
@@ -75,14 +75,14 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
         _logger.LogInformation(
-            "Refresh token requested");
+            "Refresh token request started");
 
         var command = new RefreshTokenCommand(request.RefreshToken);
 
         var response = await _mediator.Send(command);
 
         _logger.LogInformation(
-            "Refresh token issued");
+            "Refresh token request completed");
 
         return Ok(response);
     }
@@ -91,19 +91,19 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Logout()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-        {
-            _logger.LogWarning("Logout failed: invalid token");
-            return Unauthorized(new { message = "Invalid token" });
-        }
+        var userId = User.GetUserId();
 
         _logger.LogInformation(
-            "User logout {UserId}",
-            userId);
+            "Logout request started {UserId}",
+             userId);
 
-        await _mediator.Send(new LogoutUserCommand(userId));
+        var command = new LogoutUserCommand(userId);
+
+        await _mediator.Send(command);
+
+        _logger.LogInformation(
+          "Logout request completed {UserId}",
+          userId);
 
         return Ok(new { message = "Logout successful" });
     }
@@ -112,13 +112,11 @@ public class AuthController : ControllerBase
     [Authorize]
     public IActionResult GetCurrentUser()
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var email = User.FindFirst(ClaimTypes.Email)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var userId = User.GetUserId();
+        var email = User.GetEmail();
+        var role = User.GetRole();
 
-        _logger.LogInformation(
-            "Current user requested profile {UserId}",
-            userId);
+        _logger.LogInformation("User requested /me endpoint {UserId}", userId);
 
         return Ok(new
         {
@@ -133,7 +131,7 @@ public class AuthController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAll()
     {
-        _logger.LogInformation("Admin requested all users");
+        _logger.LogInformation("Admin request all users");
 
         var users = await _mediator.Send(new GetAllUsersQuery());
 
@@ -153,17 +151,24 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch("{userId}/deactivate")]
+    [HttpPatch("me/deactivate")]
     [Authorize]
-    public async Task<IActionResult> Deactivate(Guid userId)
+    public async Task<IActionResult> Deactivate()
     {
+        var userId = User.GetUserId();
+
         _logger.LogInformation(
-            "User deactivation requested {UserId}",
+            "User deactivation request for {UserId}",
             userId);
 
-        await _mediator.Send(new DeactivateUserCommand(userId));
+        await _mediator.Send(
+            new DeactivateUserCommand(userId));
 
-        return Ok();
+        _logger.LogInformation(
+            "User deactivation request completed for {UserId}",
+            userId);
+
+        return Ok(new { message = "User deactivated successfully" });
     }
 
     [HttpPatch("{userId}/activate")]
@@ -175,6 +180,10 @@ public class AuthController : ControllerBase
             userId);
 
         await _mediator.Send(new ActivateUserCommand(userId));
+
+        _logger.LogInformation(
+            "Admin activated user {UserId}",
+            userId);
 
         return Ok();
     }

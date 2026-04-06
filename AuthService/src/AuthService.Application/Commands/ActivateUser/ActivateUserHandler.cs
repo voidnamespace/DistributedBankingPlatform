@@ -2,7 +2,7 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace AuthService.Application.Commands.DeleteUser;
+namespace AuthService.Application.Commands.ActivateUser;
 
 public class ActivateUserHandler : IRequestHandler<ActivateUserCommand>
 {
@@ -20,23 +20,23 @@ public class ActivateUserHandler : IRequestHandler<ActivateUserCommand>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle(ActivateUserCommand request, CancellationToken cancellationToken)
+    public async Task Handle(ActivateUserCommand command, CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "Attempting to activate user {UserId}",
-            request.userId);
+            "ActivateUserCommand started for {UserId}",
+            command.UserId);
 
         var user = await _userRepository.GetByIdAsync(
-            request.userId,
+            command.UserId,
             cancellationToken);
 
         if (user == null)
         {
             _logger.LogWarning(
-                "Activation failed. User not found {UserId}",
-                request.userId);
+                "ActivateUserCommand failed: user not found {UserId}",
+                command.UserId);
 
-            throw new KeyNotFoundException($"User with ID {request.userId} not found");
+            throw new KeyNotFoundException($"User with ID {command.UserId} not found");
         }
 
         user.Activate();
@@ -44,7 +44,7 @@ public class ActivateUserHandler : IRequestHandler<ActivateUserCommand>
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "User {UserId} successfully activated",
-            request.userId);
+            "ActivateUserCommand completed for {UserId}",
+            command.UserId);
     }
 }

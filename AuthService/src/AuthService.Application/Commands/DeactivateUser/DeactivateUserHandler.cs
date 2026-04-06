@@ -2,7 +2,7 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace AuthService.Application.Commands.DeleteUser;
+namespace AuthService.Application.Commands.DeactivateUser;
 
 public class DeactivateUserHandler : IRequestHandler<DeactivateUserCommand>
 {
@@ -23,35 +23,35 @@ public class DeactivateUserHandler : IRequestHandler<DeactivateUserCommand>
         _refreshTokenRepository = refreshTokenRepository;
     }
 
-    public async Task Handle(DeactivateUserCommand request, CancellationToken cancellationToken)
+    public async Task Handle(DeactivateUserCommand command, CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "Attempting to deactivate user {UserId}",
-            request.userId);
+            "DeactivateUserCommand started for {UserId}",
+            command.UserId);
 
         var user = await _userRepository.GetByIdAsync(
-            request.userId,
+            command.UserId,
             cancellationToken);
 
         if (user == null)
         {
             _logger.LogWarning(
-                "Deactivation failed. User not found {UserId}",
-                request.userId);
+                "DeactivateUserCommand failed: user not found {UserId}",
+                command.UserId);
 
-            throw new KeyNotFoundException($"User with ID {request.userId} not found");
+            throw new KeyNotFoundException($"User with ID {command.UserId} not found");
         }
 
         user.Deactivate();
 
         await _refreshTokenRepository.RevokeAllUserTokensAsync(
-            request.userId,
+            command.UserId,
             cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "User {UserId} successfully deactivated and all refresh tokens revoked",
-            request.userId);
+            "DeactivateUserCommand completed for {UserId}",
+            command.UserId);
     }
 }

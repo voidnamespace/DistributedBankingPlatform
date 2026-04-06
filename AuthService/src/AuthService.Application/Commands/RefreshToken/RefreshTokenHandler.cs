@@ -32,11 +32,12 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         RefreshTokenCommand command,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Attempting to refresh access token");
+        _logger.LogInformation("RefreshTokenCommand started");
 
         if (string.IsNullOrWhiteSpace(command.RefreshToken))
         {
             _logger.LogWarning("Refresh token request failed: token is empty");
+
             throw new ArgumentException("Refresh token is required");
         }
 
@@ -47,8 +48,13 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         if (refreshToken == null)
         {
             _logger.LogWarning("Refresh token request failed: token not found");
+
             throw new UnauthorizedAccessException("Invalid refresh token");
         }
+
+        _logger.LogInformation(
+            "Refresh token validated for user {UserId}",
+            refreshToken.UserId);
 
         if (!refreshToken.IsActive())
         {
@@ -75,6 +81,10 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         refreshToken.IsRevoked = true;
         refreshToken.RevokedAt = DateTime.UtcNow;
 
+        _logger.LogInformation(
+            "Refresh token revoked for user {UserId}",
+            user.Id);
+
         await _refreshTokenRepository.UpdateAsync(
             refreshToken,
             cancellationToken);
@@ -82,6 +92,11 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var newAccessToken = _jwtService.GenerateAccessToken(user);
+
+        _logger.LogInformation(
+            "Access token generated via refresh flow for user {UserId}",
+            user.Id);
+
         var newRefreshTokenValue = _jwtService.GenerateRefreshToken();
 
         var newRefreshToken = new RefreshToken
@@ -94,6 +109,10 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
             IsRevoked = false
         };
 
+        _logger.LogInformation(
+            "New refresh token created for user {UserId}",
+            user.Id);
+
         await _refreshTokenRepository.CreateAsync(
             newRefreshToken,
             cancellationToken);
@@ -101,7 +120,7 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "Access token successfully refreshed for user {UserId}",
+            "RefreshTokenCommand completed {UserId}",
             user.Id);
 
         return new RefreshTokenResponse

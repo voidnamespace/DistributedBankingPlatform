@@ -1,4 +1,4 @@
 ﻿using MediatR;
-namespace AuthService.Application.Commands.DeleteUser;
+namespace AuthService.Application.Commands.DeactivateUser;
 
-public record DeactivateUserCommand(Guid userId) : IRequest;
+public record DeactivateUserCommand(Guid UserId) : IRequest;
