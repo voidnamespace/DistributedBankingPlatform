@@ -59,32 +59,46 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
     }
 
     public Task PublishAsync<T>(
-        T message,
-        CancellationToken ct = default)
+    T message,
+    CancellationToken ct = default)
     {
-        var routingKey = IntegrationEventMap.GetName(message!.GetType());
+        try
+        {
+            var routingKey = IntegrationEventMap.GetName(message!.GetType());
 
-        var body = Encoding.UTF8.GetBytes(
-            JsonSerializer.Serialize(message));
+            var body = Encoding.UTF8.GetBytes(
+                JsonSerializer.Serialize(message));
 
-        var props = _channel.CreateBasicProperties();
+            var props = _channel.CreateBasicProperties();
 
-        props.Persistent = true;
-        props.MessageId = Guid.NewGuid().ToString();
-        props.ContentType = "application/json";
+            props.Persistent = true;
+            props.MessageId = Guid.NewGuid().ToString();
+            props.ContentType = "application/json";
 
-        _channel.BasicPublish(
-            exchange: _publisherOptions.Exchange,
-            routingKey: routingKey,
-            basicProperties: props,
-            body: body);
+            _channel.BasicPublish(
+                exchange: _publisherOptions.Exchange,
+                routingKey: routingKey,
+                mandatory: true,
+                basicProperties: props,
+                body: body);
 
-        _logger.LogInformation(
-            "RabbitMQ event published. Type={EventType} RoutingKey={RoutingKey}",
-            message.GetType().Name,
-            routingKey);
+            _logger.LogInformation(
+                "RabbitMQ event published. Type={EventType} RoutingKey={RoutingKey} MessageId={MessageId}",
+                message.GetType().Name,
+                routingKey,
+                props.MessageId);
 
-        return Task.CompletedTask;
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "RabbitMQ publish failed. Type={EventType}",
+                typeof(T).Name);
+
+            throw;
+        }
     }
 
     public void Dispose()

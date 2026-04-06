@@ -1,5 +1,7 @@
 using AuthService.API.Extensions;
 using AuthService.Application.Commands.DeleteUser;
+using AuthService.Application.Commands.ActivateUser;
+using AuthService.Application.Commands.DeactivateUser;
 using AuthService.Application.Commands.LoginUser;
 using AuthService.Application.Commands.LogoutUser;
 using AuthService.Application.Commands.MakeRefreshToken;
@@ -8,7 +10,6 @@ using AuthService.Application.DTOs;
 using AuthService.Application.Queries.GetAllUsers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuthService.API.Controllers;

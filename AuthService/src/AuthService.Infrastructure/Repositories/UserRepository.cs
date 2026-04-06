@@ -34,12 +34,6 @@ public class UserRepository : IUserRepository
         await _context.Users.AddAsync(user, cancellationToken);
     }
 
-    public async Task UpdateAsync(User user, CancellationToken cancellationToken)
-    {
-        user.Touch();
-        _context.Users.Update(user);
-    }
-
     public Task DeleteAsync(User user, CancellationToken ct)
     {
         _context.Users.Remove(user);

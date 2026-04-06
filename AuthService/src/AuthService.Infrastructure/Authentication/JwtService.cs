@@ -1,11 +1,12 @@
 ﻿using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using System.Security.Principal;
 using System.Text;
 
 namespace AuthService.Infrastructure.Authentication;
@@ -34,19 +35,37 @@ public class JwtService : IJwtService
 
     public string GenerateAccessToken(User user)
     {
-        _logger.LogInformation("Generating access token for user {UserId}", user.Id);
+        if (user == null)
+        {
+            _logger.LogWarning("GenerateAccessToken failed: user is null");
+            throw new ArgumentNullException(nameof(user));
+        }
+
+        if (string.IsNullOrWhiteSpace(_secretKey))
+        {
+            _logger.LogCritical("GenerateAccessToken failed: secret key missing");
+            throw new InvalidOperationException("Secret key not configured");
+        }
+
+        _logger.LogInformation("GenerateAccessToken started {UserId}", user.Id);
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(_secretKey);
 
+        _logger.LogDebug(
+            "Generating claims for user {UserId} with role {Role}",
+            user.Id,
+            user.Role);
+
         var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email._email),
-            new Claim(ClaimTypes.Role, user.Role.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
-        };
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Email, user.Email._email),
+        new Claim(ClaimTypes.Role, user.Role.ToString()),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(JwtRegisteredClaimNames.Iat,
+            DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
+    };
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -61,25 +80,38 @@ public class JwtService : IJwtService
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
 
-        _logger.LogInformation("Access token generated for user {UserId}", user.Id);
+        _logger.LogDebug(
+            "Access token generated for {UserId} expires at {Expiration}",
+            user.Id,
+            tokenDescriptor.Expires);
+
+        _logger.LogInformation("GenerateAccessToken complete {UserId}", user.Id);
 
         return tokenHandler.WriteToken(token);
     }
 
     public string GenerateRefreshToken()
     {
-        _logger.LogDebug("Generating refresh token");
+        _logger.LogDebug("GenerateRefreshToken started");
 
         var randomNumber = new byte[64];
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomNumber);
+
+        _logger.LogDebug("GenerateRefreshToken completed");
 
         return Convert.ToBase64String(randomNumber);
     }
 
     public ClaimsPrincipal? ValidateToken(string token)
     {
-        _logger.LogDebug("Validating JWT token");
+        _logger.LogDebug("ValidateToken started");
+
+        if (string.IsNullOrWhiteSpace(_secretKey))
+        {
+            _logger.LogCritical("ValidateToken failed: secret key missing");
+            throw new InvalidOperationException("Secret key not configured");
+        }
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(_secretKey);
@@ -98,17 +130,39 @@ public class JwtService : IJwtService
                 ClockSkew = TimeSpan.Zero
             };
 
-            var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+            var principal = tokenHandler.ValidateToken(
+                token,
+                validationParameters,
+                out var validatedToken);
 
-            if (validatedToken is JwtSecurityToken jwtToken &&
-                jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            if (validatedToken is not JwtSecurityToken jwtToken ||
+                !jwtToken.Header.Alg.Equals(
+                    SecurityAlgorithms.HmacSha256,
+                    StringComparison.InvariantCultureIgnoreCase))
             {
-                _logger.LogInformation("JWT token validated successfully");
-                return principal;
+                _logger.LogWarning(
+                    "JWT token validation failed: invalid algorithm");
+
+                return null;
             }
 
-            _logger.LogWarning("JWT token validation failed: invalid algorithm");
+            var userId =
+                principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            _logger.LogInformation(
+                "JWT token validated successfully for {UserId}",
+                userId);
+
+            return principal;
+        }
+        catch (SecurityTokenExpiredException)
+        {
+            _logger.LogWarning("JWT token validation failed: token expired");
+            return null;
+        }
+        catch (SecurityTokenInvalidSignatureException)
+        {
+            _logger.LogWarning("JWT token validation failed: invalid signature");
             return null;
         }
         catch (Exception ex)
@@ -120,21 +174,39 @@ public class JwtService : IJwtService
 
     public Guid? GetUserIdFromToken(string token)
     {
+        _logger.LogDebug("GetUserIdFromToken started");
+
         var principal = ValidateToken(token);
 
         if (principal == null)
         {
-            _logger.LogWarning("Failed to extract user id from token");
+            _logger.LogWarning(
+                "GetUserIdFromToken failed: token validation failed");
+
             return null;
         }
 
         var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
 
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+        if (userIdClaim == null)
         {
-            _logger.LogWarning("UserId claim missing or invalid in JWT");
+            _logger.LogWarning(
+                "GetUserIdFromToken failed: NameIdentifier claim missing");
+
             return null;
         }
+
+        if (!Guid.TryParse(userIdClaim.Value, out var userId))
+        {
+            _logger.LogWarning(
+                "GetUserIdFromToken failed: invalid Guid format");
+
+            return null;
+        }
+
+        _logger.LogDebug(
+            "UserId extracted successfully from JWT: {UserId}",
+            userId);
 
         return userId;
     }
