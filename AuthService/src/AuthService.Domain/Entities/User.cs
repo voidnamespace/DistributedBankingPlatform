@@ -1,6 +1,7 @@
 using AuthService.Domain.Enums;
 using AuthService.Domain.Events;
 using AuthService.Domain.ValueObjects;
+
 namespace AuthService.Domain.Entities;
 
 public class User : Entity

@@ -5,33 +5,33 @@ using AuthService.Application.IntegrationEvents;
 using AuthService.Application.Common.Events;
 using Microsoft.Extensions.Logging;
 
-namespace AuthService.Application.EventHandlers;
+namespace AuthService.Application.DomainEventHandlers;
 
-public class UserDeactivatedDomainEventHandler
-    : INotificationHandler<DomainEventNotification<UserDeactivatedDomainEvent>>
+public class UserDeletedDomainEventHandler
+    : INotificationHandler<DomainEventNotification<UserDeletedDomainEvent>>
 {
     private readonly IOutboxWriter _outbox;
-    private readonly ILogger<UserDeactivatedDomainEventHandler> _logger;
+    private readonly ILogger<UserDeletedDomainEventHandler> _logger;
 
-    public UserDeactivatedDomainEventHandler(
+    public UserDeletedDomainEventHandler(
         IOutboxWriter outbox,
-        ILogger<UserDeactivatedDomainEventHandler> logger)
+        ILogger<UserDeletedDomainEventHandler> logger)
     {
         _outbox = outbox;
         _logger = logger;
     }
 
     public async Task Handle(
-        DomainEventNotification<UserDeactivatedDomainEvent> notification,
+        DomainEventNotification<UserDeletedDomainEvent> notification,
         CancellationToken ct)
     {
         var domainEvent = notification.DomainEvent;
 
         _logger.LogInformation(
-            "UserDeactivatedDomainEvent received for user {UserId}",
+            "UserDeletedDomainEvent received for user {UserId}",
             domainEvent.UserId);
 
-        var integrationEvent = new UserDeactivatedIntegrationEvent(
+        var integrationEvent = new UserDeletedIntegrationEvent(
             domainEvent.UserId);
 
         await _outbox.EnqueueAsync(
@@ -39,7 +39,7 @@ public class UserDeactivatedDomainEventHandler
             ct);
 
         _logger.LogInformation(
-            "UserDeactivatedIntegrationEvent enqueued to outbox for user {UserId}",
+            "UserDeletedIntegrationEvent enqueued to outbox for user {UserId}",
             domainEvent.UserId);
     }
 }

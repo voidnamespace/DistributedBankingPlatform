@@ -5,7 +5,7 @@ using AuthService.Domain.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace AuthService.Application.EventHandlers;
+namespace AuthService.Application.DomainEventHandlers;
 
 public class UserCreatedDomainEventHandler
     : INotificationHandler<DomainEventNotification<UserCreatedDomainEvent>>
@@ -28,21 +28,24 @@ public class UserCreatedDomainEventHandler
         var domainEvent = notification.DomainEvent;
 
         _logger.LogInformation(
-            "UserCreatedDomainEvent received for user {UserId} {Email}",
-            domainEvent.UserId,
-            domainEvent.Email);
+             "Handling UserCreatedDomainEvent for user {UserId} with email {Email}",
+             domainEvent.UserId,
+             domainEvent.Email);
 
         var integrationEvent = new UserCreatedIntegrationEvent(
             domainEvent.UserId,
             domainEvent.Email.Value);
 
+        _logger.LogInformation(
+          "IntegrationEvent type resolved: {IntegrationEventType}",
+           integrationEvent.GetType().FullName);
+
         await _outbox.EnqueueAsync(
             integrationEvent,
             ct);
-        _logger.LogInformation("type of integrationEvent = {Type}", integrationEvent.GetType().FullName);
 
         _logger.LogInformation(
-            "UserCreatedIntegrationEvent enqueued to outbox for user {UserId}",
-            domainEvent.UserId);
+         "Outbox enqueue: UserCreatedIntegrationEvent for user {UserId}",
+         domainEvent.UserId);
     }
 }

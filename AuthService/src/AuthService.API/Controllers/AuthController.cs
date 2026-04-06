@@ -32,7 +32,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register(RegisterRequest request)
     {
         _logger.LogInformation(
-            "Register attempt for {Email}",
+            "Register request started for {Email}",
             request.Email);
 
         var command = new RegisterUserCommand(
@@ -44,7 +44,7 @@ public class AuthController : ControllerBase
         var result = await _mediator.Send(command);
 
         _logger.LogInformation(
-            "User registered successfully {Email}",
+            "Register request completed for {Email}",
             request.Email);
 
         return Ok(result);
