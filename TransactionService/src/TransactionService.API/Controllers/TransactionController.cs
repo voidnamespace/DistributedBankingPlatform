@@ -30,11 +30,6 @@ public class TransactionController : ControllerBase
         var initiatorId = Guid.Parse(
         User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        if (request.FromAccountNumber == request.ToAccountNumber)
-            return BadRequest("Cannot transfer to the same account");
-        if (request.Amount <= 0)
-            return BadRequest("Amount must be greater than zero");
-
         var command = new CreateTransferCommand(
             initiatorId,
             request.FromAccountNumber,
@@ -54,6 +49,7 @@ public class TransactionController : ControllerBase
         var status = await _mediator.Send(query, ct);
         return Ok(status);
     }
+
     [Authorize]
     [HttpPost("withdrawal")]
     public async Task<IActionResult> Withdrawal(
@@ -73,6 +69,7 @@ public class TransactionController : ControllerBase
 
         return Accepted(new { transactionId });
     }
+
 
     [HttpPost("deposit")]
     public async Task<IActionResult> Deposit(
