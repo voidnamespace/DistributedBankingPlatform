@@ -15,10 +15,14 @@ namespace TransactionService.API.Controllers;
 public class TransactionController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ILogger<TransactionController> _logger;
 
-    public TransactionController(IMediator mediator)
+    public TransactionController(
+        IMediator mediator, 
+        ILogger<TransactionController> logger)
     {
         _mediator = mediator;
+        _logger = logger;
     }
 
     [Authorize]
@@ -30,6 +34,11 @@ public class TransactionController : ControllerBase
         var initiatorId = Guid.Parse(
         User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+        _logger.LogInformation(
+            "Transfer request started {initiatorId}",
+            initiatorId);
+
+
         var command = new CreateTransferCommand(
             initiatorId,
             request.FromAccountNumber,
@@ -39,10 +48,15 @@ public class TransactionController : ControllerBase
 
         var transactionId = await _mediator.Send(command, ct);
 
+        _logger.LogInformation(
+            "Transfer request completed {initiatorId}, {transactionId}",
+            initiatorId,
+            transactionId);
+
         return Accepted(new { transactionId });
     }
 
-    [HttpGet]
+    [HttpGet("{transactionId}")]
     public async Task<IActionResult> CheckStatus(Guid transactionId, CancellationToken ct)  
     {
         var query = new CheckTransferStatusQuery(transactionId);
@@ -59,6 +73,10 @@ public class TransactionController : ControllerBase
         var initiatorId = Guid.Parse(
         User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+        _logger.LogInformation(
+            "Withdrawal request started {initiatorId}",
+            initiatorId);
+
         var command = new CreateWithdrawalCommand(
             initiatorId,
             request.AccountNumber,
@@ -66,6 +84,11 @@ public class TransactionController : ControllerBase
             request.Currency);
 
         var transactionId = await _mediator.Send(command, ct);
+
+        _logger.LogInformation(
+            "Withdrawal request completed {initiatorId}, {transactionId}",
+             initiatorId,
+             transactionId);
 
         return Accepted(new { transactionId });
     }
@@ -76,12 +99,20 @@ public class TransactionController : ControllerBase
         [FromBody] CreateDepositRequest request,
         CancellationToken ct)
     {
+        _logger.LogInformation(
+            "Deposit request started for {ToAccountNumber}",
+            request.ToAccountNumber);
+        
         var command = new CreateDepositCommand(
             request.ToAccountNumber,
             request.Amount,
             request.Currency);
 
         var transactionId = await _mediator.Send(command, ct);
+
+        _logger.LogInformation(
+            "Deposit request completed for {ToAccountNumber}",
+            request.ToAccountNumber);
 
         return Accepted(new { transactionId });
 
