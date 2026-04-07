@@ -1,5 +1,6 @@
 using AuthService.Domain.Entities;
 using System.Security.Claims;
+
 namespace AuthService.Application.Interfaces;
 
 public interface IJwtService

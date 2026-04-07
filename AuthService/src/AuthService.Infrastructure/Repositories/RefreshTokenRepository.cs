@@ -2,6 +2,7 @@ using AuthService.Domain.Entities;
 using AuthService.Application.Interfaces;
 using AuthService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+
 namespace AuthService.Infrastructure.Repositories;
 
 public class RefreshTokenRepository : IRefreshTokenRepository

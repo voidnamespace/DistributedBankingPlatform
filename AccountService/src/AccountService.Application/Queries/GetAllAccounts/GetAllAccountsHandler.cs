@@ -1,25 +1,33 @@
 ﻿using AccountService.Application.DTOs;
 using AccountService.Application.Interfaces;
 using MediatR;
+using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.Queries.GetAllAccounts;
 
-public class GetAllAccountsHandler 
+public class GetAllAccountsHandler
     : IRequestHandler<GetAllAccountsQuery, IReadOnlyList<ReadAccountDTO>>
 {
     private readonly IAccountRepository _accountRepository;
+    private readonly ILogger<GetAllAccountsHandler> _logger;
 
-    public GetAllAccountsHandler (IAccountRepository accountRepository)
+    public GetAllAccountsHandler(
+        IAccountRepository accountRepository,
+        ILogger<GetAllAccountsHandler> logger)
     {
-        _accountRepository = accountRepository; 
+        _accountRepository = accountRepository;
+        _logger = logger;
     }
+
     public async Task<IReadOnlyList<ReadAccountDTO>> Handle(
-    GetAllAccountsQuery query,
-    CancellationToken ct)
+        GetAllAccountsQuery query,
+        CancellationToken ct)
     {
+        _logger.LogInformation("GetAllAccountsQuery received");
+
         var accounts = await _accountRepository.GetAllAsync(ct);
 
-
-        return accounts.Select(account => new ReadAccountDTO
+        var result = accounts.Select(account => new ReadAccountDTO
         {
             Id = account.Id,
             UserId = account.UserId,
@@ -30,8 +38,11 @@ public class GetAllAccountsHandler
             UpdatedAt = account.UpdatedAt,
             IsActive = account.IsActive
         }).ToList();
+
+        _logger.LogInformation(
+            "GetAllAccountsQuery completed successfully. Returned {Count} accounts",
+            result.Count);
+
+        return result;
     }
-
-
-
 }

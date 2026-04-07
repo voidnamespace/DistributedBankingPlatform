@@ -23,19 +23,25 @@ public class DeleteAccountsForDeletedUserHandler : IRequestHandler<DeleteAccount
     public async Task Handle(DeleteAccountsForDeletedUserCommand command, CancellationToken ct)
     {
         _logger.LogInformation(
-            "DeleteAccountEventChainCommand received for user {UserId}",
+            "DeleteAccountsForDeletedUserCommand started for user {UserId}",
             command.UserId);
 
-        var accounts = await _accountRepository.GetByUserIdAsync(command.UserId, ct);
+        var accounts = await _accountRepository
+            .GetByUserIdAsync(command.UserId, ct);
 
         if (accounts == null || !accounts.Any())
         {
             _logger.LogInformation(
-                "No accounts found for user {UserId}",
+                "DeleteAccountsForDeletedUserCommand: no accounts found for user {UserId}",
                 command.UserId);
 
             return;
         }
+
+        _logger.LogInformation(
+            "DeleteAccountsForDeletedUserCommand: {Count} accounts loaded for deletion for user {UserId}",
+            accounts.Count(),
+            command.UserId);
 
         foreach (var account in accounts)
         {
@@ -45,7 +51,7 @@ public class DeleteAccountsForDeletedUserHandler : IRequestHandler<DeleteAccount
         await _unitOfWork.SaveChangesAsync(ct);
 
         _logger.LogInformation(
-            "Deleted {Count} accounts for user {UserId}",
+            "DeleteAccountsForDeletedUserCommand completed: deleted {Count} accounts for user {UserId}",
             accounts.Count(),
             command.UserId);
     }

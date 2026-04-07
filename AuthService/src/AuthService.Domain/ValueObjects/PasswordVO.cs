@@ -1,4 +1,6 @@
-﻿namespace AuthService.Domain.ValueObjects;
+﻿
+namespace AuthService.Domain.ValueObjects;
+
 using BCrypt.Net;
 
 public class PasswordVO

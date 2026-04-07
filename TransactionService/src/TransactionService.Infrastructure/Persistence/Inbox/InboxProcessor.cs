@@ -22,95 +22,125 @@ public class InboxProcessor : BackgroundService
         };
     }
 
-    public InboxProcessor(IServiceScopeFactory scopeFactory,
+    public InboxProcessor(
+        IServiceScopeFactory scopeFactory,
         ILogger<InboxProcessor> logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
-
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(
+        CancellationToken stoppingToken)
     {
         _logger.LogInformation("InboxProcessor started");
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            using var scope = _scopeFactory.CreateScope();
-
-            var db = scope.ServiceProvider
-               .GetRequiredService<TransactionDbContext>();
-
-            var mediator = scope.ServiceProvider
-                .GetRequiredService<IMediator>();
-
-            var messages = await db.InboxMessages
-                .Where(x => x.ProcessedAt == null)
-                .OrderBy(x => x.ReceivedAt)
-                .Take(20)
-                .ToListAsync(stoppingToken);
-
-            if (messages.Count > 0)
+            try
             {
-                _logger.LogInformation(
-                    "Inbox batch fetched. Count={Count}",
-                    messages.Count);
-            }
-            foreach (var message in messages)
-            {
-                try
+                using var scope = _scopeFactory.CreateScope();
+
+                var db = scope.ServiceProvider
+                    .GetRequiredService<TransactionDbContext>();
+
+                var mediator = scope.ServiceProvider
+                    .GetRequiredService<IMediator>();
+
+                var batch = await db.InboxMessages
+                    .Where(x => x.ProcessedAt == null)
+                    .OrderBy(x => x.ReceivedAt)
+                    .Take(20)
+                    .ToListAsync(stoppingToken);
+
+                if (batch.Count > 0)
                 {
-                    var type = IntegrationEventMap.GetType(message.Type);
+                    _logger.LogInformation(
+                        "InboxProcessor picked batch: Count {Count}",
+                        batch.Count);
+                }
 
-                    if (type is null)
+                foreach (var message in batch)
+                {
+                    try
                     {
-                        message.Error = "Type not found";
-                        message.AttemptCount++;
+                        var type = IntegrationEventMap
+                            .GetType(message.Type);
 
-                        _logger.LogWarning(
-                            "Inbox message type not found. Id={Id} Type={Type}",
+                        if (type is null)
+                        {
+                            message.AttemptCount++;
+                            message.Error = "Type not found";
+
+                            _logger.LogWarning(
+                                "Inbox message type resolution failed: MessageId {MessageId}, Type {Type}",
+                                message.Id,
+                                message.Type);
+
+                            continue;
+                        }
+
+                        var integrationEvent =
+                            JsonSerializer.Deserialize(
+                                message.Payload,
+                                type,
+                                JsonDefaults.Options);
+
+                        if (integrationEvent is not INotification notification)
+                        {
+                            throw new InvalidOperationException(
+                                $"Message is not MediatR notification. MessageId {message.Id}");
+                        }
+
+                        _logger.LogInformation(
+                            "Publishing integration event to mediator: MessageId {MessageId}, Type {Type}",
                             message.Id,
                             message.Type);
 
-                        continue;
-                    }
-                    _logger.LogInformation("MappedType = {type}", type.FullName);
-                    _logger.LogInformation("Assembly = {assembly}", type.Assembly.FullName);
-                    _logger.LogInformation("Payload RAW = {payload}", message.Payload);
-                    var integrationEvent = JsonSerializer.Deserialize(
-                         message.Payload,
-                         type,
-                         JsonDefaults.Options);
+                        await mediator.Publish(
+                            notification,
+                            stoppingToken);
 
-                    if (integrationEvent is INotification notification)
+                        message.ProcessedAt = DateTime.UtcNow;
+                        message.Error = null;
+
+                        _logger.LogInformation(
+                            "Inbox message processed successfully: MessageId {MessageId}",
+                            message.Id);
+                    }
+                    catch (Exception ex)
                     {
-                        await mediator.Publish(notification, stoppingToken);
-                    }
+                        message.AttemptCount++;
+                        message.Error = ex.Message;
 
-                    message.ProcessedAt = DateTime.UtcNow;
+                        _logger.LogWarning(
+                            ex,
+                            "Inbox message failed: MessageId {MessageId}, Attempt {AttemptCount}",
+                            message.Id,
+                            message.AttemptCount);
+                    }
+                }
+
+                if (batch.Count > 0)
+                {
+                    await db.SaveChangesAsync(stoppingToken);
 
                     _logger.LogInformation(
-                        "Inbox message processed. Id={Id} Type={Type}",
-                        message.Id,
-                        message.Type);
-
-                }
-
-                catch (Exception ex)
-                {
-                    message.AttemptCount++;
-                    message.Error = ex.Message;
-
-                    _logger.LogError(
-                        ex,
-                        "Inbox message failed. Id={Id} Attempt={Attempt}",
-                        message.Id,
-                        message.AttemptCount);
+                        "InboxProcessor batch committed");
                 }
             }
-            await db.SaveChangesAsync(stoppingToken);
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "InboxProcessor main loop failure");
+            }
 
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            await Task.Delay(
+                TimeSpan.FromSeconds(5),
+                stoppingToken);
         }
+
+        _logger.LogInformation("InboxProcessor stopped");
     }
 }

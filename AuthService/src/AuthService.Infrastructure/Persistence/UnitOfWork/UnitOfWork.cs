@@ -38,7 +38,7 @@ public class UnitOfWork : IUnitOfWork
         if (domainEvents.Count > 0)
         {
             _logger.LogInformation(
-                "Dispatching {Count} domain events",
+               "Dispatching {Count} domain events before committing transaction",
                 domainEvents.Count);
         }
 
@@ -62,7 +62,17 @@ public class UnitOfWork : IUnitOfWork
 
         entities.ForEach(e => e.ClearDomainEvents());
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "UnitOfWork SaveChangesAsync failed while saving to database");
+
+            throw;
+        }
 
         _logger.LogDebug("UnitOfWork SaveChangesAsync completed");
     }

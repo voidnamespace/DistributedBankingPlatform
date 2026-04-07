@@ -3,6 +3,7 @@ using AuthService.Domain.Entities;
 using AuthService.Domain.ValueObjects;
 using AuthService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+
 namespace AuthService.Infrastructure.Repositories;
 
 public class UserRepository : IUserRepository
@@ -31,12 +32,6 @@ public class UserRepository : IUserRepository
     public async Task CreateAsync(User user, CancellationToken cancellationToken)
     {
         await _context.Users.AddAsync(user, cancellationToken);
-    }
-
-    public async Task UpdateAsync(User user, CancellationToken cancellationToken)
-    {
-        user.Touch();
-        _context.Users.Update(user);
     }
 
     public Task DeleteAsync(User user, CancellationToken ct)

@@ -5,30 +5,39 @@ using TransactionService.Application.IntegrationEvents.Transfer;
 
 namespace TransactionService.Application.IntegrationEventHandlers;
 
-public class TransferSuccessIntegrationEventHandler : INotificationHandler<TransferSuccessIntegrationEvent>
+public class TransferSuccessIntegrationEventHandler
+    : INotificationHandler<TransferSuccessIntegrationEvent>
 {
-
     private readonly IMediator _mediator;
     private readonly ILogger<TransferSuccessIntegrationEventHandler> _logger;
 
-    public TransferSuccessIntegrationEventHandler (IMediator mediator,
+    public TransferSuccessIntegrationEventHandler(
+        IMediator mediator,
         ILogger<TransferSuccessIntegrationEventHandler> logger)
     {
         _mediator = mediator;
         _logger = logger;
     }
 
-
-    public async Task Handle (TransferSuccessIntegrationEvent notification, CancellationToken ct)
+    public async Task Handle(
+        TransferSuccessIntegrationEvent notification,
+        CancellationToken ct)
     {
-        _logger.LogInformation("Transfer success integration event recieved {transaction.Id}", notification.TransactionId);
+        _logger.LogInformation(
+            "TransferSuccessIntegrationEvent received: TransactionId {TransactionId}",
+            notification.TransactionId);
 
-        var command = new MarkTransactionSuccessCommand(notification.TransactionId);
+        var command = new MarkTransactionSuccessCommand(
+            notification.TransactionId);
+
+        _logger.LogInformation(
+            "MarkTransactionSuccessCommand created: TransactionId {TransactionId}",
+            notification.TransactionId);
 
         await _mediator.Send(command, ct);
 
-        _logger.LogInformation("Transfer success integration event sent {transaction.Id}", notification.TransactionId);
-
+        _logger.LogInformation(
+            "MarkTransactionSuccessCommand dispatched: TransactionId {TransactionId}",
+            notification.TransactionId);
     }
-
 }

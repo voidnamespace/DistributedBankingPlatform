@@ -23,20 +23,33 @@ public class OutboxWriter : IOutboxWriter
         T integrationEvent,
         CancellationToken ct)
     {
+        string payload;
+
+        try
+        {
+            payload = JsonSerializer.Serialize(integrationEvent);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to serialize integration event {EventType}",
+                typeof(T).Name);
+
+            throw;
+        }
+
         var message = new OutboxMessage
         {
             Id = Guid.NewGuid(),
 
             Type = IntegrationEventMap.GetName(typeof(T)),
 
-            Payload = JsonSerializer.Serialize(integrationEvent),
+            Payload = payload,
 
             CreatedAt = DateTime.UtcNow,
 
             AttemptCount = 0
         };
-
-        _logger.LogInformation("type of integrationEvent {Type}", integrationEvent.GetType().FullName);
 
         _context.OutboxMessages.Add(message);
 

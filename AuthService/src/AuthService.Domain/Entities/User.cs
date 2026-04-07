@@ -49,19 +49,41 @@ public class User : Entity
 
     public void ChangeEmail(EmailVO newEmail)
     {
+        if (Email == newEmail)
+            return;
+
+        var oldEmail = Email;
+
         Email = newEmail;
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(
+            new EmailChangedDomainEvent(Id, oldEmail, newEmail));
     }
 
     public void ChangePassword(PasswordVO newPassword)
     {
+        if (PasswordHash == newPassword)
+            return;
+
         PasswordHash = newPassword;
         UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(
+            new PasswordChangedDomainEvent(Id));
     }
+
     public void ChangeRole(Roles newRole)
     {
+        if (Role == newRole)
+            return;
+        
+        var oldRole = Role;
+
         Role = newRole;
         UpdatedAt = DateTime.UtcNow;
+        AddDomainEvent(
+            new RoleChangedDomainEvent(Id, oldRole, newRole));
     }
     public void Touch()
     {

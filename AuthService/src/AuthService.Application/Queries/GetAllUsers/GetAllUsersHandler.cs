@@ -20,7 +20,7 @@ public class GetAllUsersHandler
     }
 
     public async Task<IEnumerable<UserDTO>> Handle(
-        GetAllUsersQuery request,
+        GetAllUsersQuery query,
         CancellationToken cancellationToken)
     {
         _logger.LogInformation("GetAllUsersQuery received");

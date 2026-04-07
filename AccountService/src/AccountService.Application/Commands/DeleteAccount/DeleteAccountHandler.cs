@@ -1,6 +1,7 @@
 ﻿using AccountService.Application.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.Commands.DeleteAccount;
 
 public class DeleteAccountHandler : IRequestHandler<DeleteAccountCommand>
@@ -22,26 +23,42 @@ public class DeleteAccountHandler : IRequestHandler<DeleteAccountCommand>
     public async Task Handle(DeleteAccountCommand command, CancellationToken ct)
     {
         _logger.LogInformation(
-            "DeleteAccountCommand received for account {AccountId} by user {UserId}",
+            "DeleteAccountCommand started for account {AccountId} by user {UserId}",
             command.AccountId,
             command.UserId);
 
         var account = await _accountRepository.GetByIdAsync(command.AccountId, ct);
 
         if (account == null)
-            throw new KeyNotFoundException($"Account with ID {command.AccountId} not found");
+        {
+            _logger.LogWarning(
+                "DeleteAccountCommand failed: account {AccountId} not found",
+                command.AccountId);
+
+            throw new KeyNotFoundException(
+                $"Account with ID {command.AccountId} not found");
+        }
 
         if (account.UserId != command.UserId)
-            throw new InvalidOperationException("U can delete only your account");
+        {
+            _logger.LogWarning(
+                "DeleteAccountCommand forbidden: user {UserId} tried deleting account {AccountId}",
+                command.UserId,
+                command.AccountId);
+
+            throw new InvalidOperationException(
+                "U can delete only your account");
+        }
 
         account.Delete();
 
         await _accountRepository.DeleteAsync(account, ct);
+
         await _unitOfWork.SaveChangesAsync(ct);
 
         _logger.LogInformation(
-            "Account {AccountId} deleted by user {UserId}",
-            command.AccountId,
-            command.UserId);
+            "DeleteAccountCommand completed for {UserId}, {AccountId}",
+            command.UserId,
+            command.AccountId);
     }
 }

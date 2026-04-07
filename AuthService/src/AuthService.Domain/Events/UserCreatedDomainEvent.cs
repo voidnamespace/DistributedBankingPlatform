@@ -9,4 +9,3 @@ public sealed record UserCreatedDomainEvent(
 {
     public DateTime OccurredOn { get; } = DateTime.UtcNow;
 }
-

@@ -1,6 +1,7 @@
 ﻿using AccountService.Application.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.Commands.ActivateAccount;
 
 public class ActivateAccountHandler
@@ -25,8 +26,9 @@ public class ActivateAccountHandler
         CancellationToken ct)
     {
         _logger.LogInformation(
-            "Activating account {AccountId}",
-            request.AccountId);
+            "ActivateAccountCommand started for {AccountId} by {UserId}",
+             request.AccountId,
+             request.UserId);
 
         var account = await _accountRepository.GetByIdAsync(
             request.AccountId,
@@ -38,12 +40,20 @@ public class ActivateAccountHandler
         if (account.UserId != request.UserId)
             throw new UnauthorizedAccessException();
 
-        account.Activate(); 
+        _logger.LogInformation(
+            "Account entity loaded from database {AccountId}",
+            request.AccountId);
+
+        account.Activate();
+
+        _logger.LogInformation(
+            "Account entity activated {AccountId}",
+            request.AccountId);
 
         await _unitOfWork.SaveChangesAsync(ct);
 
         _logger.LogInformation(
-            "Account {AccountId} activated",
+            "ActivateAccountCommand completed for {AccountId} ",
             request.AccountId);
     }
 }

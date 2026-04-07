@@ -1,6 +1,6 @@
-﻿namespace AccountService.Domain.Events;
+﻿namespace AccountService.Domain.Events.Account;
 
-public sealed record AccountDeactivatedDomainEvent(
+public sealed record AccountDeletedDomainEvent(
     Guid UserId,
     Guid AccountId) : IDomainEvent
 {

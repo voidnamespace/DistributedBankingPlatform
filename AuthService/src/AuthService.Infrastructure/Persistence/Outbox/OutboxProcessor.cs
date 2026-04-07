@@ -70,7 +70,10 @@ public class OutboxProcessor : BackgroundService
                                 $"Cannot deserialize message payload: {msg.Id}");
                         }
 
-                        _logger.LogInformation("integration event type = {Type}", integrationEvent.GetType().FullName);
+                        _logger.LogDebug(
+                             "Publishing integration event {Type} Id={Id}",
+                                 msg.Type,
+                                 msg.Id);
 
                         await publisher.PublishAsync(
                             integrationEvent,
@@ -97,7 +100,20 @@ public class OutboxProcessor : BackgroundService
                 }
 
                 if (batch.Count > 0)
-                    await db.SaveChangesAsync(stoppingToken);
+                {
+                    try
+                    {
+                        await db.SaveChangesAsync(stoppingToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(
+                            ex,
+                            "OutboxProcessor failed saving processed messages");
+
+                        throw;
+                    }
+                }
             }
             catch (Exception ex)
             {
