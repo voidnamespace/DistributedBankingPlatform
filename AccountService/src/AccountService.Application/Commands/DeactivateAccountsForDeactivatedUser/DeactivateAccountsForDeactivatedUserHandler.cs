@@ -1,6 +1,7 @@
 ﻿using AccountService.Application.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.Commands.DeactivateAccountEventChain;
 
 public class DeactivateAccountsForDeactivatedUserHandler
@@ -23,21 +24,42 @@ public class DeactivateAccountsForDeactivatedUserHandler
     public async Task Handle(DeactivateAccountsForDeactivatedUserCommand command, CancellationToken ct)
     {
         _logger.LogInformation(
-            "DeactivateAccountEventChainCommand received for user {UserId}",
+            "DeactivateAccountsForDeactivatedUserCommand started for {UserId} after user deactivation event",
             command.UserId);
 
-        var accounts = await _accountRepository.GetByUserIdAsync(command.UserId, ct);
+        var accounts = await _accountRepository.GetByUserIdAsync(
+            command.UserId,
+            ct);
+
+        _logger.LogInformation(
+            "Account entities loaded from database for {UserId}, {Count} accounts",
+            command.UserId,
+            accounts.Count);
+
+        if (accounts.Count == 0)
+        {
+            _logger.LogInformation(
+                "No accounts found for {UserId} to deactivate",
+                command.UserId);
+
+            return;
+        }
 
         foreach (var account in accounts)
         {
             account.Deactivate();
         }
 
+        _logger.LogInformation(
+            "Account entities deactivated for {UserId}, {Count} accounts",
+            command.UserId,
+            accounts.Count);
+
         await _unitOfWork.SaveChangesAsync(ct);
 
         _logger.LogInformation(
-            "Deactivated {Count} accounts for user {UserId}",
-            accounts.Count,
-            command.UserId);
+            "DeactivateAccountsForDeactivatedUserCommand completed for {UserId}, {Count} accounts",
+            command.UserId,
+            accounts.Count);
     }
 }

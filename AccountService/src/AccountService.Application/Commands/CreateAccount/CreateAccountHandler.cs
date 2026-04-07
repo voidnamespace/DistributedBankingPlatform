@@ -28,7 +28,7 @@ public class CreateAccountHandler
         CancellationToken ct)
     {
         _logger.LogInformation(
-            "CreateAccountCommand received for user {UserId} with currency {Currency}",
+            "CreateAccountCommand started for user {UserId} with currency {Currency}",
             command.UserId,
             command.Currency);
 
@@ -46,12 +46,19 @@ public class CreateAccountHandler
             accountNumberVO,
             command.Currency);
 
+        _logger.LogInformation(
+             "Account entity created for {UserId} with account number {AccountNumber}",
+             command.UserId,
+             accountNumberVO.Value);
+
         await _accountRepository.AddAsync(acc, ct);
+
         await _unitOfWork.SaveChangesAsync(ct);
 
         _logger.LogInformation(
-            "Account created for user {UserId} with account number {AccountNumber}",
-            command.UserId,
-            accountNumberVO.Value);
+           "CreateAccountCommand completed for {UserId} with account number {AccountNumber}",
+           command.UserId,
+           accountNumberVO.Value);
+
     }
 }

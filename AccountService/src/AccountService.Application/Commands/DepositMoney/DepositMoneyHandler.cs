@@ -34,27 +34,50 @@ public class DepositMoneyHandler : IRequestHandler<DepositMoneyCommand>
 
         var accNum = new AccountNumberVO(command.ToAccountNumber);
 
-        var acc = await _accountRepository.GetByAccountNumberAsync(accNum, ct)
-            ?? throw new KeyNotFoundException("No such acc");
+        var acc = await _accountRepository.GetByAccountNumberAsync(accNum, ct);
+
+        if (acc == null)
+        {
+            _logger.LogWarning(
+                "DepositMoneyCommand failed: account {AccountNumber} not found",
+                command.ToAccountNumber);
+
+            throw new KeyNotFoundException("Account not found");
+        }
 
         if (command.Amount <= 0)
         {
-            await _outboxWriter.EnqueueAsync(new DepositFailedIntegrationEvent(
-                command.TransactionId,
-                command.ToAccountNumber,
+            _logger.LogWarning(
+                "DepositMoneyCommand failed: invalid amount {Amount} for account {AccountNumber}",
                 command.Amount,
-                command.Currency), ct);
+                command.ToAccountNumber);
+
+            await _outboxWriter.EnqueueAsync(
+                new DepositFailedIntegrationEvent(
+                    command.TransactionId,
+                    command.ToAccountNumber,
+                    command.Amount,
+                    command.Currency),
+                ct);
 
             return;
         }
 
         if ((Currency)command.Currency != acc.Balance.Currency)
         {
-            await _outboxWriter.EnqueueAsync(new DepositFailedIntegrationEvent(
-                command.TransactionId,
+            _logger.LogWarning(
+                "DepositMoneyCommand failed: currency mismatch for account {AccountNumber}. Expected {ExpectedCurrency}, received {Currency}",
                 command.ToAccountNumber,
-                command.Amount,
-                command.Currency), ct);
+                acc.Balance.Currency,
+                command.Currency);
+
+            await _outboxWriter.EnqueueAsync(
+                new DepositFailedIntegrationEvent(
+                    command.TransactionId,
+                    command.ToAccountNumber,
+                    command.Amount,
+                    command.Currency),
+                ct);
 
             return;
         }
@@ -67,7 +90,7 @@ public class DepositMoneyHandler : IRequestHandler<DepositMoneyCommand>
         acc.Deposit(money, command.TransactionId);
 
         _logger.LogInformation(
-            "Deposit completed for account {AccountNumber}, amount {Amount} {Currency}",
+            "DepositMoneyCommand applied to account {AccountNumber}, amount {Amount} {Currency}",
             command.ToAccountNumber,
             command.Amount,
             command.Currency);

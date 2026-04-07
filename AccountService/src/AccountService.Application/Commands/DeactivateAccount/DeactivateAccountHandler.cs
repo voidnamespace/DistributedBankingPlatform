@@ -1,6 +1,7 @@
 ﻿using AccountService.Application.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
+
 namespace AccountService.Application.Commands.DeactivateAccount;
 
 public class DeactivateAccountHandler
@@ -25,7 +26,7 @@ public class DeactivateAccountHandler
         CancellationToken ct)
     {
         _logger.LogInformation(
-            "Deactivating account {AccountId}",
+            "DeactivateAccountCommand started for {AccountId}",
             request.AccountId);
 
         var account = await _accountRepository.GetByIdAsync(
@@ -35,12 +36,20 @@ public class DeactivateAccountHandler
         if (account == null)
             throw new KeyNotFoundException("Account not found");
 
-        account.Deactivate(); 
+        _logger.LogInformation(
+            "Account entity loaded from database {AccountId}",
+            request.AccountId);
+
+        account.Deactivate();
+
+        _logger.LogInformation(
+            "Account entity deactivated {AccountId}",
+            request.AccountId);
 
         await _unitOfWork.SaveChangesAsync(ct);
 
         _logger.LogInformation(
-            "Account {AccountId} deactivated",
+            "DeactivateAccountCommand completed for {AccountId} ",
             request.AccountId);
     }
 }

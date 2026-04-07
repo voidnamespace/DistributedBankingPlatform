@@ -19,10 +19,13 @@ public class AccountController : ControllerBase
 {
 
     private readonly IMediator _mediator;
+    private readonly ILogger<AccountController> _logger;
 
-    public AccountController (IMediator mediator)
+    public AccountController (
+        IMediator mediator, ILogger<AccountController> logger)
     {
-        _mediator = mediator; 
+        _mediator = mediator;
+        _logger = logger;
     }
 
     [Authorize]
@@ -34,11 +37,19 @@ public class AccountController : ControllerBase
         var userId = Guid.Parse(
         User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+        _logger.LogInformation(
+            "CreateAccount request started for {userId}",
+            userId);
+
         await _mediator.Send(
             new CreateAccountCommand(
                 userId,
                 request.Currency),
             ct);
+
+        _logger.LogInformation(
+            "CreateAccount request complete for {userId}",
+            userId);
 
         return Accepted();
     }
@@ -47,7 +58,19 @@ public class AccountController : ControllerBase
     [HttpGet("all")]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
+        var userId = Guid.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        _logger.LogInformation(
+            "GetAll request started for admin {userId}",
+            userId);
+
         var result = await _mediator.Send(new GetAllAccountsQuery(), ct);
+
+        _logger.LogInformation(
+            "GetAll request complete for admin {userId}",
+            userId);
+
         return Ok(result);
     }
 
@@ -57,7 +80,17 @@ public class AccountController : ControllerBase
     {
         var tokenUserId = Guid.Parse(
         User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        _logger.LogInformation(
+            "GetById request started for {tokenUserId}",
+            tokenUserId);
+
         var result = await _mediator.Send(new GetByIdAccountQuery(accountId, tokenUserId), ct);
+
+        _logger.LogInformation(
+            "GetById request completed for {tokenUserId}",
+            tokenUserId);
+
         return Ok(result);
     }
 
@@ -70,10 +103,18 @@ public class AccountController : ControllerBase
         var userId = Guid.Parse(
             User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+        _logger.LogInformation(
+            "GetByAccountNumber request started for {userId}",
+            userId);
+
         var result = await _mediator.Send(
             new GetByAccountNumberAccountQuery(accountNumber, userId),
             ct
         );
+
+        _logger.LogInformation(
+            "GetByAccountNumber request completed for {userId}",
+            userId);
 
         return Ok(result);
     }
@@ -84,8 +125,18 @@ public class AccountController : ControllerBase
     {
         var userId = Guid.Parse(
         User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        _logger.LogInformation(
+            "DeleteAccount request started for {userId}",
+            userId);
+
         var command = new DeleteAccountCommand(accountId, userId);
         await _mediator.Send(command, ct);
+
+        _logger.LogInformation(
+            "DeleteAccount request completed for {userId}",
+            userId);
+
         return NoContent();
     }
 
@@ -96,9 +147,17 @@ public class AccountController : ControllerBase
         var userId = Guid.Parse(
             User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+        _logger.LogInformation(
+            "GetMyAccount request started for {userId}",
+            userId);
+
         var result = await _mediator.Send(
             new GetMyAccountQuery(userId),
             ct);
+
+        _logger.LogInformation(
+            "GetMyAccount request completed for {userId}",
+            userId);
 
         return Ok(result);
     }
@@ -112,9 +171,17 @@ public class AccountController : ControllerBase
         var userId = Guid.Parse(
             User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+        _logger.LogInformation(
+            "ActivateAccount request started for {userId}",
+            userId);
+
         var command = new ActivateAccountCommand(accountId, userId);
 
         await _mediator.Send(command, ct);
+
+        _logger.LogInformation(
+            "ActivateAccount request completed for {userId}",
+            userId);
 
         return NoContent();
     }

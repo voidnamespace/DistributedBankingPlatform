@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+
 namespace AuthService.Infrastructure.Middleware;
 
 public class ExceptionMiddleware

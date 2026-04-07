@@ -1,10 +1,10 @@
 ﻿using AccountService.Domain.ValueObjects;
 
-namespace AccountService.Domain.Events;
+namespace AccountService.Domain.Events.Transactions;
 
-public sealed record WithdrawalFailedDomainEvent(
+public sealed record  DepositSuccessDomainEvent(
     Guid TransactionId,
-    AccountNumberVO FromAccountNumber,
+    AccountNumberVO ToAccountNumber,
     MoneyVO Money) : IDomainEvent
 {
     public DateTime OccurredOn { get; } = DateTime.UtcNow;

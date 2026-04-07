@@ -16,7 +16,6 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
 
     public WithdrawMoneyHandler(
         IAccountRepository accountRepository,
-        IUnitOfWork unitOfWork,
         ILogger<WithdrawMoneyHandler> logger,
         IOutboxWriter outboxWriter)
     {
@@ -25,10 +24,11 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
         _outboxWriter = outboxWriter;
     }
 
+
     private async Task PublishWithdrawalFailed(
-    WithdrawMoneyCommand command,
-    string reason,
-    CancellationToken ct)
+        WithdrawMoneyCommand command,
+        string reason,
+        CancellationToken ct)
     {
         await _outboxWriter.EnqueueAsync(
             new WithdrawalFailedIntegrationEvent(
@@ -39,70 +39,103 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
                 reason
             ),
             ct);
+
+        _logger.LogInformation(
+            "WithdrawalFailedIntegrationEvent queued for transaction {TransactionId}, reason {Reason}",
+            command.TransactionId,
+            reason);
     }
+
 
     public async Task Handle(WithdrawMoneyCommand command, CancellationToken ct)
     {
         _logger.LogInformation(
-            "WithdrawMoneyCommand received for account {AccountNumber}, amount {Amount} {Currency}",
+            "WithdrawMoneyCommand received for transaction {TransactionId}, account {AccountNumber}, amount {Amount} {Currency}",
+            command.TransactionId,
             command.FromAccountNumber,
             command.Amount,
             command.Currency);
 
+
         var accNum = new AccountNumberVO(command.FromAccountNumber);
 
         var acc = await _accountRepository.GetByAccountNumberAsync(accNum, ct);
-            
-        if ( acc == null )
+
+
+        if (acc == null)
         {
-            await PublishWithdrawalFailed(command,
-                "FromAccountNotFound",
-                ct);
+            _logger.LogWarning(
+                "WithdrawMoneyCommand failed for transaction {TransactionId}: account {AccountNumber} not found",
+                command.TransactionId,
+                command.FromAccountNumber);
+
+            await PublishWithdrawalFailed(command, "FromAccountNotFound", ct);
             return;
         }
+
 
         if (command.Amount <= 0)
         {
-            await PublishWithdrawalFailed(command,
-                "InvalidAmount",
-                ct);
+            _logger.LogWarning(
+                "WithdrawMoneyCommand failed for transaction {TransactionId}: invalid amount {Amount}",
+                command.TransactionId,
+                command.Amount);
+
+            await PublishWithdrawalFailed(command, "InvalidAmount", ct);
             return;
         }
+
 
         if (command.InitiatorId != acc.UserId)
         {
-            await PublishWithdrawalFailed(command,
-                "OwnershipMismatch",
-                ct);
+            _logger.LogWarning(
+                "WithdrawMoneyCommand failed for transaction {TransactionId}: ownership mismatch for account {AccountNumber}",
+                command.TransactionId,
+                command.FromAccountNumber);
+
+            await PublishWithdrawalFailed(command, "OwnershipMismatch", ct);
             return;
         }
+
 
         if ((Currency)command.Currency != acc.Balance.Currency)
         {
-            await PublishWithdrawalFailed(command,
-                "InvalidCurrency",
-                ct);
-            return;
+            _logger.LogWarning(
+                "WithdrawMoneyCommand failed for transaction {TransactionId}: currency mismatch. Expected {ExpectedCurrency}, received {Currency}",
+                command.TransactionId,
+                acc.Balance.Currency,
+                command.Currency);
 
+            await PublishWithdrawalFailed(command, "InvalidCurrency", ct);
+            return;
         }
+
 
         if (command.Amount > acc.Balance.Amount)
         {
-            await PublishWithdrawalFailed(command,
-                  "InvalidAmount",
-                  ct);
+            _logger.LogWarning(
+                "WithdrawMoneyCommand failed for transaction {TransactionId}: insufficient funds. Balance {Balance}, requested {Amount}",
+                command.TransactionId,
+                acc.Balance.Amount,
+                command.Amount);
+
+            await PublishWithdrawalFailed(command, "InsufficientFunds", ct);
             return;
         }
+
 
         var money = new MoneyVO(
             command.Amount,
             (Currency)command.Currency
         );
 
+
         acc.Withdraw(money, command.TransactionId);
 
+
         _logger.LogInformation(
-            "Withdraw completed for account {AccountNumber}, amount {Amount} {Currency}",
+            "WithdrawMoneyCommand applied successfully for transaction {TransactionId}, account {AccountNumber}, amount {Amount} {Currency}",
+            command.TransactionId,
             command.FromAccountNumber,
             command.Amount,
             command.Currency);

@@ -1,6 +1,6 @@
 ﻿using AccountService.Domain.ValueObjects;
 
-namespace AccountService.Domain.Events;
+namespace AccountService.Domain.Events.Balance;
 
 public sealed record BalanceChangedDomainEvent(
     Guid UserId,
