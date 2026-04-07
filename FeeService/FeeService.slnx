@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FeeService.API/FeeService.API.csproj" />
+    <Project Path="src/FeeService.Application/FeeService.Application.csproj" />
+    <Project Path="src/FeeService.Domain/FeeService.Domain.csproj" />
+    <Project Path="src/FeeService.Infrastructure/FeeService.Infrastructure.csproj" />
+  </Folder>
+</Solution>

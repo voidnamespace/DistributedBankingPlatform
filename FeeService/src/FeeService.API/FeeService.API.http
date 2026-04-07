@@ -1,0 +1,6 @@
+@FeeService.API_HostAddress = http://localhost:5023
+
+GET {{FeeService.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
