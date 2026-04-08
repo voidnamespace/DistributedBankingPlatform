@@ -1,8 +1,9 @@
 ﻿using AccountService.Domain.Enums;
-using AccountService.Domain.Events;
+using AccountService.Domain.Events.Account;
+using AccountService.Domain.Events.Balance;
+using AccountService.Domain.Events.Transactions;
 using AccountService.Domain.Exceptions;
 using AccountService.Domain.ValueObjects;
-using System.Transactions;
 
 namespace AccountService.Domain.Entity;
 
