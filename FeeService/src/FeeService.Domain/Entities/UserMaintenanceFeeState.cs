@@ -1,6 +1,6 @@
 ﻿namespace FeeService.Domain.Entities;
 
-public class UserMaintenanceFeeState
+public class UserMaintenanceFeeState : Entity
 {
     public Guid UserId { get; private set; }
 

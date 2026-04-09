@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  fee-postgres:
+    image: postgres:16
+    container_name: fee-postgres
+    environment:
+      POSTGRES_DB: feedb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - fee-postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  fee-postgres-data:

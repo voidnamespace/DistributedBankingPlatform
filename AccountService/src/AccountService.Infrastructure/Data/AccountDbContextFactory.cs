@@ -9,7 +9,7 @@ public class AccountDbContextFactory
     {
         var options = new DbContextOptionsBuilder<AccountDbContext>()
             .UseNpgsql(
-                "Host=localhost;Port=5432;Database=accountdb;Username=postgres;Password=postgres"
+                "Host=localhost;Port=5433;Database=accountdb;Username=postgres;Password=postgres"
             )
             .Options;
 
