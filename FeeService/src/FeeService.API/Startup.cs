@@ -1,5 +1,6 @@
 ﻿using FeeService.Infrastructure.Data;
 using FeeService.Infrastructure.Extensions;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 namespace FeeService.API;
