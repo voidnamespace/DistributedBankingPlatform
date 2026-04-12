@@ -1,4 +1,4 @@
-﻿using FeeService.Infrastructure.Messaging.Consuming;
+using FeeService.Infrastructure.Messaging.Consuming.UserConsumers;
 using FeeService.Infrastructure.Messaging.Options;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
@@ -12,20 +12,21 @@ public static class MessagingExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<RabbitMqOptions>(
-            configuration.GetSection("RabbitMq"));
+        var rabbitOptions = configuration
+            .GetSection("RabbitMq")
+            .Get<RabbitMqOptions>()
+            ?? throw new InvalidOperationException("RabbitMq options are not configured.");
 
         services.AddMassTransit(x =>
         {
             x.AddConsumer<UserCreatedConsumer>();
+            x.AddConsumer<UserDeletedConsumer>();
+            x.AddConsumer<UserActivatedConsumer>();
+            x.AddConsumer<UserDeactivatedConsumer>();
 
             x.UsingRabbitMq((context, cfg) =>
             {
-                var rabbitOptions = configuration
-                    .GetSection("RabbitMq")
-                    .Get<RabbitMqOptions>();
-
-                cfg.Host(rabbitOptions!.Host, h =>
+                cfg.Host(rabbitOptions.Host, rabbitOptions.Port, h =>
                 {
                     h.Username(rabbitOptions.Username);
                     h.Password(rabbitOptions.Password);
@@ -33,10 +34,12 @@ public static class MessagingExtensions
 
                 cfg.UseRawJsonDeserializer();
 
-                cfg.ReceiveEndpoint("fee-service-user-events", e =>
+                cfg.ReceiveEndpoint("fee.auth.events", e =>
                 {
                     e.ConfigureConsumer<UserCreatedConsumer>(context);
-
+                    e.ConfigureConsumer<UserDeletedConsumer>(context);
+                    e.ConfigureConsumer<UserActivatedConsumer>(context);
+                    e.ConfigureConsumer<UserDeactivatedConsumer>(context);
                     e.Bind("auth.events", s =>
                     {
                         s.RoutingKey = "user.*";

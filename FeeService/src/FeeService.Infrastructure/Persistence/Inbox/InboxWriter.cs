@@ -1,16 +1,20 @@
 ﻿using FeeService.Application.Interfaces;
-using FeeService.Infrastructure.Data;
+using FeeService.Infrastructure.Persistence.DbContext;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FeeService.Infrastructure.Persistence.Inbox;
 
 public sealed class InboxWriter : IInboxWriter
 {
-    private readonly FeeDbContext _dbContext;
-
-    public InboxWriter(FeeDbContext dbContext)
+    private readonly FeeDbContext _context;
+    private readonly ILogger<InboxWriter> _logger;
+    public InboxWriter(
+        FeeDbContext context,
+        ILogger<InboxWriter> logger)
     {
-        _dbContext = dbContext;
+        _context = context;
+        _logger = logger;
     }
 
     public async Task SaveAsync(
@@ -19,11 +23,15 @@ public sealed class InboxWriter : IInboxWriter
         string payload,
         CancellationToken cancellationToken = default)
     {
-        var alreadyExists = await _dbContext.InboxMessages
+        var alreadyExists = await _context.InboxMessages
             .AnyAsync(x => x.Id == messageId, cancellationToken);
 
         if (alreadyExists)
+        {
+            _logger.LogInformation("Duplicate message skipped: {MessageId}", messageId);
             return;
+        }
+            
 
         var inboxMessage = new InboxMessage
         {
@@ -37,7 +45,13 @@ public sealed class InboxWriter : IInboxWriter
             ProcessedAt = null
         };
 
-        await _dbContext.InboxMessages.AddAsync(inboxMessage, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+         _context.InboxMessages.Add(inboxMessage);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Inbox message saved. Id={Id} Type={Type} ",
+            inboxMessage.Id,
+            type);
     }
 }

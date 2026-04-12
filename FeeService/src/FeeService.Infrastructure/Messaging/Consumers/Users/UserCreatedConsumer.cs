@@ -3,7 +3,7 @@ using FeeService.Application.Interfaces;
 using MassTransit;
 using System.Text.Json;
 
-namespace FeeService.Infrastructure.Messaging.Consuming;
+namespace FeeService.Infrastructure.Messaging.Consuming.UserConsumers;
 
 public class UserCreatedConsumer : IConsumer<UserCreatedIntegrationEvent>
 {

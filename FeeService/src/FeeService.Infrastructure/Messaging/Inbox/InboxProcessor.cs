@@ -1,14 +1,18 @@
-﻿using FeeService.Application.Interfaces;
-using FeeService.Infrastructure.Data;
+using FeeService.Application.Interfaces;
+using FeeService.Infrastructure.Persistence.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FeeService.Infrastructure.Persistence.Inbox;
+namespace FeeService.Infrastructure.Messaging.Inbox;
 
 public sealed class InboxProcessor : BackgroundService
 {
+    private const int BatchSize = 20;
+    private const int MaxAttempts = 5;
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(5);
+
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<InboxProcessor> _logger;
 
@@ -35,7 +39,14 @@ public sealed class InboxProcessor : BackgroundService
                 _logger.LogError(ex, "Error while processing inbox messages");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            try
+            {
+                await Task.Delay(PollInterval, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
     }
 
@@ -47,9 +58,9 @@ public sealed class InboxProcessor : BackgroundService
         var handler = scope.ServiceProvider.GetRequiredService<IInboxMessageHandler>();
 
         var messages = await dbContext.InboxMessages
-            .Where(x => !x.Processed)
+            .Where(x => !x.Processed && x.AttemptCount < MaxAttempts)
             .OrderBy(x => x.ReceivedAt)
-            .Take(20)
+            .Take(BatchSize)
             .ToListAsync(cancellationToken);
 
         if (messages.Count == 0)
@@ -60,10 +71,10 @@ public sealed class InboxProcessor : BackgroundService
             try
             {
                 await handler.HandleAsync(
-                      message.Id,
-                      message.Type,
-                      message.Payload,
-                      cancellationToken);
+                    message.Id,
+                    message.Type,
+                    message.Payload,
+                    cancellationToken);
 
                 message.Processed = true;
                 message.ProcessedAt = DateTime.UtcNow;
@@ -73,6 +84,13 @@ public sealed class InboxProcessor : BackgroundService
             {
                 message.AttemptCount++;
                 message.Error = ex.Message;
+
+                _logger.LogWarning(
+                    ex,
+                    "Inbox message {MessageId} failed on attempt {Attempt}/{MaxAttempts}",
+                    message.Id,
+                    message.AttemptCount,
+                    MaxAttempts);
             }
         }
 

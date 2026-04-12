@@ -1,4 +1,4 @@
-﻿using FeeService.Infrastructure.Data;
+using FeeService.Infrastructure.Persistence.DbContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,8 +13,7 @@ public static class DatabaseServiceCollectionExtensions
     {
         services.AddDbContext<FeeDbContext>(options =>
             options.UseNpgsql(
-                configuration.GetConnectionString("FeeDb")
-            ));
+                configuration.GetConnectionString("FeeDb")));
 
         return services;
     }

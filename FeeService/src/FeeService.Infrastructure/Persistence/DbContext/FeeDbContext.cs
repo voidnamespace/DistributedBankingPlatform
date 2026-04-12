@@ -2,7 +2,7 @@
 using FeeService.Infrastructure.Persistence.Inbox;
 using Microsoft.EntityFrameworkCore;
 
-namespace FeeService.Infrastructure.Data;
+namespace FeeService.Infrastructure.Persistence.DbContext;
 
 public class FeeDbContext : DbContext
 {
