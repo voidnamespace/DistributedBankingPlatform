@@ -12,7 +12,7 @@ public class TransactionDbContextFactory
             new DbContextOptionsBuilder<TransactionDbContext>();
 
         optionsBuilder.UseNpgsql(
-            "Host=localhost;Port=5432;Database=transactiondb;Username=postgres;Password=postgres");
+            "Host=localhost;Port=5434;Database=transactiondb;Username=postgres;Password=postgres");
 
         return new TransactionDbContext(optionsBuilder.Options);
     }

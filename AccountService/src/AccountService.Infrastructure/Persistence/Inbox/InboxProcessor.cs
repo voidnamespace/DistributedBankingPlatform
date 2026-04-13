@@ -36,6 +36,23 @@ public class InboxProcessor : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            try
+            {
+                await ProcessMessagesAsync(stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while processing inbox messages");
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        }
+    }
+
+
+
+    private async Task ProcessMessagesAsync(CancellationToken stoppingToken)
+    {
             using var scope = _scopeFactory.CreateScope();
 
             var db = scope.ServiceProvider
@@ -101,7 +118,5 @@ public class InboxProcessor : BackgroundService
 
             await db.SaveChangesAsync(stoppingToken);
 
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-        }
     }
 }
