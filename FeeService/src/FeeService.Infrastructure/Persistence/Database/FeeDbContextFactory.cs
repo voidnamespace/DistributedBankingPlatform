@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace FeeService.Infrastructure.Persistence.DbContext;
+namespace FeeService.Infrastructure.Persistence.Database;
 
 
 public class FeeDbContextFactory

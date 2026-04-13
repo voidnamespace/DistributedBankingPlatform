@@ -1,10 +1,8 @@
 ﻿namespace FeeService.Application.Interfaces;
 
-public interface IInboxMessageHandler
+public interface IInboxMessageHandler<in TMessage>
 {
     Task HandleAsync(
-        Guid id,
-        string type,
-        string payload,
+        TMessage message,
         CancellationToken cancellationToken = default);
 }

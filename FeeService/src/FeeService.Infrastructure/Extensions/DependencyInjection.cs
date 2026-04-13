@@ -1,9 +1,8 @@
-using FeeService.Application.Interfaces;
-using FeeService.Infrastructure.Messaging.Inbox;
-using FeeService.Infrastructure.Persistence.DbContext;
-using FeeService.Infrastructure.Persistence.Inbox;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using FeeService.Infrastructure.Persistence.Database;
+using FeeService.Infrastructure.Persistence.Inbox;
+using FeeService.Infrastructure.Messaging;
 
 namespace FeeService.Infrastructure.Extensions;
 
@@ -13,14 +12,10 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddDatabaseConfiguration(configuration);
+        services.AddDbContext(configuration);
+        services.AddInbox();
         services.AddMessaging(configuration);
 
-        services.AddScoped<IInboxWriter, InboxWriter>();
-        services.AddScoped<IInboxMessageHandler, InboxMessageHandler>();
-
-        services.AddHostedService<FeeDbContextMigrator>();
-        services.AddHostedService<InboxProcessor>();
 
         return services;
     }

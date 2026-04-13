@@ -1,5 +1,7 @@
 using FeeService.Application.Interfaces;
-using FeeService.Infrastructure.Persistence.DbContext;
+using FeeService.Infrastructure.Persistence.Database;
+using FeeService.Infrastructure.Persistence.Inbox;
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -55,12 +57,20 @@ public sealed class InboxProcessor : BackgroundService
         using var scope = _scopeFactory.CreateScope();
 
         var dbContext = scope.ServiceProvider.GetRequiredService<FeeDbContext>();
-        var handler = scope.ServiceProvider.GetRequiredService<IInboxMessageHandler>();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<IInboxDispatcher>();
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
 
         var messages = await dbContext.InboxMessages
-            .Where(x => !x.Processed && x.AttemptCount < MaxAttempts)
-            .OrderBy(x => x.ReceivedAt)
-            .Take(BatchSize)
+            .FromSqlInterpolated($"""
+                SELECT "Id", "Type", "Payload", "Processed", "ReceivedAt", "ProcessedAt", "AttemptCount", "Error"
+                FROM "InboxMessages"
+                WHERE NOT "Processed" AND "AttemptCount" < {MaxAttempts}
+                ORDER BY "ReceivedAt"
+                LIMIT {BatchSize}
+                FOR UPDATE SKIP LOCKED
+                """)
             .ToListAsync(cancellationToken);
 
         if (messages.Count == 0)
@@ -70,7 +80,7 @@ public sealed class InboxProcessor : BackgroundService
         {
             try
             {
-                await handler.HandleAsync(
+                await dispatcher.DispatchAsync(
                     message.Id,
                     message.Type,
                     message.Payload,
@@ -85,6 +95,19 @@ public sealed class InboxProcessor : BackgroundService
                 message.AttemptCount++;
                 message.Error = ex.Message;
 
+                if (message.AttemptCount >= MaxAttempts)
+                {
+                    await DeadLetterMessageAsync(dbContext, message, cancellationToken);
+                    message.Processed = true;
+                    message.ProcessedAt = DateTime.UtcNow;
+
+                    _logger.LogError(
+                        ex,
+                        "Inbox message {MessageId} moved to dead-letter storage after {AttemptCount} attempts",
+                        message.Id,
+                        message.AttemptCount);
+                }
+
                 _logger.LogWarning(
                     ex,
                     "Inbox message {MessageId} failed on attempt {Attempt}/{MaxAttempts}",
@@ -95,5 +118,31 @@ public sealed class InboxProcessor : BackgroundService
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    private static async Task DeadLetterMessageAsync(
+        FeeDbContext dbContext,
+        InboxMessage message,
+        CancellationToken cancellationToken)
+    {
+        var alreadyDeadLettered = await dbContext.DeadLetterInboxMessages
+            .AnyAsync(x => x.MessageId == message.Id, cancellationToken);
+
+        if (alreadyDeadLettered)
+            return;
+
+        var deadLetter = new DeadLetterInboxMessage
+        {
+            MessageId = message.Id,
+            Type = message.Type,
+            Payload = message.Payload,
+            ReceivedAt = message.ReceivedAt,
+            AttemptCount = message.AttemptCount,
+            Error = message.Error,
+            DeadLetteredAt = DateTime.UtcNow
+        };
+
+        await dbContext.DeadLetterInboxMessages.AddAsync(deadLetter, cancellationToken);
     }
 }

@@ -1,12 +1,12 @@
-using FeeService.Infrastructure.Messaging.Consuming.UserConsumers;
+﻿using FeeService.Infrastructure.Messaging.Consuming.UserConsumers;
 using FeeService.Infrastructure.Messaging.Options;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FeeService.Infrastructure.Extensions;
+namespace FeeService.Infrastructure.Messaging;
 
-public static class MessagingExtensions
+public static class DependencyInjection
 {
     public static IServiceCollection AddMessaging(
         this IServiceCollection services,
@@ -26,7 +26,7 @@ public static class MessagingExtensions
 
             x.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host(rabbitOptions.Host, rabbitOptions.Port, h =>
+                cfg.Host($"rabbitmq://{rabbitOptions.Host}:{rabbitOptions.Port}", h =>
                 {
                     h.Username(rabbitOptions.Username);
                     h.Password(rabbitOptions.Password);
@@ -40,6 +40,7 @@ public static class MessagingExtensions
                     e.ConfigureConsumer<UserDeletedConsumer>(context);
                     e.ConfigureConsumer<UserActivatedConsumer>(context);
                     e.ConfigureConsumer<UserDeactivatedConsumer>(context);
+
                     e.Bind("auth.events", s =>
                     {
                         s.RoutingKey = "user.*";

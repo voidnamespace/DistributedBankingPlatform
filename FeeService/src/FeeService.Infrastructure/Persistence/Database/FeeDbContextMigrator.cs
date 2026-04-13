@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FeeService.Infrastructure.Persistence.DbContext;
+namespace FeeService.Infrastructure.Persistence.Database;
 
 public sealed class FeeDbContextMigrator : IHostedService
 {

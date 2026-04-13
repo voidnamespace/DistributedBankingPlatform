@@ -1,5 +1,5 @@
 ﻿using FeeService.Application.Interfaces;
-using FeeService.Infrastructure.Persistence.DbContext;
+using FeeService.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
