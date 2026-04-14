@@ -34,11 +34,18 @@ public class OutboxProcessor : BackgroundService
 
                 var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
                 var publisher = scope.ServiceProvider.GetRequiredService<IEventPublisher>();
+                await using var transaction =
+                    await db.Database.BeginTransactionAsync(stoppingToken);
 
                 var batch = await db.OutboxMessages
-                    .Where(x => x.ProcessedAt == null)
-                    .OrderBy(x => x.CreatedAt)
-                    .Take(20)
+                    .FromSqlRaw("""
+                        SELECT *
+                        FROM "OutboxMessages"
+                        WHERE "ProcessedAt" IS NULL
+                        ORDER BY "CreatedAt"
+                        LIMIT 20
+                        FOR UPDATE SKIP LOCKED
+                        """)
                     .ToListAsync(stoppingToken);
 
                 if (batch.Count > 0)
@@ -105,6 +112,7 @@ public class OutboxProcessor : BackgroundService
                     try
                     {
                         await db.SaveChangesAsync(stoppingToken);
+                        await transaction.CommitAsync(stoppingToken);
                     }
                     catch (Exception ex)
                     {
