@@ -11,6 +11,8 @@ namespace AuthService.Infrastructure.Persistence.Outbox;
 
 public class OutboxProcessor : BackgroundService
 {
+    private const int MaxPublishAttempts = 5;
+
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<OutboxProcessor> _logger;
 
@@ -42,10 +44,11 @@ public class OutboxProcessor : BackgroundService
                         SELECT *
                         FROM "OutboxMessages"
                         WHERE "ProcessedAt" IS NULL
+                          AND "AttemptCount" < {0}
                         ORDER BY "CreatedAt"
                         LIMIT 20
                         FOR UPDATE SKIP LOCKED
-                        """)
+                        """, MaxPublishAttempts)
                     .ToListAsync(stoppingToken);
 
                 if (batch.Count > 0)
@@ -97,13 +100,28 @@ public class OutboxProcessor : BackgroundService
                     catch (Exception ex)
                     {
                         msg.AttemptCount += 1;
-                        msg.Error = ex.Message;
 
-                        _logger.LogError(
-                            ex,
-                            "Outbox message failed. Id={Id} Attempt={Attempt}",
-                            msg.Id,
-                            msg.AttemptCount);
+                        if (msg.AttemptCount >= MaxPublishAttempts)
+                        {
+                            msg.Error =
+                                $"Max publish attempts reached ({MaxPublishAttempts}). Last error: {ex.Message}";
+
+                            _logger.LogError(
+                                ex,
+                                "Outbox message moved out of publish flow after reaching max attempts. Id={Id} Attempt={Attempt}",
+                                msg.Id,
+                                msg.AttemptCount);
+                        }
+                        else
+                        {
+                            msg.Error = ex.Message;
+
+                            _logger.LogError(
+                                ex,
+                                "Outbox message failed. Id={Id} Attempt={Attempt}",
+                                msg.Id,
+                                msg.AttemptCount);
+                        }
                     }
                 }
 
