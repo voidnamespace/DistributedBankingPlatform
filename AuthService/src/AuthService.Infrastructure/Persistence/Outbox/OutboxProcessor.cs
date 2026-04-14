@@ -44,11 +44,10 @@ public class OutboxProcessor : BackgroundService
                         SELECT *
                         FROM "OutboxMessages"
                         WHERE "ProcessedAt" IS NULL
-                          AND "AttemptCount" < {0}
                         ORDER BY "CreatedAt"
                         LIMIT 20
                         FOR UPDATE SKIP LOCKED
-                        """, MaxPublishAttempts)
+                        """)
                     .ToListAsync(stoppingToken);
 
                 if (batch.Count > 0)
@@ -103,14 +102,28 @@ public class OutboxProcessor : BackgroundService
 
                         if (msg.AttemptCount >= MaxPublishAttempts)
                         {
-                            msg.Error =
-                                $"Max publish attempts reached ({MaxPublishAttempts}). Last error: {ex.Message}";
+                            var deadLetterMessage = new DeadLetterOutboxMessage
+                            {
+                                Id = Guid.NewGuid(),
+                                OriginalOutboxMessageId = msg.Id,
+                                Type = msg.Type,
+                                Payload = msg.Payload,
+                                Error =
+                                    $"Max publish attempts reached ({MaxPublishAttempts}). Last error: {ex.Message}",
+                                AttemptCount = msg.AttemptCount,
+                                CreatedAt = msg.CreatedAt,
+                                FinalFailedAt = DateTime.UtcNow
+                            };
+
+                            db.DeadLetterOutboxMessages.Add(deadLetterMessage);
+                            db.OutboxMessages.Remove(msg);
 
                             _logger.LogError(
                                 ex,
-                                "Outbox message moved out of publish flow after reaching max attempts. Id={Id} Attempt={Attempt}",
+                                "Outbox message moved to dead-letter storage. Id={Id} Attempt={Attempt} DeadLetterId={DeadLetterId}",
                                 msg.Id,
-                                msg.AttemptCount);
+                                msg.AttemptCount,
+                                deadLetterMessage.Id);
                         }
                         else
                         {

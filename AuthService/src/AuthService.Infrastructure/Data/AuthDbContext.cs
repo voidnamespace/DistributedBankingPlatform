@@ -19,6 +19,7 @@ public class AuthDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<DeadLetterOutboxMessage> DeadLetterOutboxMessages => Set<DeadLetterOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -94,6 +95,27 @@ public class AuthDbContext : DbContext
 
             b.HasIndex(x => x.ProcessedAt);
             b.HasIndex(x => x.CreatedAt);
+        });
+
+        modelBuilder.Entity<DeadLetterOutboxMessage>(b =>
+        {
+            b.ToTable("DeadLetterOutboxMessages");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.OriginalOutboxMessageId).IsRequired();
+
+            b.Property(x => x.Type).IsRequired().HasMaxLength(256);
+
+            b.Property(x => x.Payload).IsRequired();
+
+            b.Property(x => x.Error).IsRequired();
+
+            b.Property(x => x.AttemptCount).IsRequired();
+            b.Property(x => x.CreatedAt).IsRequired();
+            b.Property(x => x.FinalFailedAt).IsRequired();
+
+            b.HasIndex(x => x.OriginalOutboxMessageId).IsUnique();
+            b.HasIndex(x => x.FinalFailedAt);
         });
     }
 }
