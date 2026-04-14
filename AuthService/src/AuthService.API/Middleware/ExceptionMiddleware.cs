@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using FluentValidation;
 
 namespace AuthService.Infrastructure.Middleware;
 
@@ -31,6 +32,8 @@ public class ExceptionMiddleware
         int statusCode = exception switch
         {
             KeyNotFoundException => (int)HttpStatusCode.NotFound,
+            UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
+            ValidationException => (int)HttpStatusCode.BadRequest,
             ArgumentException => (int)HttpStatusCode.BadRequest,
             _ => (int)HttpStatusCode.InternalServerError
         };
