@@ -1,9 +1,8 @@
-﻿using AuthService.Application.DTOs;
-using MediatR;
+﻿using MediatR;
+
 namespace AuthService.Application.Commands.RegisterUser;
 
 public record RegisterUserCommand (
     string Email,
-    string Password,
-    string ConfirmPassword
-    ) : IRequest<RegisterResponse>;
+    string Password
+    ) : IRequest<RegisterUserResponse>;

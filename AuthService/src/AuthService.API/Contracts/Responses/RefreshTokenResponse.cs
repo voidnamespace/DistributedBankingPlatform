@@ -1,9 +1,5 @@
-namespace AuthService.Application.DTOs;
+﻿namespace AuthService.API.Contracts.Responses;
 
-public class RefreshTokenRequest
-{
-   public string RefreshToken { get; set; } = string.Empty;
-}
 public class RefreshTokenResponse
 {
     public string AccessToken { get; set; } = string.Empty;

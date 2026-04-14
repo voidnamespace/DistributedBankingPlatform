@@ -15,9 +15,5 @@ public class RegisterUserCommandValidator
             .NotEmpty()
             .MinimumLength(6);
 
-        RuleFor(x => x.ConfirmPassword)
-            .NotEmpty()
-            .Equal(x => x.Password)
-            .WithMessage("Passwords must match");
     }
 }

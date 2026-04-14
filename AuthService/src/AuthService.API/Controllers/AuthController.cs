@@ -1,12 +1,13 @@
+using AuthService.API.Contracts.Requests;
+using AuthService.API.Contracts.Responses;
 using AuthService.API.Extensions;
-using AuthService.Application.Commands.DeleteUser;
 using AuthService.Application.Commands.ActivateUser;
 using AuthService.Application.Commands.DeactivateUser;
+using AuthService.Application.Commands.DeleteUser;
 using AuthService.Application.Commands.LoginUser;
 using AuthService.Application.Commands.LogoutUser;
 using AuthService.Application.Commands.MakeRefreshToken;
 using AuthService.Application.Commands.RegisterUser;
-using AuthService.Application.DTOs;
 using AuthService.Application.Queries.GetAllUsers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -44,11 +45,18 @@ public class AuthController : ControllerBase
 
         var result = await _mediator.Send(command);
 
+        var response = new RegisterResponse
+        {
+            UserId = result.UserId,
+            Email = result.Email,
+            Message = result.Message
+        };
+
         _logger.LogInformation(
             "Register request completed for {Email}",
             request.Email);
 
-        return Ok(result);
+        return Ok(response);
     }
 
     [HttpPost("login")]
