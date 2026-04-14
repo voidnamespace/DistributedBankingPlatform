@@ -77,6 +77,7 @@ public class OutboxProcessor : BackgroundService
 
                         await publisher.PublishAsync(
                             integrationEvent,
+                            msg.Id.ToString("D"),
                             stoppingToken);
 
                         msg.ProcessedAt = DateTime.UtcNow;
