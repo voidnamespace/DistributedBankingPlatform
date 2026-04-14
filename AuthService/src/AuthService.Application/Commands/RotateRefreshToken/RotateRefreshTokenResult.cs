@@ -1,6 +1,6 @@
-﻿namespace AuthService.Application.Commands.MakeRefreshToken;
+﻿namespace AuthService.Application.Commands.RotateRefreshToken;
 
-public class RefreshTokenResult
+public class RotateRefreshTokenResult
 {
     public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;

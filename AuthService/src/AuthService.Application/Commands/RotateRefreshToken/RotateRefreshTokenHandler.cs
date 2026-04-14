@@ -3,19 +3,19 @@ using AuthService.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace AuthService.Application.Commands.MakeRefreshToken;
+namespace AuthService.Application.Commands.RotateRefreshToken;
 
-public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshTokenResult>
+public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenCommand, RotateRefreshTokenResult>
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
-    private readonly ILogger<RefreshTokenHandler> _logger;
+    private readonly ILogger<RotateRefreshTokenHandler> _logger;
     private readonly IUserRepository _userRepository;
     private readonly IJwtService _jwtService;
     private readonly IUnitOfWork _unitOfWork;
 
-    public RefreshTokenHandler(
+    public RotateRefreshTokenHandler(
         IRefreshTokenRepository refreshTokenRepository,
-        ILogger<RefreshTokenHandler> logger,
+        ILogger<RotateRefreshTokenHandler> logger,
         IUserRepository userRepository,
         IJwtService jwtService,
         IUnitOfWork unitOfWork)
@@ -27,8 +27,8 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<RefreshTokenResult> Handle(
-        RefreshTokenCommand command,
+    public async Task<RotateRefreshTokenResult> Handle(
+        RotateRefreshTokenCommand command,
         CancellationToken cancellationToken)
     {
         _logger.LogInformation("RefreshTokenCommand started");
@@ -80,7 +80,6 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
             refreshToken,
             cancellationToken);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var newAccessToken = _jwtService.GenerateAccessToken(user);
 
@@ -114,7 +113,7 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
             "RefreshTokenCommand completed {UserId}",
             user.Id);
 
-        return new RefreshTokenResult
+        return new RotateRefreshTokenResult
         {
             AccessToken = newAccessToken,
             RefreshToken = newRefreshTokenValue,
