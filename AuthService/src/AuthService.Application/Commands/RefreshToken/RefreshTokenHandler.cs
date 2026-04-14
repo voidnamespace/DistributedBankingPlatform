@@ -1,10 +1,9 @@
-﻿using AuthService.Application.DTOs;
-using AuthService.Application.Interfaces;
+﻿using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace AuthService.Application.Commands.MakeRefreshToken;
+namespace AuthService.Application.Commands.RefreshToken;
 
 public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshTokenResponse>
 {
@@ -34,13 +33,6 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
     {
         _logger.LogInformation("RefreshTokenCommand started");
 
-        if (string.IsNullOrWhiteSpace(command.RefreshToken))
-        {
-            _logger.LogWarning("Refresh token request failed: token is empty");
-
-            throw new ArgumentException("Refresh token is required");
-        }
-
         var refreshToken = await _refreshTokenRepository.GetByTokenAsync(
             command.RefreshToken,
             cancellationToken);
@@ -48,7 +40,6 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         if (refreshToken == null)
         {
             _logger.LogWarning("Refresh token request failed: token not found");
-
             throw new UnauthorizedAccessException("Invalid refresh token");
         }
 

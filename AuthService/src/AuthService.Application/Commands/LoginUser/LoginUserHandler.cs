@@ -1,5 +1,4 @@
-﻿using AuthService.Application.DTOs;
-using AuthService.Application.Interfaces;
+﻿using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
 using AuthService.Domain.ValueObjects;
 using MediatR;
@@ -7,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AuthService.Application.Commands.LoginUser;
 
-public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
+public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserResponse>
 {
     private readonly IUserRepository _userRepository;
     private readonly IJwtService _jwtService;
@@ -29,22 +28,13 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<LoginResponse> Handle(
+    public async Task<LoginUserResponse> Handle(
         LoginUserCommand command,
         CancellationToken cancellationToken)
     {
         _logger.LogInformation(
             "LoginUserCommand started {Email}",
             command.Email);
-
-        if (string.IsNullOrWhiteSpace(command.Password) ||
-            string.IsNullOrWhiteSpace(command.Email))
-        {
-            _logger.LogWarning(
-                "Login failed due to missing credentials");
-
-            throw new ArgumentException("Email and password are required.");
-        }
 
         var email = new EmailVO(command.Email);
 
@@ -106,7 +96,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginResponse>
             "LoginUserCommand completed {UserId}",
             user.Id);
 
-        return new LoginResponse
+        return new LoginUserResponse
         {
             AccessToken = accessToken,
             RefreshToken = refreshTokenValue,

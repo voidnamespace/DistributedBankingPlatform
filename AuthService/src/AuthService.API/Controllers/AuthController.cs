@@ -7,6 +7,7 @@ using AuthService.Application.Commands.DeleteUser;
 using AuthService.Application.Commands.LoginUser;
 using AuthService.Application.Commands.LogoutUser;
 using AuthService.Application.Commands.MakeRefreshToken;
+using AuthService.Application.Commands.RefreshToken;
 using AuthService.Application.Commands.RegisterUser;
 using AuthService.Application.Queries.GetAllUsers;
 using MediatR;
@@ -39,8 +40,7 @@ public class AuthController : ControllerBase
 
         var command = new RegisterUserCommand(
             request.Email,
-            request.Password,
-            request.ConfirmPassword
+            request.Password
         );
 
         var result = await _mediator.Send(command);
@@ -71,7 +71,18 @@ public class AuthController : ControllerBase
             request.Password
         );
 
-        var response = await _mediator.Send(command);
+        var result = await _mediator.Send(command);
+
+        var response = new LoginResponse
+        {
+            AccessToken = result.AccessToken,
+            RefreshToken = result.RefreshToken,
+            ExpiresAt = result.ExpiresAt,
+            UserId = result.UserId,
+            Email = result.Email,
+            Role = result.Role,
+        };
+            
 
         _logger.LogInformation(
             "Login request completed for {Email}",
@@ -83,15 +94,20 @@ public class AuthController : ControllerBase
     [HttpPost("refresh")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
-        _logger.LogInformation(
-            "Refresh token request started");
+        _logger.LogInformation("Refresh token request started");
 
         var command = new RefreshTokenCommand(request.RefreshToken);
 
-        var response = await _mediator.Send(command);
+        var result = await _mediator.Send(command);
 
-        _logger.LogInformation(
-            "Refresh token request completed");
+        var response = new RefreshTokenResponse
+        {
+            AccessToken = result.AccessToken,
+            RefreshToken = result.RefreshToken,
+            ExpiresAt = result.ExpiresAt
+        };
+
+        _logger.LogInformation("Refresh token request completed");
 
         return Ok(response);
     }

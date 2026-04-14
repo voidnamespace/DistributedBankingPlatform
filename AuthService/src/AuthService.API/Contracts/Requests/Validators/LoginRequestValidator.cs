@@ -8,8 +8,7 @@ public class LoginRequestValidator
     public LoginRequestValidator()
     {
         RuleFor(x => x.Email)
-            .NotEmpty()
-            .EmailAddress();
+            .NotEmpty();
 
         RuleFor(x => x.Password)
             .NotEmpty();

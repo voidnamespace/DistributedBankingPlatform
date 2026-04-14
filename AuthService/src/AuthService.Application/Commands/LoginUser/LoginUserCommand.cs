@@ -3,4 +3,4 @@ using MediatR;
 
 namespace AuthService.Application.Commands.LoginUser;
 
-public record LoginUserCommand(string Email, string Password) : IRequest<LoginResponse>;
+public record LoginUserCommand(string Email, string Password) : IRequest<LoginUserResponse>;

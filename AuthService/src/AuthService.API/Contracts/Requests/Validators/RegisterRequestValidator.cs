@@ -7,14 +7,13 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
     public RegisterRequestValidator()
     {
         RuleFor(x => x.Email)
-            .NotEmpty()
-            .EmailAddress();
+            .NotEmpty();
 
         RuleFor(x => x.Password)
-            .NotEmpty()
-            .MinimumLength(6);
+            .NotEmpty();
 
         RuleFor(x => x.ConfirmPassword)
+            .NotEmpty()
             .Equal(x => x.Password)
             .WithMessage("Passwords must match");
     }
