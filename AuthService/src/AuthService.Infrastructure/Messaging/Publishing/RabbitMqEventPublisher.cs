@@ -15,13 +15,14 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 {
     private static readonly TimeSpan PublishConfirmTimeout = TimeSpan.FromSeconds(5);
 
+    private readonly ConnectionFactory _factory;
     private readonly RabbitMqOptions _connectionOptions;
     private readonly AuthEventsPublisherOptions _publisherOptions;
 
     private readonly ILogger<RabbitMqEventPublisher> _logger;
 
-    private readonly IConnection _connection;
-    private readonly IModel _channel;
+    private IConnection? _connection;
+    private IModel? _channel;
     private readonly object _publishLock = new();
     private readonly ConcurrentDictionary<string, ReturnedMessageInfo> _returnedMessages = new();
 
@@ -35,7 +36,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
         _logger = logger;
 
-        var factory = new ConnectionFactory
+        _factory = new ConnectionFactory
         {
             HostName = _connectionOptions.Host,
             Port = _connectionOptions.Port,
@@ -44,20 +45,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
             DispatchConsumersAsync = true
         };
 
-        _connection = factory.CreateConnection();
-        _channel = _connection.CreateModel();
-        _channel.ConfirmSelect();
-
-        _channel.ExchangeDeclare(
-            exchange: _publisherOptions.Exchange,
-            type: ExchangeType.Topic,
-            durable: true);
-
-        _channel.BasicReturn += OnMessageReturned;
-
-        _logger.LogInformation(
-            "RabbitMQ publisher initialized. Exchange={Exchange}",
-            _publisherOptions.Exchange);
+        EnsureConnected();
     }
 
     public Task PublishAsync<T>(
@@ -76,7 +64,12 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
             lock (_publishLock)
             {
-                var props = _channel.CreateBasicProperties();
+                EnsureConnected();
+
+                var channel = _channel
+                    ?? throw new InvalidOperationException("RabbitMQ channel is not initialized");
+
+                var props = channel.CreateBasicProperties();
 
                 props.Persistent = true;
                 props.MessageId = string.IsNullOrWhiteSpace(messageId)
@@ -86,14 +79,14 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
                 _returnedMessages.TryRemove(props.MessageId, out _);
 
-                _channel.BasicPublish(
+                channel.BasicPublish(
                     exchange: _publisherOptions.Exchange,
                     routingKey: routingKey,
                     mandatory: true,
                     basicProperties: props,
                     body: body);
 
-                var confirmed = _channel.WaitForConfirms(PublishConfirmTimeout);
+                var confirmed = channel.WaitForConfirms(PublishConfirmTimeout);
 
                 if (!confirmed)
                 {
@@ -132,10 +125,78 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
     public void Dispose()
     {
-        _channel?.Dispose();
-        _connection?.Dispose();
+        lock (_publishLock)
+        {
+            DisposeChannel();
+            DisposeConnection();
+        }
+
+        _returnedMessages.Clear();
 
         _logger.LogInformation("RabbitMQ publisher disposed");
+    }
+
+    private void EnsureConnected()
+    {
+        if (_connection is { IsOpen: true } && _channel is { IsOpen: true })
+        {
+            return;
+        }
+
+        DisposeChannel();
+        DisposeConnection();
+
+        _returnedMessages.Clear();
+
+        _connection = _factory.CreateConnection();
+        _channel = _connection.CreateModel();
+        _channel.ConfirmSelect();
+
+        _channel.ExchangeDeclare(
+            exchange: _publisherOptions.Exchange,
+            type: ExchangeType.Topic,
+            durable: true);
+
+        _channel.BasicReturn += OnMessageReturned;
+
+        _logger.LogInformation(
+            "RabbitMQ publisher connection/channel initialized. Exchange={Exchange}",
+            _publisherOptions.Exchange);
+    }
+
+    private void DisposeChannel()
+    {
+        if (_channel == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _channel.BasicReturn -= OnMessageReturned;
+            _channel.Dispose();
+        }
+        finally
+        {
+            _channel = null;
+        }
+    }
+
+    private void DisposeConnection()
+    {
+        if (_connection == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _connection.Dispose();
+        }
+        finally
+        {
+            _connection = null;
+        }
     }
 
     private void OnMessageReturned(object? sender, BasicReturnEventArgs args)
