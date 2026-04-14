@@ -3,9 +3,9 @@ using AuthService.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace AuthService.Application.Commands.RefreshToken;
+namespace AuthService.Application.Commands.MakeRefreshToken;
 
-public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshTokenResponse>
+public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshTokenResult>
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly ILogger<RefreshTokenHandler> _logger;
@@ -27,7 +27,7 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<RefreshTokenResponse> Handle(
+    public async Task<RefreshTokenResult> Handle(
         RefreshTokenCommand command,
         CancellationToken cancellationToken)
     {
@@ -114,7 +114,7 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
             "RefreshTokenCommand completed {UserId}",
             user.Id);
 
-        return new RefreshTokenResponse
+        return new RefreshTokenResult
         {
             AccessToken = newAccessToken,
             RefreshToken = newRefreshTokenValue,

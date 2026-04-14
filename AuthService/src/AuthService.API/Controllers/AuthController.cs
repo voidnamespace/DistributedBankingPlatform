@@ -7,7 +7,6 @@ using AuthService.Application.Commands.DeleteUser;
 using AuthService.Application.Commands.LoginUser;
 using AuthService.Application.Commands.LogoutUser;
 using AuthService.Application.Commands.MakeRefreshToken;
-using AuthService.Application.Commands.RefreshToken;
 using AuthService.Application.Commands.RegisterUser;
 using AuthService.Application.Queries.GetAllUsers;
 using MediatR;

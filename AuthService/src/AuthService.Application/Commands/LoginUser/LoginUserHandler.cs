@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AuthService.Application.Commands.LoginUser;
 
-public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserResponse>
+public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserResult>
 {
     private readonly IUserRepository _userRepository;
     private readonly IJwtService _jwtService;
@@ -28,7 +28,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserRespo
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<LoginUserResponse> Handle(
+    public async Task<LoginUserResult> Handle(
         LoginUserCommand command,
         CancellationToken cancellationToken)
     {
@@ -96,7 +96,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserRespo
             "LoginUserCommand completed {UserId}",
             user.Id);
 
-        return new LoginUserResponse
+        return new LoginUserResult
         {
             AccessToken = accessToken,
             RefreshToken = refreshTokenValue,

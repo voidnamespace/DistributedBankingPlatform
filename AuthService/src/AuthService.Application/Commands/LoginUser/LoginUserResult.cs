@@ -1,6 +1,6 @@
 ﻿namespace AuthService.Application.Commands.LoginUser;
 
-public class LoginUserResponse
+public class LoginUserResult
 {
     public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;

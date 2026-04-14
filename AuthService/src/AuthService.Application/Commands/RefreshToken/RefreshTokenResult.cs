@@ -1,6 +1,6 @@
-﻿namespace AuthService.Application.Commands.RefreshToken;
+﻿namespace AuthService.Application.Commands.MakeRefreshToken;
 
-public class RefreshTokenResponse
+public class RefreshTokenResult
 {
     public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;

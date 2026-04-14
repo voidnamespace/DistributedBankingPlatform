@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AuthService.Application.Commands.RegisterUser;
 
-public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, RegisterUserResponse>
+public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, RegisterUserResult>
 {
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -22,7 +22,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
         _logger = logger;
     }
 
-    public async Task<RegisterUserResponse> Handle(
+    public async Task<RegisterUserResult> Handle(
         RegisterUserCommand command,
         CancellationToken cancellationToken)
     {
@@ -51,7 +51,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
             user.Id,
             user.Email.Value);
 
-        return new RegisterUserResponse
+        return new RegisterUserResult
         {
             UserId = user.Id,
             Email = user.Email.Value,
