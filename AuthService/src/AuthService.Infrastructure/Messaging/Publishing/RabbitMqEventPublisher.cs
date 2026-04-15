@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
-using System.Collections.Concurrent;
 
 namespace AuthService.Infrastructure.Messaging.Publishing;
 
@@ -20,15 +20,16 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
     private readonly AuthEventsPublisherOptions _publisherOptions;
 
     private readonly ILogger<RabbitMqEventPublisher> _logger;
+    private readonly RabbitMqChannelPool _channelPool;
+    private readonly object _connectionLock = new();
+    private readonly ConcurrentDictionary<string, ReturnedMessageInfo> _returnedMessages = new();
 
     private IConnection? _connection;
-    private IModel? _channel;
-    private readonly object _publishLock = new();
-    private readonly ConcurrentDictionary<string, ReturnedMessageInfo> _returnedMessages = new();
 
     public RabbitMqEventPublisher(
         IOptions<RabbitMqOptions> connectionOptions,
         IOptions<AuthEventsPublisherOptions> publisherOptions,
+        ILoggerFactory loggerFactory,
         ILogger<RabbitMqEventPublisher> logger)
     {
         _connectionOptions = connectionOptions.Value;
@@ -45,72 +46,71 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
             DispatchConsumersAsync = true
         };
 
-        EnsureConnected();
+        _channelPool = new RabbitMqChannelPool(
+            EnsureConnected,
+            _publisherOptions.Exchange,
+            _connectionOptions.ChannelPoolMaxSize,
+            OnMessageReturned,
+            loggerFactory.CreateLogger<RabbitMqChannelPool>());
+
+        _ = EnsureConnected();
     }
 
-    public Task PublishAsync<T>(
-    T message,
-    string? messageId = null,
-    CancellationToken ct = default)
+    public async Task PublishAsync<T>(
+        T message,
+        string? messageId = null,
+        CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
 
         try
         {
-            var routingKey = IntegrationEventMap.GetName(message!.GetType());
+            ArgumentNullException.ThrowIfNull(message);
 
-            var body = Encoding.UTF8.GetBytes(
-                JsonSerializer.Serialize(message));
+            var routingKey = IntegrationEventMap.GetName(message.GetType());
+            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
 
-            lock (_publishLock)
+            using var lease = await _channelPool.RentAsync(ct);
+            var channel = lease.Channel;
+
+            var props = channel.CreateBasicProperties();
+            props.Persistent = true;
+            props.MessageId = string.IsNullOrWhiteSpace(messageId)
+                ? Guid.NewGuid().ToString("D")
+                : messageId;
+            props.ContentType = "application/json";
+
+            _returnedMessages.TryRemove(props.MessageId, out _);
+
+            channel.BasicPublish(
+                exchange: _publisherOptions.Exchange,
+                routingKey: routingKey,
+                mandatory: true,
+                basicProperties: props,
+                body: body);
+
+            var confirmed = channel.WaitForConfirms(PublishConfirmTimeout);
+
+            if (!confirmed)
             {
-                EnsureConnected();
-
-                var channel = _channel
-                    ?? throw new InvalidOperationException("RabbitMQ channel is not initialized");
-
-                var props = channel.CreateBasicProperties();
-
-                props.Persistent = true;
-                props.MessageId = string.IsNullOrWhiteSpace(messageId)
-                    ? Guid.NewGuid().ToString("D")
-                    : messageId;
-                props.ContentType = "application/json";
-
-                _returnedMessages.TryRemove(props.MessageId, out _);
-
-                channel.BasicPublish(
-                    exchange: _publisherOptions.Exchange,
-                    routingKey: routingKey,
-                    mandatory: true,
-                    basicProperties: props,
-                    body: body);
-
-                var confirmed = channel.WaitForConfirms(PublishConfirmTimeout);
-
-                if (!confirmed)
-                {
-                    throw new InvalidOperationException(
-                        $"RabbitMQ publish was not confirmed for message {props.MessageId}");
-                }
-
-                if (_returnedMessages.TryRemove(props.MessageId, out var returnedMessage))
-                {
-                    throw new InvalidOperationException(
-                        $"RabbitMQ returned message {props.MessageId}. " +
-                        $"ReplyCode={returnedMessage.ReplyCode} " +
-                        $"ReplyText={returnedMessage.ReplyText} " +
-                        $"RoutingKey={returnedMessage.RoutingKey}");
-                }
-
-                _logger.LogInformation(
-                    "RabbitMQ event published. Type={EventType} RoutingKey={RoutingKey} MessageId={MessageId}",
-                    message.GetType().Name,
-                    routingKey,
-                    props.MessageId);
+                throw new InvalidOperationException(
+                    $"RabbitMQ publish was not confirmed for message {props.MessageId}");
             }
 
-            return Task.CompletedTask;
+            if (_returnedMessages.TryRemove(props.MessageId, out var returnedMessage))
+            {
+                throw new InvalidOperationException(
+                    $"RabbitMQ returned message {props.MessageId}. " +
+                    $"ReplyCode={returnedMessage.ReplyCode} " +
+                    $"ReplyText={returnedMessage.ReplyText} " +
+                    $"RoutingKey={returnedMessage.RoutingKey}");
+            }
+
+            _logger.LogInformation(
+                "RabbitMQ event published. Type={EventType} RoutingKey={RoutingKey} MessageId={MessageId}",
+                message.GetType().Name,
+                routingKey,
+                props.MessageId);
         }
         catch (Exception ex)
         {
@@ -125,64 +125,45 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
     public void Dispose()
     {
-        lock (_publishLock)
-        {
-            DisposeChannel();
-            DisposeConnection();
-        }
+        _channelPool.Dispose();
+        DisposeConnection();
 
         _returnedMessages.Clear();
 
         _logger.LogInformation("RabbitMQ publisher disposed");
     }
 
-    private void EnsureConnected()
+    private IConnection EnsureConnected()
     {
-        if (_connection is { IsOpen: true } && _channel is { IsOpen: true })
+        lock (_connectionLock)
         {
-            return;
-        }
+            if (_connection is { IsOpen: true })
+            {
+                return _connection;
+            }
 
-        DisposeChannel();
-        DisposeConnection();
+            DisposeConnectionCore();
 
-        _returnedMessages.Clear();
+            _connection = _factory.CreateConnection();
 
-        _connection = _factory.CreateConnection();
-        _channel = _connection.CreateModel();
-        _channel.ConfirmSelect();
+            _logger.LogInformation(
+                "RabbitMQ publisher connection initialized. Host={Host} Port={Port}",
+                _connectionOptions.Host,
+                _connectionOptions.Port);
 
-        _channel.ExchangeDeclare(
-            exchange: _publisherOptions.Exchange,
-            type: ExchangeType.Topic,
-            durable: true);
-
-        _channel.BasicReturn += OnMessageReturned;
-
-        _logger.LogInformation(
-            "RabbitMQ publisher connection/channel initialized. Exchange={Exchange}",
-            _publisherOptions.Exchange);
-    }
-
-    private void DisposeChannel()
-    {
-        if (_channel == null)
-        {
-            return;
-        }
-
-        try
-        {
-            _channel.BasicReturn -= OnMessageReturned;
-            _channel.Dispose();
-        }
-        finally
-        {
-            _channel = null;
+            return _connection;
         }
     }
 
     private void DisposeConnection()
+    {
+        lock (_connectionLock)
+        {
+            DisposeConnectionCore();
+        }
+    }
+
+    private void DisposeConnectionCore()
     {
         if (_connection == null)
         {

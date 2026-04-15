@@ -6,4 +6,5 @@ public sealed class RabbitMqOptions
     public int Port { get; init; } = default!;
     public string Username { get; init; } = default!;
     public string Password { get; init; } = default!;
+    public int ChannelPoolMaxSize { get; init; } = 16;
 }
