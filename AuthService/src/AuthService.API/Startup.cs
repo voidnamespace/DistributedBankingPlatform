@@ -1,11 +1,15 @@
 using AspNetCoreRateLimit;
+using AuthService.API.Contracts.Requests.Validators;
 using AuthService.API.Extensions;
 using AuthService.Application.Commands.RegisterUser;
+using AuthService.Application.DomainEventHandlers;
 using AuthService.Infrastructure.Data;
 using AuthService.Infrastructure.Extensions;
 using AuthService.Infrastructure.Persistence.Seeding;
+using AuthService.Application.Common.Behaviors;
+using FluentValidation;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
-using AuthService.Application.DomainEventHandlers;
 
 namespace AuthService.API;
 
@@ -25,6 +29,15 @@ public class Startup
         typeof(RegisterUserCommand).Assembly,
         typeof(UserActivatedDomainEventHandler).Assembly
     ));
+
+
+        services.AddValidatorsFromAssemblyContaining<RegisterUserCommandValidator>();
+        services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+        services.AddTransient(
+            typeof(IPipelineBehavior<,>),
+            typeof(ValidationBehavior<,>));
+
+
 
         services.AddApi(Configuration);
         services.AddInfrastructure(Configuration);

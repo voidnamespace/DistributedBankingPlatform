@@ -1,12 +1,13 @@
+using AuthService.API.Contracts.Requests;
+using AuthService.API.Contracts.Responses;
 using AuthService.API.Extensions;
-using AuthService.Application.Commands.DeleteUser;
 using AuthService.Application.Commands.ActivateUser;
 using AuthService.Application.Commands.DeactivateUser;
+using AuthService.Application.Commands.DeleteUser;
 using AuthService.Application.Commands.LoginUser;
 using AuthService.Application.Commands.LogoutUser;
-using AuthService.Application.Commands.MakeRefreshToken;
+using AuthService.Application.Commands.RotateRefreshToken;
 using AuthService.Application.Commands.RegisterUser;
-using AuthService.Application.DTOs;
 using AuthService.Application.Queries.GetAllUsers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -38,17 +39,23 @@ public class AuthController : ControllerBase
 
         var command = new RegisterUserCommand(
             request.Email,
-            request.Password,
-            request.ConfirmPassword
+            request.Password
         );
 
         var result = await _mediator.Send(command);
+
+        var response = new RegisterResponse
+        {
+            UserId = result.UserId,
+            Email = result.Email,
+            Message = result.Message
+        };
 
         _logger.LogInformation(
             "Register request completed for {Email}",
             request.Email);
 
-        return Ok(result);
+        return Ok(response);
     }
 
     [HttpPost("login")]
@@ -63,7 +70,18 @@ public class AuthController : ControllerBase
             request.Password
         );
 
-        var response = await _mediator.Send(command);
+        var result = await _mediator.Send(command);
+
+        var response = new LoginResponse
+        {
+            AccessToken = result.AccessToken,
+            RefreshToken = result.RefreshToken,
+            ExpiresAt = result.ExpiresAt,
+            UserId = result.UserId,
+            Email = result.Email,
+            Role = result.Role,
+        };
+            
 
         _logger.LogInformation(
             "Login request completed for {Email}",
@@ -75,15 +93,20 @@ public class AuthController : ControllerBase
     [HttpPost("refresh")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
-        _logger.LogInformation(
-            "Refresh token request started");
+        _logger.LogInformation("Refresh token request started");
 
-        var command = new RefreshTokenCommand(request.RefreshToken);
+        var command = new RotateRefreshTokenCommand(request.RefreshToken);
 
-        var response = await _mediator.Send(command);
+        var result = await _mediator.Send(command);
 
-        _logger.LogInformation(
-            "Refresh token request completed");
+        var response = new RefreshTokenResponse
+        {
+            AccessToken = result.AccessToken,
+            RefreshToken = result.RefreshToken,
+            ExpiresAt = result.ExpiresAt
+        };
+
+        _logger.LogInformation("Refresh token request completed");
 
         return Ok(response);
     }

@@ -1,5 +1,4 @@
-﻿using AuthService.Application.DTOs;
-using AuthService.Application.Interfaces;
+﻿using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
 using AuthService.Domain.ValueObjects;
 using MediatR;
@@ -7,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AuthService.Application.Commands.RegisterUser;
 
-public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, RegisterResponse>
+public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, RegisterUserResult>
 {
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -23,22 +22,13 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
         _logger = logger;
     }
 
-    public async Task<RegisterResponse> Handle(
+    public async Task<RegisterUserResult> Handle(
         RegisterUserCommand command,
         CancellationToken cancellationToken)
     {
         _logger.LogInformation(
             "RegisterUserCommand started {Email}",
             command.Email);
-
-        if (command.Password != command.ConfirmPassword)
-        {
-            _logger.LogWarning(
-                "Password mismatch during registration {Email}",
-                command.Email);
-
-            throw new ArgumentException("The passwords don't match");
-        }
 
         var user = new User(
             new EmailVO(command.Email.Trim()),
@@ -61,7 +51,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Register
             user.Id,
             user.Email.Value);
 
-        return new RegisterResponse
+        return new RegisterUserResult
         {
             UserId = user.Id,
             Email = user.Email.Value,

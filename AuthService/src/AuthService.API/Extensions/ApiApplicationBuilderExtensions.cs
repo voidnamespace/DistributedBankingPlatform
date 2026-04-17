@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using FluentValidation.AspNetCore;
 
 namespace AuthService.API.Extensions;
 
@@ -13,6 +14,7 @@ public static class ApiServiceCollectionExtensions
         IConfiguration configuration)
     {
         services.AddControllers();
+        services.AddFluentValidationAutoValidation();
         services.AddEndpointsApiExplorer();
 
         services.AddSwaggerConfiguration();

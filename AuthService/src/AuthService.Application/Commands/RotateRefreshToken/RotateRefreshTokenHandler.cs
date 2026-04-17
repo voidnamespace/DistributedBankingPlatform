@@ -1,22 +1,21 @@
-﻿using AuthService.Application.DTOs;
-using AuthService.Application.Interfaces;
+﻿using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace AuthService.Application.Commands.MakeRefreshToken;
+namespace AuthService.Application.Commands.RotateRefreshToken;
 
-public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshTokenResponse>
+public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenCommand, RotateRefreshTokenResult>
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
-    private readonly ILogger<RefreshTokenHandler> _logger;
+    private readonly ILogger<RotateRefreshTokenHandler> _logger;
     private readonly IUserRepository _userRepository;
     private readonly IJwtService _jwtService;
     private readonly IUnitOfWork _unitOfWork;
 
-    public RefreshTokenHandler(
+    public RotateRefreshTokenHandler(
         IRefreshTokenRepository refreshTokenRepository,
-        ILogger<RefreshTokenHandler> logger,
+        ILogger<RotateRefreshTokenHandler> logger,
         IUserRepository userRepository,
         IJwtService jwtService,
         IUnitOfWork unitOfWork)
@@ -28,18 +27,11 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<RefreshTokenResponse> Handle(
-        RefreshTokenCommand command,
+    public async Task<RotateRefreshTokenResult> Handle(
+        RotateRefreshTokenCommand command,
         CancellationToken cancellationToken)
     {
         _logger.LogInformation("RefreshTokenCommand started");
-
-        if (string.IsNullOrWhiteSpace(command.RefreshToken))
-        {
-            _logger.LogWarning("Refresh token request failed: token is empty");
-
-            throw new ArgumentException("Refresh token is required");
-        }
 
         var refreshToken = await _refreshTokenRepository.GetByTokenAsync(
             command.RefreshToken,
@@ -48,7 +40,6 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
         if (refreshToken == null)
         {
             _logger.LogWarning("Refresh token request failed: token not found");
-
             throw new UnauthorizedAccessException("Invalid refresh token");
         }
 
@@ -89,7 +80,6 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
             refreshToken,
             cancellationToken);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var newAccessToken = _jwtService.GenerateAccessToken(user);
 
@@ -123,7 +113,7 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, RefreshT
             "RefreshTokenCommand completed {UserId}",
             user.Id);
 
-        return new RefreshTokenResponse
+        return new RotateRefreshTokenResult
         {
             AccessToken = newAccessToken,
             RefreshToken = newRefreshTokenValue,

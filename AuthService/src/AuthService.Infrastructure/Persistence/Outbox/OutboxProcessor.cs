@@ -11,6 +11,8 @@ namespace AuthService.Infrastructure.Persistence.Outbox;
 
 public class OutboxProcessor : BackgroundService
 {
+    private const int MaxPublishAttempts = 5;
+
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<OutboxProcessor> _logger;
 
@@ -34,11 +36,18 @@ public class OutboxProcessor : BackgroundService
 
                 var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
                 var publisher = scope.ServiceProvider.GetRequiredService<IEventPublisher>();
+                await using var transaction =
+                    await db.Database.BeginTransactionAsync(stoppingToken);
 
                 var batch = await db.OutboxMessages
-                    .Where(x => x.ProcessedAt == null)
-                    .OrderBy(x => x.CreatedAt)
-                    .Take(20)
+                    .FromSqlRaw("""
+                        SELECT *
+                        FROM "OutboxMessages"
+                        WHERE "ProcessedAt" IS NULL
+                        ORDER BY "CreatedAt"
+                        LIMIT 20
+                        FOR UPDATE SKIP LOCKED
+                        """)
                     .ToListAsync(stoppingToken);
 
                 if (batch.Count > 0)
@@ -77,6 +86,7 @@ public class OutboxProcessor : BackgroundService
 
                         await publisher.PublishAsync(
                             integrationEvent,
+                            msg.Id.ToString("D"),
                             stoppingToken);
 
                         msg.ProcessedAt = DateTime.UtcNow;
@@ -89,13 +99,42 @@ public class OutboxProcessor : BackgroundService
                     catch (Exception ex)
                     {
                         msg.AttemptCount += 1;
-                        msg.Error = ex.Message;
 
-                        _logger.LogError(
-                            ex,
-                            "Outbox message failed. Id={Id} Attempt={Attempt}",
-                            msg.Id,
-                            msg.AttemptCount);
+                        if (msg.AttemptCount >= MaxPublishAttempts)
+                        {
+                            var deadLetterMessage = new DeadLetterOutboxMessage
+                            {
+                                Id = Guid.NewGuid(),
+                                OriginalOutboxMessageId = msg.Id,
+                                Type = msg.Type,
+                                Payload = msg.Payload,
+                                Error =
+                                    $"Max publish attempts reached ({MaxPublishAttempts}). Last error: {ex.Message}",
+                                AttemptCount = msg.AttemptCount,
+                                CreatedAt = msg.CreatedAt,
+                                FinalFailedAt = DateTime.UtcNow
+                            };
+
+                            db.DeadLetterOutboxMessages.Add(deadLetterMessage);
+                            db.OutboxMessages.Remove(msg);
+
+                            _logger.LogError(
+                                ex,
+                                "Outbox message moved to dead-letter storage. Id={Id} Attempt={Attempt} DeadLetterId={DeadLetterId}",
+                                msg.Id,
+                                msg.AttemptCount,
+                                deadLetterMessage.Id);
+                        }
+                        else
+                        {
+                            msg.Error = ex.Message;
+
+                            _logger.LogError(
+                                ex,
+                                "Outbox message failed. Id={Id} Attempt={Attempt}",
+                                msg.Id,
+                                msg.AttemptCount);
+                        }
                     }
                 }
 
@@ -104,6 +143,7 @@ public class OutboxProcessor : BackgroundService
                     try
                     {
                         await db.SaveChangesAsync(stoppingToken);
+                        await transaction.CommitAsync(stoppingToken);
                     }
                     catch (Exception ex)
                     {

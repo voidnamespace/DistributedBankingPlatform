@@ -4,6 +4,8 @@ using AuthService.Infrastructure.Messaging.Routing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 
@@ -11,17 +13,23 @@ namespace AuthService.Infrastructure.Messaging.Publishing;
 
 public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 {
+    private static readonly TimeSpan PublishConfirmTimeout = TimeSpan.FromSeconds(5);
+
+    private readonly ConnectionFactory _factory;
     private readonly RabbitMqOptions _connectionOptions;
     private readonly AuthEventsPublisherOptions _publisherOptions;
 
     private readonly ILogger<RabbitMqEventPublisher> _logger;
+    private readonly RabbitMqChannelPool _channelPool;
+    private readonly object _connectionLock = new();
+    private readonly ConcurrentDictionary<string, ReturnedMessageInfo> _returnedMessages = new();
 
-    private readonly IConnection _connection;
-    private readonly IModel _channel;
+    private IConnection? _connection;
 
     public RabbitMqEventPublisher(
         IOptions<RabbitMqOptions> connectionOptions,
         IOptions<AuthEventsPublisherOptions> publisherOptions,
+        ILoggerFactory loggerFactory,
         ILogger<RabbitMqEventPublisher> logger)
     {
         _connectionOptions = connectionOptions.Value;
@@ -29,7 +37,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
         _logger = logger;
 
-        var factory = new ConnectionFactory
+        _factory = new ConnectionFactory
         {
             HostName = _connectionOptions.Host,
             Port = _connectionOptions.Port,
@@ -38,57 +46,71 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
             DispatchConsumersAsync = true
         };
 
-        _connection = factory.CreateConnection();
-        _channel = _connection.CreateModel();
+        _channelPool = new RabbitMqChannelPool(
+            EnsureConnected,
+            _publisherOptions.Exchange,
+            _connectionOptions.ChannelPoolMaxSize,
+            OnMessageReturned,
+            loggerFactory.CreateLogger<RabbitMqChannelPool>());
 
-        _channel.ExchangeDeclare(
-            exchange: _publisherOptions.Exchange,
-            type: ExchangeType.Topic,
-            durable: true);
-
-        _channel.BasicReturn += (sender, args) =>
-        {
-            _logger.LogWarning(
-                "RabbitMQ message returned. RoutingKey={RoutingKey}",
-                args.RoutingKey);
-        };
-
-        _logger.LogInformation(
-            "RabbitMQ publisher initialized. Exchange={Exchange}",
-            _publisherOptions.Exchange);
+        _ = EnsureConnected();
     }
 
-    public Task PublishAsync<T>(
-    T message,
-    CancellationToken ct = default)
+    public async Task PublishAsync<T>(
+        T message,
+        string? messageId = null,
+        CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
+
         try
         {
-            var routingKey = IntegrationEventMap.GetName(message!.GetType());
+            ArgumentNullException.ThrowIfNull(message);
 
-            var body = Encoding.UTF8.GetBytes(
-                JsonSerializer.Serialize(message));
+            var routingKey = IntegrationEventMap.GetName(message.GetType());
+            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
 
-            var props = _channel.CreateBasicProperties();
+            using var lease = await _channelPool.RentAsync(ct);
+            var channel = lease.Channel;
 
+            var props = channel.CreateBasicProperties();
             props.Persistent = true;
-            props.MessageId = Guid.NewGuid().ToString();
+            props.MessageId = string.IsNullOrWhiteSpace(messageId)
+                ? Guid.NewGuid().ToString("D")
+                : messageId;
             props.ContentType = "application/json";
 
-            _channel.BasicPublish(
+            _returnedMessages.TryRemove(props.MessageId, out _);
+
+            channel.BasicPublish(
                 exchange: _publisherOptions.Exchange,
                 routingKey: routingKey,
                 mandatory: true,
                 basicProperties: props,
                 body: body);
 
+            var confirmed = channel.WaitForConfirms(PublishConfirmTimeout);
+
+            if (!confirmed)
+            {
+                throw new InvalidOperationException(
+                    $"RabbitMQ publish was not confirmed for message {props.MessageId}");
+            }
+
+            if (_returnedMessages.TryRemove(props.MessageId, out var returnedMessage))
+            {
+                throw new InvalidOperationException(
+                    $"RabbitMQ returned message {props.MessageId}. " +
+                    $"ReplyCode={returnedMessage.ReplyCode} " +
+                    $"ReplyText={returnedMessage.ReplyText} " +
+                    $"RoutingKey={returnedMessage.RoutingKey}");
+            }
+
             _logger.LogInformation(
                 "RabbitMQ event published. Type={EventType} RoutingKey={RoutingKey} MessageId={MessageId}",
                 message.GetType().Name,
                 routingKey,
                 props.MessageId);
-
-            return Task.CompletedTask;
         }
         catch (Exception ex)
         {
@@ -103,9 +125,89 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
     public void Dispose()
     {
-        _channel?.Dispose();
-        _connection?.Dispose();
+        _channelPool.Dispose();
+        DisposeConnection();
+
+        _returnedMessages.Clear();
 
         _logger.LogInformation("RabbitMQ publisher disposed");
     }
+
+    private IConnection EnsureConnected()
+    {
+        lock (_connectionLock)
+        {
+            if (_connection is { IsOpen: true })
+            {
+                return _connection;
+            }
+
+            DisposeConnectionCore();
+
+            _connection = _factory.CreateConnection();
+
+            _logger.LogInformation(
+                "RabbitMQ publisher connection initialized. Host={Host} Port={Port}",
+                _connectionOptions.Host,
+                _connectionOptions.Port);
+
+            return _connection;
+        }
+    }
+
+    private void DisposeConnection()
+    {
+        lock (_connectionLock)
+        {
+            DisposeConnectionCore();
+        }
+    }
+
+    private void DisposeConnectionCore()
+    {
+        if (_connection == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _connection.Dispose();
+        }
+        finally
+        {
+            _connection = null;
+        }
+    }
+
+    private void OnMessageReturned(object? sender, BasicReturnEventArgs args)
+    {
+        var messageId = args.BasicProperties?.MessageId;
+
+        if (string.IsNullOrWhiteSpace(messageId))
+        {
+            _logger.LogWarning(
+                "RabbitMQ message returned without MessageId. RoutingKey={RoutingKey}",
+                args.RoutingKey);
+
+            return;
+        }
+
+        _returnedMessages[messageId] = new ReturnedMessageInfo(
+            args.ReplyCode,
+            args.ReplyText,
+            args.RoutingKey);
+
+        _logger.LogWarning(
+            "RabbitMQ message returned. MessageId={MessageId} RoutingKey={RoutingKey} ReplyCode={ReplyCode} ReplyText={ReplyText}",
+            messageId,
+            args.RoutingKey,
+            args.ReplyCode,
+            args.ReplyText);
+    }
+
+    private sealed record ReturnedMessageInfo(
+        ushort ReplyCode,
+        string ReplyText,
+        string RoutingKey);
 }
