@@ -249,6 +249,57 @@ public class RotateRefreshTokenHandlerTests
             Times.Never);
     }
 
+    [Fact]
+    public async Task Handle_WhenConcurrentReuseIsDetected_ShouldThrowUnauthorizedAccessException()
+    {
+        // Arrange
+        var user = CreateActiveUser();
+        var refreshToken = new RefreshToken(
+            "valid-refresh-token",
+            user.Id,
+            DateTime.UtcNow.AddMinutes(5));
+        var command = new RotateRefreshTokenCommand(refreshToken.Token);
+        var cancellationToken = CancellationToken.None;
+
+        _refreshTokenRepositoryMock
+            .Setup(repository => repository.GetByTokenAsync(command.RefreshToken, cancellationToken))
+            .ReturnsAsync(refreshToken);
+
+        _userRepositoryMock
+            .Setup(repository => repository.GetByIdAsync(user.Id, cancellationToken))
+            .ReturnsAsync(user);
+
+        _refreshTokenRepositoryMock
+            .Setup(repository => repository.UpdateAsync(refreshToken, cancellationToken))
+            .Returns(Task.CompletedTask);
+
+        _jwtServiceMock
+            .Setup(service => service.GenerateAccessToken(user))
+            .Returns("new-access-token");
+
+        _jwtServiceMock
+            .Setup(service => service.GenerateRefreshToken())
+            .Returns("new-refresh-token");
+
+        _refreshTokenRepositoryMock
+            .Setup(repository => repository.CreateAsync(It.IsAny<RefreshToken>(), cancellationToken))
+            .ReturnsAsync((RefreshToken createdToken, CancellationToken _) => createdToken);
+
+        _unitOfWorkMock
+            .Setup(unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken))
+            .ThrowsAsync(new Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException());
+
+        var handler = CreateHandler();
+
+        // Act
+        Func<Task> act = async () => await handler.Handle(command, cancellationToken);
+
+        // Assert
+        await act.Should()
+            .ThrowAsync<UnauthorizedAccessException>()
+            .WithMessage("Refresh token is invalid or revoked");
+    }
+
     private RotateRefreshTokenHandler CreateHandler()
     {
         return new RotateRefreshTokenHandler(
