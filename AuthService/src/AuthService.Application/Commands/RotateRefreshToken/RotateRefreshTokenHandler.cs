@@ -89,15 +89,10 @@ public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenComma
 
         var newRefreshTokenValue = _jwtService.GenerateRefreshToken();
 
-        var newRefreshToken = new RefreshToken
-        {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            Token = newRefreshTokenValue,
-            ExpiryDate = DateTime.UtcNow.AddDays(7),
-            CreatedAt = DateTime.UtcNow,
-            IsRevoked = false
-        };
+        var newRefreshToken = new RefreshToken(
+            newRefreshTokenValue,
+            user.Id,
+            DateTime.UtcNow.AddDays(7));
 
         _logger.LogInformation(
             "New refresh token created for user {UserId}",
