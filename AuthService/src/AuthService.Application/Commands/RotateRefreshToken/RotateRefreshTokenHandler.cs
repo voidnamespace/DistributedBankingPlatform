@@ -69,8 +69,7 @@ public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenComma
             throw new UnauthorizedAccessException("User not found or inactive");
         }
 
-        refreshToken.IsRevoked = true;
-        refreshToken.RevokedAt = DateTime.UtcNow;
+        refreshToken.Revoke();
 
         _logger.LogInformation(
             "Refresh token revoked for user {UserId}",
@@ -89,15 +88,10 @@ public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenComma
 
         var newRefreshTokenValue = _jwtService.GenerateRefreshToken();
 
-        var newRefreshToken = new RefreshToken
-        {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            Token = newRefreshTokenValue,
-            ExpiryDate = DateTime.UtcNow.AddDays(7),
-            CreatedAt = DateTime.UtcNow,
-            IsRevoked = false
-        };
+        var newRefreshToken = new RefreshToken(
+            newRefreshTokenValue,
+            user.Id,
+            DateTime.UtcNow.AddDays(7));
 
         _logger.LogInformation(
             "New refresh token created for user {UserId}",
@@ -107,7 +101,19 @@ public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenComma
             newRefreshToken,
             cancellationToken);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex) when (IsConcurrencyConflict(ex))
+        {
+            _logger.LogWarning(
+                ex,
+                "Refresh token request failed due to concurrent reuse attempt for user {UserId}",
+                user.Id);
+
+            throw new UnauthorizedAccessException("Refresh token is invalid or revoked");
+        }
 
         _logger.LogInformation(
             "RefreshTokenCommand completed {UserId}",
@@ -119,5 +125,10 @@ public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenComma
             RefreshToken = newRefreshTokenValue,
             ExpiresAt = DateTime.UtcNow.AddMinutes(60)
         };
+    }
+
+    private static bool IsConcurrencyConflict(Exception exception)
+    {
+        return exception.GetType().FullName == "Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException";
     }
 }

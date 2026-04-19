@@ -72,15 +72,10 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserResul
         var accessToken = _jwtService.GenerateAccessToken(user);
         var refreshTokenValue = _jwtService.GenerateRefreshToken();
 
-        var refreshToken = new RefreshToken
-        {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            Token = refreshTokenValue,
-            ExpiryDate = DateTime.UtcNow.AddDays(7),
-            CreatedAt = DateTime.UtcNow,
-            IsRevoked = false
-        };
+        var refreshToken = new RefreshToken(
+            refreshTokenValue,
+            user.Id,
+            DateTime.UtcNow.AddDays(7));
 
         _logger.LogInformation(
              "Refresh token generated for {UserId}",

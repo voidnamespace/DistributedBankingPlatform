@@ -5,4 +5,9 @@
     <Project Path="src/AuthService.Domain/AuthService.Domain.csproj" />
     <Project Path="src/AuthService.Infrastructure/AuthService.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AuthService.Application.Tests/AuthService.Application.Tests.csproj" />
+    <Project Path="tests/AuthService.Domain.Tests/AuthService.Domain.Tests.csproj" />
+    <Project Path="tests/AuthService.Infrastructure.Tests/AuthService.Infrastructure.Tests.csproj" />
+  </Folder>
 </Solution>

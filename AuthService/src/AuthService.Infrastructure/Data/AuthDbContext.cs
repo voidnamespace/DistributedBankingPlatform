@@ -75,6 +75,7 @@ public class AuthDbContext : DbContext
             entity.Property(e => e.ExpiryDate).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.IsRevoked)
+                .IsConcurrencyToken()
                 .IsRequired()
                 .HasDefaultValue(false);
 
