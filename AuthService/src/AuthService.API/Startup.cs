@@ -9,6 +9,7 @@ using AuthService.Infrastructure.Persistence.Seeding;
 using AuthService.Application.Common.Behaviors;
 using FluentValidation;
 using MediatR;
+using OpenTelemetry.Metrics;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.API;
@@ -30,6 +31,15 @@ public class Startup
         typeof(UserActivatedDomainEventHandler).Assembly
     ));
 
+        services.AddOpenTelemetry()
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddProcessInstrumentation()
+            .AddPrometheusExporter();
+    });
 
         services.AddValidatorsFromAssemblyContaining<RegisterUserCommandValidator>();
         services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
@@ -48,12 +58,12 @@ public class Startup
         using (var scope = app.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-            db.Database.Migrate(); 
+            db.Database.Migrate();
 
             var seeder = scope.ServiceProvider.GetRequiredService<AuthDbSeeder>();
-            seeder.SeedAsync().GetAwaiter().GetResult(); 
+            seeder.SeedAsync().GetAwaiter().GetResult();
         }
- 
+        app.MapPrometheusScrapingEndpoint();
         app.UseMiddleware<AuthService.Infrastructure.Middleware.ExceptionMiddleware>();
         app.UseIpRateLimiting();
 
@@ -63,7 +73,7 @@ public class Startup
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("swagger/v1/swagger.json", "AuthService API V1");
-                c.RoutePrefix = string.Empty; 
+                c.RoutePrefix = string.Empty;
             });
         }
 
