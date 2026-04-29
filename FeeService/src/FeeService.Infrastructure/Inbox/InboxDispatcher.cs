@@ -1,9 +1,9 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using FeeService.Application.IntegrationEvents.Users;
 using FeeService.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FeeService.Infrastructure.Messaging.Inbox;
+namespace FeeService.Infrastructure.Inbox;
 
 public sealed class InboxDispatcher : IInboxDispatcher
 {

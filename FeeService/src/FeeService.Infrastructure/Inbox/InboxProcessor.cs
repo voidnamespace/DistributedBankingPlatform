@@ -1,13 +1,12 @@
-using FeeService.Application.Interfaces;
+﻿using FeeService.Application.Interfaces;
 using FeeService.Infrastructure.Persistence.Database;
-using FeeService.Infrastructure.Persistence.Inbox;
 using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace FeeService.Infrastructure.Messaging.Inbox;
+namespace FeeService.Infrastructure.Inbox;
 
 public sealed class InboxProcessor : BackgroundService
 {

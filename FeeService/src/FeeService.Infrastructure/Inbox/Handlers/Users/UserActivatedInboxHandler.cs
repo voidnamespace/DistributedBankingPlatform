@@ -1,10 +1,10 @@
-using FeeService.Application.IntegrationEvents.Users;
+﻿using FeeService.Application.IntegrationEvents.Users;
 using FeeService.Application.Interfaces;
 using FeeService.Domain.Entities;
 using FeeService.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace FeeService.Infrastructure.Messaging.Inbox.Handlers.Users;
+namespace FeeService.Infrastructure.Inbox.Handlers.Users;
 
 public sealed class UserActivatedInboxHandler : IInboxMessageHandler<UserActivatedIntegrationEvent>
 {

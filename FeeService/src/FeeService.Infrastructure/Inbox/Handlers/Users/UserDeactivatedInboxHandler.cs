@@ -1,21 +1,21 @@
-using FeeService.Application.IntegrationEvents.Users;
+﻿using FeeService.Application.IntegrationEvents.Users;
 using FeeService.Application.Interfaces;
 using FeeService.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace FeeService.Infrastructure.Messaging.Inbox.Handlers.Users;
+namespace FeeService.Infrastructure.Inbox.Handlers.Users;
 
-public sealed class UserDeletedInboxHandler : IInboxMessageHandler<UserDeletedIntegrationEvent>
+public sealed class UserDeactivatedInboxHandler : IInboxMessageHandler<UserDeactivatedIntegrationEvent>
 {
     private readonly FeeDbContext _dbContext;
 
-    public UserDeletedInboxHandler(FeeDbContext dbContext)
+    public UserDeactivatedInboxHandler(FeeDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
     public async Task HandleAsync(
-        UserDeletedIntegrationEvent message,
+        UserDeactivatedIntegrationEvent message,
         CancellationToken cancellationToken = default)
     {
         var state = await _dbContext.UserMaintenanceFeeStates

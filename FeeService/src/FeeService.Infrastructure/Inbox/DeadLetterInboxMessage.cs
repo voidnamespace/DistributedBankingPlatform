@@ -1,4 +1,4 @@
-namespace FeeService.Infrastructure.Persistence.Inbox;
+﻿namespace FeeService.Infrastructure.Inbox;
 
 public class DeadLetterInboxMessage
 {

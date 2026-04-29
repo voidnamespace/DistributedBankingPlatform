@@ -1,19 +1,17 @@
-﻿using FeeService.Application.IntegrationEvents.Users;
+using FeeService.Application.IntegrationEvents.Users;
 using FeeService.Application.Interfaces;
-using FeeService.Infrastructure.Messaging.Inbox;
-using FeeService.Infrastructure.Messaging.Inbox.Handlers.Users;
+using FeeService.Infrastructure.Inbox.Handlers.Users;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FeeService.Infrastructure.Persistence.Inbox;
+namespace FeeService.Infrastructure.Inbox;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInbox(
-    this IServiceCollection services)
+    public static IServiceCollection AddInbox(this IServiceCollection services)
     {
         services.AddScoped<IInboxWriter, InboxWriter>();
-
         services.AddScoped<IInboxDispatcher, InboxDispatcher>();
+        services.AddHostedService<InboxProcessor>();
 
         services.AddScoped<
             IInboxMessageHandler<UserCreatedIntegrationEvent>,
@@ -30,8 +28,6 @@ public static class DependencyInjection
         services.AddScoped<
             IInboxMessageHandler<UserDeactivatedIntegrationEvent>,
             UserDeactivatedInboxHandler>();
-
-        services.AddHostedService<InboxProcessor>();
 
         return services;
     }

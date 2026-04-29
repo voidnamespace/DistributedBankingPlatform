@@ -86,6 +86,22 @@ services:
       timeout: 5s
       retries: 5
 
+  segmentation-postgres:
+    image: postgres:16
+    container_name: segmentation_postgres
+    environment:
+      POSTGRES_DB: segmentationdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - segmentation_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   auditlog-mongodb:
     image: mongo:7
@@ -131,4 +147,5 @@ volumes:
   auth_pgdata:
   account_pgdata:
   transaction_pgdata:
+  segmentation_pgdata:
   auditlog_mongo_data:

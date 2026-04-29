@@ -3,7 +3,7 @@ using FeeService.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace FeeService.Infrastructure.Persistence.Inbox;
+namespace FeeService.Infrastructure.Inbox;
 
 public sealed class InboxWriter : IInboxWriter
 {

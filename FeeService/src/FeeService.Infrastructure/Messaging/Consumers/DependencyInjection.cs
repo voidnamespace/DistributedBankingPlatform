@@ -1,10 +1,10 @@
-﻿using FeeService.Infrastructure.Messaging.Consuming.UserConsumers;
-using FeeService.Infrastructure.Messaging.Options;
+﻿using FeeService.Infrastructure.Messaging.Options;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using FeeService.Infrastructure.Messaging.Consuming.UserConsumers;
 
-namespace FeeService.Infrastructure.Messaging;
+namespace FeeService.Infrastructure.Messaging.Consumers;
 
 public static class DependencyInjection
 {

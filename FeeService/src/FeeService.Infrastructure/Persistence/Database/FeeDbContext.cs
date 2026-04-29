@@ -1,5 +1,5 @@
 ﻿using FeeService.Domain.Entities;
-using FeeService.Infrastructure.Persistence.Inbox;
+using FeeService.Infrastructure.Inbox;
 using Microsoft.EntityFrameworkCore;
 
 namespace FeeService.Infrastructure.Persistence.Database;
