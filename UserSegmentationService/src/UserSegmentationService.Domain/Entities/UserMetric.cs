@@ -14,4 +14,17 @@ public class UserMetric
     {
         UserId = userId;
     }
+
+    public void RecordSpend(
+        decimal amount,
+        DateTime occurredAt)
+    {
+        if (amount <= 0)
+            return;
+
+        SpendLast60Days += amount;
+        LastTransactionAt = LastTransactionAt is null || occurredAt > LastTransactionAt
+            ? occurredAt
+            : LastTransactionAt;
+    }
 }

@@ -1,5 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+using MediatR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using UserSegmentationService.Application.Interfaces;
+using UserSegmentationService.Application.IntegrationEvents.Users;
+using UserSegmentationService.Infrastructure.Inbox;
+using UserSegmentationService.Infrastructure.Messaging;
+using UserSegmentationService.Infrastructure.Persistence;
 using UserSegmentationService.Infrastructure.Persistence.Database;
 
 namespace UserSegmentationService.Infrastructure.Extensions;
@@ -11,6 +17,13 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddDatabase(configuration);
+        services.AddScoped<IUserMetricRepository, UserMetricRepository>();
+        services.AddScoped<IUserAccountRepository, UserAccountRepository>();
+        services.AddMediatR(configuration =>
+            configuration.RegisterServicesFromAssembly(
+                typeof(UserCreatedIntegrationEvent).Assembly));
+        services.AddInbox();
+        services.AddMessaging(configuration);
 
         return services;
     }

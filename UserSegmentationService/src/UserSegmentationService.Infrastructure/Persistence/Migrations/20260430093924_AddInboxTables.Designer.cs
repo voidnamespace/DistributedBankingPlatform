@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UserSegmentationService.Infrastructure.Persistence.Database;
 
 #nullable disable
 
-namespace UserSegmentationService.Infrastructure.Migrations
+namespace UserSegmentationService.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(SegmentationDbContext))]
-    partial class SegmentationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260430093924_AddInboxTables")]
+    partial class AddInboxTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,30 +40,6 @@ namespace UserSegmentationService.Infrastructure.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("UserMetrics");
-                });
-
-            modelBuilder.Entity("UserSegmentationService.Domain.Entities.UserAccount", b =>
-                {
-                    b.Property<Guid>("AccountId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AccountNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("AccountId");
-
-                    b.HasIndex("AccountNumber")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserAccounts");
                 });
 
             modelBuilder.Entity("UserSegmentationService.Infrastructure.Inbox.DeadLetterInboxMessage", b =>
