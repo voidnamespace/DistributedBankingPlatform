@@ -45,7 +45,7 @@ namespace FeeService.Infrastructure.Migrations
                     b.ToTable("UserMaintenanceFeeStates");
                 });
 
-            modelBuilder.Entity("FeeService.Infrastructure.Persistence.Inbox.InboxMessage", b =>
+            modelBuilder.Entity("FeeService.Infrastructure.Inbox.InboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()

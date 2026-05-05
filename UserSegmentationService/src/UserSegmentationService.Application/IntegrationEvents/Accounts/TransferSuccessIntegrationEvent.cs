@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace AccountService.Application.IntegrationEvents.Transactions.Transfer;
+namespace UserSegmentationService.Application.IntegrationEvents.Accounts;
 
 public sealed record TransferSuccessIntegrationEvent(Guid TransactionId,
     string FromAccountNumber,

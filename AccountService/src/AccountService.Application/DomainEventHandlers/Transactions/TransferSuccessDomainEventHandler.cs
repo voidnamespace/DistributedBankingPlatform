@@ -40,7 +40,8 @@ public class TransferSuccessDomainEventHandler
             domainEvent.FromAccountNumber.Value,
             domainEvent.ToAccountNumber.Value,
             domainEvent.Money.Amount,
-            (int)domainEvent.Money.Currency
+            (int)domainEvent.Money.Currency,
+            domainEvent.OccurredOn
         );
 
         await _outboxWriter.EnqueueAsync(integrationEvent, ct);

@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/UserSegmentationService.API/UserSegmentationService.API.csproj" />
+    <Project Path="src/UserSegmentationService.Application/UserSegmentationService.Application.csproj" />
+    <Project Path="src/UserSegmentationService.Domain/UserSegmentationService.Domain.csproj" />
+    <Project Path="src/UserSegmentationService.Infrastructure/UserSegmentationService.Infrastructure.csproj" />
+  </Folder>
+</Solution>
