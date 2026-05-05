@@ -30,6 +30,17 @@ internal class UserMetricRepository : IUserMetricRepository
             .AnyAsync(x => x.UserId == userId, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Guid>> GetActiveUserIdsAsync(
+        DateTime activeSince,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.UserMetrics
+            .Where(x => x.LastTransactionAt != null)
+            .Where(x => x.LastTransactionAt >= activeSince)
+            .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
+    }
+
     public void Add(UserMetric userMetric)
     {
         _dbContext.UserMetrics.Add(userMetric);

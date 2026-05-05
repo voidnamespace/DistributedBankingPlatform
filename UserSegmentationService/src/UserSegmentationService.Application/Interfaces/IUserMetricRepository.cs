@@ -12,5 +12,9 @@ public interface IUserMetricRepository
         Guid userId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Guid>> GetActiveUserIdsAsync(
+        DateTime activeSince,
+        CancellationToken cancellationToken = default);
+
     void Add(UserMetric userMetric);
 }

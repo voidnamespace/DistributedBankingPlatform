@@ -25,7 +25,7 @@ public class TransferSuccessIntegrationEventHandler
                 notification.ToAccountNumber,
                 notification.Amount,
                 notification.Currency,
-                DateTime.UtcNow),
+                notification.OccurredOn),
             cancellationToken);
     }
 }

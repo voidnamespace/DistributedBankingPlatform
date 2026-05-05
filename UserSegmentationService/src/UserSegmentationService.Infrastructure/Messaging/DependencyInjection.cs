@@ -2,7 +2,6 @@ using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UserSegmentationService.Infrastructure.Messaging.Consumers.Accounts;
-using UserSegmentationService.Infrastructure.Messaging.Consumers.Users;
 
 namespace UserSegmentationService.Infrastructure.Messaging;
 
@@ -14,10 +13,6 @@ public static class DependencyInjection
     {
         services.AddMassTransit(x =>
         {
-            x.AddConsumer<UserCreatedConsumer>();
-            x.AddConsumer<UserActivatedConsumer>();
-            x.AddConsumer<UserDeactivatedConsumer>();
-            x.AddConsumer<UserDeletedConsumer>();
             x.AddConsumer<AccountCreatedConsumer>();
             x.AddConsumer<TransferSuccessConsumer>();
 
@@ -31,38 +26,6 @@ public static class DependencyInjection
                 {
                     h.Username(username);
                     h.Password(password);
-                });
-
-                cfg.ReceiveEndpoint("segmentation.auth.events", e =>
-                {
-                    e.ConfigureConsumer<UserCreatedConsumer>(context);
-                    e.ConfigureConsumer<UserActivatedConsumer>(context);
-                    e.ConfigureConsumer<UserDeactivatedConsumer>(context);
-                    e.ConfigureConsumer<UserDeletedConsumer>(context);
-
-                    e.Bind("auth.events", bind =>
-                    {
-                        bind.RoutingKey = "user.created";
-                        bind.ExchangeType = "topic";
-                    });
-
-                    e.Bind("auth.events", bind =>
-                    {
-                        bind.RoutingKey = "user.activated";
-                        bind.ExchangeType = "topic";
-                    });
-
-                    e.Bind("auth.events", bind =>
-                    {
-                        bind.RoutingKey = "user.deactivated";
-                        bind.ExchangeType = "topic";
-                    });
-
-                    e.Bind("auth.events", bind =>
-                    {
-                        bind.RoutingKey = "user.deleted";
-                        bind.ExchangeType = "topic";
-                    });
                 });
 
                 cfg.ReceiveEndpoint("segmentation.account.events", e =>

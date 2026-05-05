@@ -6,4 +6,5 @@ public sealed record TransferSuccessIntegrationEvent(Guid TransactionId,
     string FromAccountNumber,
     string ToAccountNumber,
     decimal Amount,
-    int Currency) : INotification;
+    int Currency,
+    DateTime OccurredOn) : INotification;

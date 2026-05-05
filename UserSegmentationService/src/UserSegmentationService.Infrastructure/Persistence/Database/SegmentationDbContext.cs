@@ -16,6 +16,10 @@ public class SegmentationDbContext : DbContext
 
     public DbSet<UserAccount> UserAccounts { get; set; }
 
+    public DbSet<Segment> Segments { get; set; }
+
+    public DbSet<SegmentMembership> SegmentMemberships { get; set; }
+
     public DbSet<InboxMessage> InboxMessages { get; set; }
 
     public DbSet<DeadLetterInboxMessage> DeadLetterInboxMessages { get; set; }
@@ -39,6 +43,35 @@ public class SegmentationDbContext : DbContext
 
             entity.HasIndex(x => x.AccountNumber)
                 .IsUnique();
+
+            entity.HasIndex(x => x.UserId);
+        });
+
+        modelBuilder.Entity<Segment>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Name)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.RuleType)
+                .HasConversion<int>()
+                .IsRequired();
+
+            entity.Property(x => x.Kind)
+                .HasConversion<int>()
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<SegmentMembership>(entity =>
+        {
+            entity.HasKey(x => new { x.SegmentId, x.UserId });
+
+            entity.HasOne<Segment>()
+                .WithMany()
+                .HasForeignKey(x => x.SegmentId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(x => x.UserId);
         });
