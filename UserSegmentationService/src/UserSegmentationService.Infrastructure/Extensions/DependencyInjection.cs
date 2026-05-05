@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Application.IntegrationEvents.Accounts;
+using UserSegmentationService.Infrastructure.BackgroundJobs;
 using UserSegmentationService.Infrastructure.Inbox;
 using UserSegmentationService.Infrastructure.Messaging;
 using UserSegmentationService.Infrastructure.Persistence;
@@ -21,10 +22,12 @@ public static class DependencyInjection
         services.AddScoped<IUserAccountRepository, UserAccountRepository>();
         services.AddScoped<ISegmentRepository, SegmentRepository>();
         services.AddScoped<ISegmentMembershipRepository, SegmentMembershipRepository>();
+        services.AddScoped<ISegmentDeltaRepository, SegmentDeltaRepository>();
         services.AddMediatR(configuration =>
             configuration.RegisterServicesFromAssembly(
                 typeof(AccountCreatedIntegrationEvent).Assembly));
         services.AddInbox();
+        services.AddHostedService<SegmentEvaluationBackgroundService>();
         services.AddMessaging(configuration);
 
         return services;

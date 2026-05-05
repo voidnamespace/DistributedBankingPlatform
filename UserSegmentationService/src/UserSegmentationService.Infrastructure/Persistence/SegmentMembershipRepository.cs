@@ -14,6 +14,16 @@ internal class SegmentMembershipRepository : ISegmentMembershipRepository
         _dbContext = dbContext;
     }
 
+    public async Task<IReadOnlyList<Guid>> GetUserIdsBySegmentIdAsync(
+        Guid segmentId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.SegmentMemberships
+            .Where(x => x.SegmentId == segmentId)
+            .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task ReplaceSegmentMembersAsync(
         Guid segmentId,
         IReadOnlyCollection<Guid> userIds,
