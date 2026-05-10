@@ -4,7 +4,7 @@ using UserSegmentationService.Domain.Entities;
 using UserSegmentationService.Domain.Enums;
 using UserSegmentationService.Infrastructure.Persistence.Database;
 
-namespace UserSegmentationService.Infrastructure.Persistence;
+namespace UserSegmentationService.Infrastructure.Persistence.Repositories;
 
 internal class SegmentRepository : ISegmentRepository
 {

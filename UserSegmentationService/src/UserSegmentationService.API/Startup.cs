@@ -18,13 +18,18 @@ public class Startup
         services.AddInfrastructure(_configuration);
 
         services.AddEndpointsApiExplorer();
-
+        services.AddSwaggerGen();
     }
 
     public void Configure(
         WebApplication app,
         IWebHostEnvironment env)
     {
+        if (env.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
 
         app.UseAuthorization();
 
