@@ -16,5 +16,9 @@ public interface IUserMetricRepository
         DateTime activeSince,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<UserMetric>> GetRandomAsync(
+        int count,
+        CancellationToken cancellationToken = default);
+
     void Add(UserMetric userMetric);
 }

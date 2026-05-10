@@ -41,6 +41,16 @@ internal class UserMetricRepository : IUserMetricRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<UserMetric>> GetRandomAsync(
+        int count,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.UserMetrics
+            .OrderBy(_ => Guid.NewGuid())
+            .Take(count)
+            .ToListAsync(cancellationToken);
+    }
+
     public void Add(UserMetric userMetric)
     {
         _dbContext.UserMetrics.Add(userMetric);
