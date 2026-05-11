@@ -41,6 +41,16 @@ internal class UserMetricRepository : IUserMetricRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Guid>> GetVipUserIdsAsync(
+        decimal minimumSpend,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.UserMetrics
+            .Where(x => x.SpendLast60Days >= minimumSpend)
+            .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<UserMetric>> GetRandomAsync(
         int count,
         CancellationToken cancellationToken = default)

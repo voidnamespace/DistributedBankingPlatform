@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using UserSegmentationService.Application.Commands.Segments.ActiveUsers;
+using UserSegmentationService.Application.Commands.Segments.VipUsers;
 
 namespace UserSegmentationService.API.Controllers;
 
@@ -23,6 +24,18 @@ public class SegmentationController : ControllerBase
 
         await _mediator.Send(
             new EvaluateActiveUserSegmentCommand(activeSince),
+            cancellationToken);
+
+        return Ok();
+    }
+
+    [HttpPost("vip-users/evaluate")]
+    public async Task<IActionResult> EvaluateVipUsers(
+        [FromQuery] decimal minimumSpend = 5_000m,
+        CancellationToken cancellationToken = default)
+    {
+        await _mediator.Send(
+            new EvaluateVipUserSegmentCommand(minimumSpend),
             cancellationToken);
 
         return Ok();

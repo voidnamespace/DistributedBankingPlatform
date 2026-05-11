@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using UserSegmentationService.Application.Commands.Segments.ActiveUsers;
+using UserSegmentationService.Application.Commands.Segments.VipUsers;
 
 namespace UserSegmentationService.Infrastructure.BackgroundJobs;
 
@@ -60,6 +61,11 @@ internal class SegmentEvaluationBackgroundService : BackgroundService
 
         await mediator.Send(
             new EvaluateActiveUserSegmentCommand(DateTime.UtcNow.Subtract(activeWindow)),
+            cancellationToken);
+
+        await mediator.Send(
+            new EvaluateVipUserSegmentCommand(
+                GetConfigurationValue("Segments:VipUsersMinimumSpend", 5_000)),
             cancellationToken);
 
         _logger.LogInformation("Dynamic segments evaluated");

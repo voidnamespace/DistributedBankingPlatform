@@ -5,7 +5,7 @@ using UserSegmentationService.Domain.Enums;
 
 namespace UserSegmentationService.Application.Commands.Segments.ActiveUsers;
 
-public class EvaluateActiveUserSegmentCommandHandler
+public class EvaluateActiveUserSegmentHandler
     : IRequestHandler<EvaluateActiveUserSegmentCommand>
 {
     private readonly ISegmentRepository _segmentRepository;
@@ -13,7 +13,7 @@ public class EvaluateActiveUserSegmentCommandHandler
     private readonly ISegmentDeltaRepository _segmentDeltaRepository;
     private readonly IUserMetricRepository _userMetricRepository;
 
-    public EvaluateActiveUserSegmentCommandHandler(
+    public EvaluateActiveUserSegmentHandler(
         ISegmentRepository segmentRepository,
         ISegmentMembershipRepository segmentMembershipRepository,
         ISegmentDeltaRepository segmentDeltaRepository,
