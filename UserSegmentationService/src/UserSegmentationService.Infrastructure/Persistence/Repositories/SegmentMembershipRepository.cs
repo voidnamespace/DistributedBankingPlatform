@@ -3,7 +3,7 @@ using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Domain.Entities;
 using UserSegmentationService.Infrastructure.Persistence.Database;
 
-namespace UserSegmentationService.Infrastructure.Persistence;
+namespace UserSegmentationService.Infrastructure.Persistence.Repositories;
 
 internal class SegmentMembershipRepository : ISegmentMembershipRepository
 {
@@ -12,6 +12,16 @@ internal class SegmentMembershipRepository : ISegmentMembershipRepository
     public SegmentMembershipRepository(SegmentationDbContext dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    public async Task<IReadOnlyList<Guid>> GetUserIdsBySegmentIdAsync(
+        Guid segmentId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.SegmentMemberships
+            .Where(x => x.SegmentId == segmentId)
+            .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task ReplaceSegmentMembersAsync(

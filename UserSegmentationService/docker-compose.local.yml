@@ -1,0 +1,20 @@
+services:
+  segmentation-postgres:
+    image: postgres:16
+    container_name: segmentation_postgres_local
+    environment:
+      POSTGRES_DB: segmentationdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - segmentation_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  segmentation_pgdata:

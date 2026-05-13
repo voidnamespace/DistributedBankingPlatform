@@ -20,6 +20,8 @@ public class SegmentationDbContext : DbContext
 
     public DbSet<SegmentMembership> SegmentMemberships { get; set; }
 
+    public DbSet<SegmentDelta> SegmentDeltas { get; set; }
+
     public DbSet<InboxMessage> InboxMessages { get; set; }
 
     public DbSet<DeadLetterInboxMessage> DeadLetterInboxMessages { get; set; }
@@ -74,6 +76,27 @@ public class SegmentationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(x => x.UserId);
+        });
+
+        modelBuilder.Entity<SegmentDelta>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.AddedUserIds)
+                .HasColumnType("uuid[]")
+                .IsRequired();
+
+            entity.Property(x => x.RemovedUserIds)
+                .HasColumnType("uuid[]")
+                .IsRequired();
+
+            entity.HasOne<Segment>()
+                .WithMany()
+                .HasForeignKey(x => x.SegmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.SegmentId);
+            entity.HasIndex(x => x.CreatedAt);
         });
 
         modelBuilder.Entity<InboxMessage>(entity =>

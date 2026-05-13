@@ -3,7 +3,7 @@ using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Domain.Entities;
 using UserSegmentationService.Infrastructure.Persistence.Database;
 
-namespace UserSegmentationService.Infrastructure.Persistence;
+namespace UserSegmentationService.Infrastructure.Persistence.Repositories;
 
 internal class UserMetricRepository : IUserMetricRepository
 {
@@ -38,6 +38,36 @@ internal class UserMetricRepository : IUserMetricRepository
             .Where(x => x.LastTransactionAt != null)
             .Where(x => x.LastTransactionAt >= activeSince)
             .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Guid>> GetVipUserIdsAsync(
+        decimal minimumSpend,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.UserMetrics
+            .Where(x => x.SpendLast60Days >= minimumSpend)
+            .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Guid>> GetRiskUserIdsAsync(
+        DateTime inactiveSince,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.UserMetrics
+            .Where(x => x.LastTransactionAt == null || x.LastTransactionAt < inactiveSince)
+            .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<UserMetric>> GetRandomAsync(
+        int count,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.UserMetrics
+            .OrderBy(_ => Guid.NewGuid())
+            .Take(count)
             .ToListAsync(cancellationToken);
     }
 

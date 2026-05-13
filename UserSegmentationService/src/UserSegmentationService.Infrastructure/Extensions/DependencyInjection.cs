@@ -1,12 +1,13 @@
-using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Application.IntegrationEvents.Accounts;
+using UserSegmentationService.Infrastructure.BackgroundJobs;
 using UserSegmentationService.Infrastructure.Inbox;
 using UserSegmentationService.Infrastructure.Messaging;
 using UserSegmentationService.Infrastructure.Persistence;
 using UserSegmentationService.Infrastructure.Persistence.Database;
+using UserSegmentationService.Infrastructure.Persistence.Repositories;
 
 namespace UserSegmentationService.Infrastructure.Extensions;
 
@@ -17,15 +18,24 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddDatabase(configuration);
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserMetricRepository, UserMetricRepository>();
         services.AddScoped<IUserAccountRepository, UserAccountRepository>();
         services.AddScoped<ISegmentRepository, SegmentRepository>();
         services.AddScoped<ISegmentMembershipRepository, SegmentMembershipRepository>();
+        services.AddScoped<ISegmentDeltaRepository, SegmentDeltaRepository>();
+
         services.AddMediatR(configuration =>
             configuration.RegisterServicesFromAssembly(
                 typeof(AccountCreatedIntegrationEvent).Assembly));
+
         services.AddInbox();
-        services.AddMessaging(configuration);
+
+        services.AddHostedService<SegmentEvaluationBackgroundService>();
+        if (configuration["Messaging:Enabled"] == "true")
+        {
+            services.AddMessaging(configuration);
+        }
 
         return services;
     }

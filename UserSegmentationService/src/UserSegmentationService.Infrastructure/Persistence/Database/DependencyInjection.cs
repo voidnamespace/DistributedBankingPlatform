@@ -16,6 +16,8 @@ public static class DependencyInjection
             options.UseNpgsql(
                 configuration.GetConnectionString("SegmentationDb")));
 
+        services.AddScoped<DatabaseMigrator>();
+
         return services;
     }
 
