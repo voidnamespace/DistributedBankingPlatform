@@ -51,6 +51,16 @@ internal class UserMetricRepository : IUserMetricRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Guid>> GetRiskUserIdsAsync(
+        DateTime inactiveSince,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.UserMetrics
+            .Where(x => x.LastTransactionAt == null || x.LastTransactionAt < inactiveSince)
+            .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<UserMetric>> GetRandomAsync(
         int count,
         CancellationToken cancellationToken = default)

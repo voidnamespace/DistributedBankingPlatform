@@ -20,6 +20,10 @@ public interface IUserMetricRepository
         decimal minimumSpend,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Guid>> GetRiskUserIdsAsync(
+        DateTime inactiveSince,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<UserMetric>> GetRandomAsync(
         int count,
         CancellationToken cancellationToken = default);

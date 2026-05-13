@@ -32,15 +32,30 @@ public class SimulateBulkUserMetricCreationHandler : IRequestHandler<SimulateBul
 
             for (var i = 0; i < currentChunkSize; i++)
             {
+                var lastTransactionAt = CreateRandomLastTransactionAt(random);
+
                 var userMetric = UserMetric.CreateSnapshot(
                     Guid.NewGuid(),
                     random.Next(0, 10_000),
-                    null);
+                    lastTransactionAt);
 
                 _userMetricRepository.Add(userMetric);
             }
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
+    }
+
+    private static DateTime? CreateRandomLastTransactionAt(Random random)
+    {
+        var bucket = random.Next(0, 100);
+
+        if (bucket < 10)
+            return null;
+
+        if (bucket < 70)
+            return DateTime.UtcNow.AddDays(-random.Next(0, 30));
+
+        return DateTime.UtcNow.AddDays(-random.Next(91, 180));
     }
 }
