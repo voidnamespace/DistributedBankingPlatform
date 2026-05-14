@@ -34,7 +34,12 @@ public static class SegmentsSeeder
                 Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
                 "March campaign audience",
                 SegmentRuleType.ActiveUsers,
-                SegmentKind.Static));
+                SegmentKind.Static),
+            new Segment(
+                Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
+                "Vip At Risk users",
+                SegmentRuleType.VipAtRiskUsers,
+                SegmentKind.Dynamic));
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }

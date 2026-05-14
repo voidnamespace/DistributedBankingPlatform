@@ -4,5 +4,6 @@ public enum SegmentRuleType
 {
     ActiveUsers = 1,
     VipUsers = 2,
-    RiskUsers = 3
+    RiskUsers = 3,
+    VipAtRiskUsers = 4,
 }
