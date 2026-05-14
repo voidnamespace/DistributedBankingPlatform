@@ -8,18 +8,18 @@ namespace UserSegmentationService.Application.Commands.Segments.VipUsers;
 public class EvaluateVipUserSegmentHandler
     : IRequestHandler<EvaluateVipUserSegmentCommand>
 {
-    private readonly ISegmentRepository _segmentRepository;
+    private readonly ISegmentCache _segmentCache;
     private readonly ISegmentMembershipRepository _segmentMembershipRepository;
     private readonly ISegmentDeltaRepository _segmentDeltaRepository;
     private readonly IUserMetricRepository _userMetricRepository;
 
     public EvaluateVipUserSegmentHandler(
-        ISegmentRepository segmentRepository,
+        ISegmentCache segmentCache,
         ISegmentMembershipRepository segmentMembershipRepository,
         ISegmentDeltaRepository segmentDeltaRepository,
         IUserMetricRepository userMetricRepository)
     {
-        _segmentRepository = segmentRepository;
+        _segmentCache = segmentCache;
         _segmentMembershipRepository = segmentMembershipRepository;
         _segmentDeltaRepository = segmentDeltaRepository;
         _userMetricRepository = userMetricRepository;
@@ -29,7 +29,7 @@ public class EvaluateVipUserSegmentHandler
         EvaluateVipUserSegmentCommand request,
         CancellationToken cancellationToken)
     {
-        var segment = await _segmentRepository.GetByRuleTypeAndKindAsync(
+        var segment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.VipUsers,
             SegmentKind.Dynamic,
             cancellationToken);

@@ -14,4 +14,8 @@
     <ProjectReference Include="..\UserSegmentationService.Domain\UserSegmentationService.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Caching\" />
+  </ItemGroup>
+
 </Project>

@@ -8,6 +8,7 @@ using UserSegmentationService.Infrastructure.Messaging;
 using UserSegmentationService.Infrastructure.Persistence;
 using UserSegmentationService.Infrastructure.Persistence.Database;
 using UserSegmentationService.Infrastructure.Persistence.Repositories;
+using UserSegmentationService.Infrastructure.Caching;
 
 namespace UserSegmentationService.Infrastructure.Extensions;
 
@@ -22,9 +23,11 @@ public static class DependencyInjection
         services.AddScoped<IUserMetricRepository, UserMetricRepository>();
         services.AddScoped<IUserAccountRepository, UserAccountRepository>();
         services.AddScoped<ISegmentRepository, SegmentRepository>();
+        services.AddScoped<ISegmentCache, SegmentCache>();
+        services.AddMemoryCache();
         services.AddScoped<ISegmentMembershipRepository, SegmentMembershipRepository>();
         services.AddScoped<ISegmentDeltaRepository, SegmentDeltaRepository>();
-
+        
         services.AddMediatR(configuration =>
             configuration.RegisterServicesFromAssembly(
                 typeof(AccountCreatedIntegrationEvent).Assembly));

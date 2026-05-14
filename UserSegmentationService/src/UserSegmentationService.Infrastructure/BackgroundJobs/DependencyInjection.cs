@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UserSegmentationService.Application.Commands.Segments.LowSpenderUsers
+namespace UserSegmentationService.Infrastructure.BackgroundJobs
 {
-    internal class FileName
+    internal class DependencyInjection
     {
     }
 }

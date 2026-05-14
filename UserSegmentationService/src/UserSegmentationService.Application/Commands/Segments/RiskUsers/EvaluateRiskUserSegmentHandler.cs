@@ -8,18 +8,18 @@ namespace UserSegmentationService.Application.Commands.Segments.RiskUsers;
 public class EvaluateRiskUserSegmentHandler
     : IRequestHandler<EvaluateRiskUserSegmentCommand>
 {
-    private readonly ISegmentRepository _segmentRepository;
+    private readonly ISegmentCache _segmentCache;
     private readonly ISegmentMembershipRepository _segmentMembershipRepository;
     private readonly ISegmentDeltaRepository _segmentDeltaRepository;
     private readonly IUserMetricRepository _userMetricRepository;
 
     public EvaluateRiskUserSegmentHandler(
-        ISegmentRepository segmentRepository,
+        ISegmentCache segmentCache,
         ISegmentMembershipRepository segmentMembershipRepository,
         ISegmentDeltaRepository segmentDeltaRepository,
         IUserMetricRepository userMetricRepository)
     {
-        _segmentRepository = segmentRepository;
+        _segmentCache = segmentCache;
         _segmentMembershipRepository = segmentMembershipRepository;
         _segmentDeltaRepository = segmentDeltaRepository;
         _userMetricRepository = userMetricRepository;
@@ -29,7 +29,7 @@ public class EvaluateRiskUserSegmentHandler
         EvaluateRiskUserSegmentCommand request,
         CancellationToken cancellationToken)
     {
-        var segment = await _segmentRepository.GetByRuleTypeAndKindAsync(
+        var segment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.RiskUsers,
             SegmentKind.Dynamic,
             cancellationToken);

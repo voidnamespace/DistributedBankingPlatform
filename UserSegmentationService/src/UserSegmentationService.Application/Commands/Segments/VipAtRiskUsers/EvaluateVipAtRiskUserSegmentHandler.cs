@@ -8,17 +8,17 @@ namespace UserSegmentationService.Application.Commands.Segments.VipAtRiskUsers;
 public class EvaluateVipAtRiskUserSegmentHandler
     : IRequestHandler<EvaluateVipAtRiskUserSegmentCommand>
 {
-    private readonly ISegmentRepository _segmentRepository;
+    private readonly ISegmentCache _segmentCache;
     private readonly ISegmentMembershipRepository _segmentMembershipRepository;
     private readonly ISegmentDeltaRepository _segmentDeltaRepository;
 
     public EvaluateVipAtRiskUserSegmentHandler (
-        ISegmentMembershipRepository segmentMembershipRepository, 
-        ISegmentRepository segmentRepository,
+        ISegmentMembershipRepository segmentMembershipRepository,
+        ISegmentCache segmentCache,
         ISegmentDeltaRepository segmentDeltaRepository)
     {
         _segmentMembershipRepository = segmentMembershipRepository;
-        _segmentRepository = segmentRepository;
+        _segmentCache = segmentCache;
         _segmentDeltaRepository = segmentDeltaRepository;
     }
 
@@ -26,7 +26,7 @@ public class EvaluateVipAtRiskUserSegmentHandler
         EvaluateVipAtRiskUserSegmentCommand command,
         CancellationToken cancellationToken)
     {
-        var riskSegment = await _segmentRepository.GetByRuleTypeAndKindAsync(
+        var riskSegment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.RiskUsers,
             SegmentKind.Dynamic,
             cancellationToken);
@@ -37,7 +37,7 @@ public class EvaluateVipAtRiskUserSegmentHandler
 
         var riskUsers = await _segmentMembershipRepository.GetUserIdsBySegmentIdAsync(riskSegment.Id, cancellationToken);
 
-        var vipSegment = await _segmentRepository.GetByRuleTypeAndKindAsync(
+        var vipSegment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.VipUsers,
             SegmentKind.Dynamic,
             cancellationToken);
@@ -51,7 +51,7 @@ public class EvaluateVipAtRiskUserSegmentHandler
              .Intersect(riskUsers)
              .ToArray();
 
-        var vipAtRiskSegment = await _segmentRepository.GetByRuleTypeAndKindAsync(
+        var vipAtRiskSegment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.VipAtRiskUsers,
             SegmentKind.Dynamic,
             cancellationToken);
