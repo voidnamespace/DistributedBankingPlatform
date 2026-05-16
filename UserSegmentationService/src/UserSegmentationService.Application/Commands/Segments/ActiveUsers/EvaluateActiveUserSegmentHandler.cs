@@ -12,17 +12,20 @@ public class EvaluateActiveUserSegmentHandler
     private readonly ISegmentMembershipRepository _segmentMembershipRepository;
     private readonly ISegmentDeltaRepository _segmentDeltaRepository;
     private readonly IUserMetricRepository _userMetricRepository;
+    private IUnitOfWork _unitOfWork;
 
     public EvaluateActiveUserSegmentHandler(
         ISegmentCache segmentCache,
         ISegmentMembershipRepository segmentMembershipRepository,
         ISegmentDeltaRepository segmentDeltaRepository,
-        IUserMetricRepository userMetricRepository)
+        IUserMetricRepository userMetricRepository,
+        IUnitOfWork unitOfWork)
     {
          _segmentCache = segmentCache;
         _segmentMembershipRepository = segmentMembershipRepository;
         _segmentDeltaRepository = segmentDeltaRepository;
         _userMetricRepository = userMetricRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task Handle(
@@ -55,14 +58,13 @@ public class EvaluateActiveUserSegmentHandler
 
         if (addedUserIds.Length > 0 || removedUserIds.Length > 0)
         {
-            await _segmentDeltaRepository.AddAsync(
-                new SegmentDelta(
+              _segmentDeltaRepository.Add(
+                    SegmentDelta.Create(
                     Guid.NewGuid(),
                     segment.Id,
                     addedUserIds,
                     removedUserIds,
-                    DateTime.UtcNow),
-                cancellationToken);
+                    DateTime.UtcNow));        
         }
 
         await _segmentMembershipRepository.ReplaceSegmentMembersAsync(
@@ -70,5 +72,7 @@ public class EvaluateActiveUserSegmentHandler
             activeUserIds,
             DateTime.UtcNow,
             cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

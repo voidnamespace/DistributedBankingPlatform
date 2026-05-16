@@ -45,6 +45,5 @@ internal class SegmentMembershipRepository : ISegmentMembershipRepository
 
         _dbContext.SegmentMemberships.AddRange(newMembers);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }
