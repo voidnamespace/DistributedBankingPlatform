@@ -4,26 +4,28 @@ using UserSegmentationService.Domain.Entities;
 
 namespace UserSegmentationService.Application.Commands.Users;
 
-public class RecordTransferSuccessCommandHandler
+public class RecordTransferSuccessHandler
     : IRequestHandler<RecordTransferSuccessCommand>
 {
     private readonly IUserAccountRepository _userAccountRepository;
     private readonly IUserMetricRepository _userMetricRepository;
 
-    public RecordTransferSuccessCommandHandler(
+
+    public RecordTransferSuccessHandler(
         IUserAccountRepository userAccountRepository,
         IUserMetricRepository userMetricRepository)
     {
         _userAccountRepository = userAccountRepository;
         _userMetricRepository = userMetricRepository;
+
     }
 
     public async Task Handle(
-        RecordTransferSuccessCommand request,
+        RecordTransferSuccessCommand command,
         CancellationToken cancellationToken)
     {
         var senderAccount = await _userAccountRepository.GetByAccountNumberAsync(
-            request.FromAccountNumber,
+            command.FromAccountNumber,
             cancellationToken);
 
         if (senderAccount is null)
@@ -39,6 +41,7 @@ public class RecordTransferSuccessCommandHandler
             _userMetricRepository.Add(metric);
         }
 
-        metric.RecordSpend(request.Amount, request.RecordedAt);
+        metric.RecordSpend(command.Amount, command.RecordedAt);
+
     }
 }

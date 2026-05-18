@@ -29,7 +29,7 @@ public class EvaluateVipUserSegmentHandler
     }
 
     public async Task Handle(
-        EvaluateVipUserSegmentCommand request,
+        EvaluateVipUserSegmentCommand command,
         CancellationToken cancellationToken)
     {
         var segment = await _segmentCache.GetByRuleTypeAndKindAsync(
@@ -41,7 +41,7 @@ public class EvaluateVipUserSegmentHandler
             throw new InvalidOperationException("VIP users dynamic segment was not found.");
 
         var vipUserIds = await _userMetricRepository.GetVipUserIdsAsync(
-            request.MinimumSpend,
+            command.MinimumSpend,
             cancellationToken);
 
         var currentUserIds = await _segmentMembershipRepository.GetUserIdsBySegmentIdAsync(

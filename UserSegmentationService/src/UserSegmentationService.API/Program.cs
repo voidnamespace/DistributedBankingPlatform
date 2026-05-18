@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using UserSegmentationService.API;
 using UserSegmentationService.Infrastructure.Persistence.Database;
 using UserSegmentationService.Infrastructure.Persistence.Seeding;
@@ -11,6 +13,10 @@ startup.ConfigureServices(builder.Services);
 var app = builder.Build();
 startup.Configure(app, builder.Environment);
 
+
+
+
+
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
@@ -19,8 +25,15 @@ if (app.Environment.IsDevelopment())
 
     await migrator.MigrateAsync();
 
-    await SegmentsSeeder.SeedAsync(dbContext);
-    await UserMetricsSeeder.SeedAsync(dbContext);
+    if (builder.Configuration["Seeding:Segments:Enabled"] == "true")
+    {
+        await SegmentsSeeder.SeedAsync(dbContext);
+    }
+    if (builder.Configuration["Seeding:UserMetrics:Enabled"] == "true")
+    {
+        await UserMetricsSeeder.SeedAsync(dbContext);
+    }
+    
 }
 
 app.Run();

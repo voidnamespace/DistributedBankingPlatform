@@ -1,4 +1,5 @@
-﻿using AccountService.Infrastructure.Data;
+﻿using AccountService.Application.Interfaces;
+using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Routing;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -61,6 +62,8 @@ public class InboxProcessor : BackgroundService
             var mediator = scope.ServiceProvider
                 .GetRequiredService<IMediator>();
 
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();    
+
             var messages = await db.InboxMessages
                 .Where(x => x.ProcessedAt == null)
                 .OrderBy(x => x.ReceivedAt)
@@ -116,7 +119,7 @@ public class InboxProcessor : BackgroundService
                 }
             }
 
-            await db.SaveChangesAsync(stoppingToken);
+            await unitOfWork.SaveChangesAsync(stoppingToken);
 
     }
 }

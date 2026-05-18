@@ -1,14 +1,16 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Application.IntegrationEvents.Accounts;
+using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Infrastructure.BackgroundJobs;
+using UserSegmentationService.Infrastructure.Caching;
 using UserSegmentationService.Infrastructure.Inbox;
 using UserSegmentationService.Infrastructure.Messaging;
 using UserSegmentationService.Infrastructure.Persistence;
 using UserSegmentationService.Infrastructure.Persistence.Database;
 using UserSegmentationService.Infrastructure.Persistence.Repositories;
-using UserSegmentationService.Infrastructure.Caching;
+using UserSegmentationService.Infrastructure.Persistence.Seeding;
 
 namespace UserSegmentationService.Infrastructure.Extensions;
 
@@ -23,8 +25,7 @@ public static class DependencyInjection
         services.AddScoped<IUserMetricRepository, UserMetricRepository>();
         services.AddScoped<IUserAccountRepository, UserAccountRepository>();
         services.AddScoped<ISegmentRepository, SegmentRepository>();
-        services.AddScoped<ISegmentCache, SegmentCache>();
-        services.AddMemoryCache();
+        
         services.AddScoped<ISegmentMembershipRepository, SegmentMembershipRepository>();
         services.AddScoped<ISegmentDeltaRepository, SegmentDeltaRepository>();
         
@@ -32,9 +33,15 @@ public static class DependencyInjection
             configuration.RegisterServicesFromAssembly(
                 typeof(AccountCreatedIntegrationEvent).Assembly));
 
+        services.AddCaching(configuration);
+        
         services.AddInbox();
 
-        services.AddHostedService<SegmentEvaluationBackgroundService>();
+        if (configuration["SegmentEvaluationBackgroundService:Enabled"] == "true")
+        {
+            services.AddBackgroundJobs(configuration);
+        }
+
         if (configuration["Messaging:Enabled"] == "true")
         {
             services.AddMessaging(configuration);

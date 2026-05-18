@@ -1,12 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using UserSegmentationService.Application.Interfaces;
 
-namespace UserSegmentationService.Infrastructure.Caching
+namespace UserSegmentationService.Infrastructure.Caching;
+
+public static class DependencyInjection
 {
-    internal class DependencyInjection
+    public static IServiceCollection AddCaching(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
+        services.AddScoped<ISegmentCache, SegmentCache>();
+        services.AddMemoryCache();
+
+        return services;
     }
+
 }

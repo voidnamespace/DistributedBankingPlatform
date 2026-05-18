@@ -29,7 +29,7 @@ public class EvaluateRiskUserSegmentHandler
     }
 
     public async Task Handle(
-        EvaluateRiskUserSegmentCommand request,
+        EvaluateRiskUserSegmentCommand command,
         CancellationToken cancellationToken)
     {
         var segment = await _segmentCache.GetByRuleTypeAndKindAsync(
@@ -41,7 +41,7 @@ public class EvaluateRiskUserSegmentHandler
             throw new InvalidOperationException("Risk users dynamic segment was not found.");
 
         var riskUserIds = await _userMetricRepository.GetRiskUserIdsAsync(
-            request.InactiveSince,
+            command.InactiveSince,
             cancellationToken);
 
         var currentUserIds = await _segmentMembershipRepository.GetUserIdsBySegmentIdAsync(

@@ -29,7 +29,7 @@ public class EvaluateActiveUserSegmentHandler
     }
 
     public async Task Handle(
-        EvaluateActiveUserSegmentCommand request,
+        EvaluateActiveUserSegmentCommand command,
         CancellationToken cancellationToken)
     {
         var segment = await _segmentCache.GetByRuleTypeAndKindAsync(
@@ -41,7 +41,7 @@ public class EvaluateActiveUserSegmentHandler
             throw new InvalidOperationException("Active users dynamic segment was not found.");
 
         var activeUserIds = await _userMetricRepository.GetActiveUserIdsAsync(
-            request.ActiveSince,
+            command.ActiveSince,
             cancellationToken);
 
         var currentUserIds = await _segmentMembershipRepository.GetUserIdsBySegmentIdAsync(
