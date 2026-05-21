@@ -8,7 +8,7 @@ using UserSegmentationService.Infrastructure.Persistence.Database;
 
 #nullable disable
 
-namespace UserSegmentationService.Infrastructure.Migrations
+namespace UserSegmentationService.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(SegmentationDbContext))]
     partial class SegmentationDbContextModelSnapshot : ModelSnapshot

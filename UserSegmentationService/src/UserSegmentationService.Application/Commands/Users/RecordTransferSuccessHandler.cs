@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Domain.Entities;
 
@@ -9,14 +10,16 @@ public class RecordTransferSuccessHandler
 {
     private readonly IUserAccountRepository _userAccountRepository;
     private readonly IUserMetricRepository _userMetricRepository;
-
+    private readonly ILogger<RecordTransferSuccessHandler> _logger;
 
     public RecordTransferSuccessHandler(
         IUserAccountRepository userAccountRepository,
-        IUserMetricRepository userMetricRepository)
+        IUserMetricRepository userMetricRepository,
+        ILogger<RecordTransferSuccessHandler> logger)
     {
         _userAccountRepository = userAccountRepository;
         _userMetricRepository = userMetricRepository;
+        _logger = logger;
 
     }
 
@@ -24,24 +27,57 @@ public class RecordTransferSuccessHandler
         RecordTransferSuccessCommand command,
         CancellationToken cancellationToken)
     {
+        using var logScope = _logger.BeginScope(
+            new Dictionary<string, object?>
+            {
+                ["TransactionId"] = command.TransactionId,
+                ["FromAccountNumber"] = MaskAccountNumber(command.FromAccountNumber),
+                ["ToAccountNumber"] = MaskAccountNumber(command.ToAccountNumber)
+            });
+
         var senderAccount = await _userAccountRepository.GetByAccountNumberAsync(
             command.FromAccountNumber,
             cancellationToken);
 
         if (senderAccount is null)
+        {
+            _logger.LogWarning(
+                "Transfer success skipped because sender account projection was not found");
             return;
+        }
 
         var metric = await _userMetricRepository.GetByUserIdAsync(
             senderAccount.UserId,
             cancellationToken);
 
+        var metricCreated = false;
+
         if (metric is null)
         {
             metric = new UserMetric(senderAccount.UserId);
             _userMetricRepository.Add(metric);
+            metricCreated = true;
         }
 
         metric.RecordSpend(command.Amount, command.RecordedAt);
 
+        _logger.LogInformation(
+            "Transfer success recorded for user metric. UserId={UserId}, Currency={Currency}, MetricCreated={MetricCreated}, RecordedAt={RecordedAt}",
+            senderAccount.UserId,
+            command.Currency,
+            metricCreated,
+            command.RecordedAt);
+    }
+
+    private static string MaskAccountNumber(string accountNumber)
+    {
+        if (string.IsNullOrWhiteSpace(accountNumber))
+            return "<empty>";
+
+        const int visibleDigits = 4;
+
+        return accountNumber.Length <= visibleDigits
+            ? "****"
+            : string.Concat("****", accountNumber.AsSpan(accountNumber.Length - visibleDigits));
     }
 }

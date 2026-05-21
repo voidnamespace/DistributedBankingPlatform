@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace UserSegmentationService.Application.Commands.Accounts;
+namespace UserSegmentationService.Application.Commands.Accounts.CreateProjection;
 
 public sealed record CreateUserAccountProjectionCommand(
     Guid UserId,

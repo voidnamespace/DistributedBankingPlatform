@@ -6,7 +6,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Security.Principal;
 using System.Text;
 
 namespace AuthService.Infrastructure.Authentication;
@@ -18,7 +17,7 @@ public class JwtService : IJwtService
     private readonly string _secretKey;
     private readonly string _issuer;
     private readonly string _audience;
-
+    private readonly int _jwtLifeTimeMinutes;
     public JwtService(
         IConfiguration configuration,
         ILogger<JwtService> logger)
@@ -31,6 +30,9 @@ public class JwtService : IJwtService
 
         _issuer = _configuration["Jwt:Issuer"] ?? "AuthService";
         _audience = _configuration["Jwt:Audience"] ?? "AuthServiceClient";
+        _jwtLifeTimeMinutes = _configuration.GetValue<int>(
+                 "AccessTokenLifeTime:JWTLifeTime",
+                 60);
     }
 
     public string GenerateAccessToken(User user)
@@ -70,7 +72,7 @@ public class JwtService : IJwtService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(60),
+            Expires = DateTime.UtcNow.AddMinutes(_jwtLifeTimeMinutes),
             Issuer = _issuer,
             Audience = _audience,
             SigningCredentials = new SigningCredentials(

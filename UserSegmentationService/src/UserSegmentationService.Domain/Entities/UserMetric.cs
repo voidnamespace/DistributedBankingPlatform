@@ -4,7 +4,7 @@ public class UserMetric
 {
     public Guid UserId { get; private set; }
 
-    public decimal SpendLast60Days { get; private set; }
+    public decimal SpendLast60Days { get; private set; } // this is VALUe object
 
     public DateTime? LastTransactionAt { get; private set; }
 

@@ -27,6 +27,8 @@
 
   <ItemGroup>
     <Folder Include="Messaging\Consumers\Accounts\" />
+    <Folder Include="Messaging\Publishers\" />
+    <Folder Include="Persistence\Migrations\" />
   </ItemGroup>
 
 </Project>

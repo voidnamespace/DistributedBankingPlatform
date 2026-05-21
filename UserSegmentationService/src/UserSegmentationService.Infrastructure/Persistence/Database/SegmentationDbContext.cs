@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UserSegmentationService.Domain.Entities;
 using UserSegmentationService.Infrastructure.Inbox;
+using UserSegmentationService.Infrastructure.Outbox;
 
 namespace UserSegmentationService.Infrastructure.Persistence.Database;
 
@@ -25,6 +26,8 @@ public class SegmentationDbContext : DbContext
     public DbSet<InboxMessage> InboxMessages { get; set; }
 
     public DbSet<DeadLetterInboxMessage> DeadLetterInboxMessages { get; set; }
+
+    public DbSet<OutboxMessage> OutboxMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -135,6 +138,26 @@ public class SegmentationDbContext : DbContext
 
             entity.HasIndex(x => x.MessageId);
             entity.HasIndex(x => x.FailedAt);
+        });
+
+        modelBuilder.Entity<OutboxMessage>(entity =>
+        {
+            entity.HasKey(x => x.MessageId);
+
+            entity.Property(x => x.Type)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.Payload)
+                .HasColumnType("jsonb")
+                .IsRequired();
+
+            entity.Property(x => x.LastError)
+                .HasMaxLength(4000);
+
+            entity.HasIndex(x => new { x.ProcessedAt, x.NextAttemptAt });
+
+
         });
     }
 }

@@ -28,16 +28,22 @@ public static class DependencyInjection
                     h.Password(password);
                 });
 
-                cfg.ReceiveEndpoint("segmentation.account.events", e =>
+                cfg.UseRawJsonDeserializer();
+
+                cfg.ReceiveEndpoint("segmentation.account.created", e =>
                 {
                     e.ConfigureConsumer<AccountCreatedConsumer>(context);
-                    e.ConfigureConsumer<TransferSuccessConsumer>(context);
 
                     e.Bind("account.events", bind =>
                     {
                         bind.RoutingKey = "account.created";
                         bind.ExchangeType = "topic";
                     });
+                });
+
+                cfg.ReceiveEndpoint("segmentation.transfer.success", e =>
+                {
+                    e.ConfigureConsumer<TransferSuccessConsumer>(context);
 
                     e.Bind("account.events", bind =>
                     {

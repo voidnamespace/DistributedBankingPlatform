@@ -12,8 +12,8 @@ using UserSegmentationService.Infrastructure.Persistence.Database;
 namespace UserSegmentationService.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(SegmentationDbContext))]
-    [Migration("20260504233435_AddSegments")]
-    partial class AddSegments
+    [Migration("20260519134930_InitMigration")]
+    partial class InitMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,6 +45,35 @@ namespace UserSegmentationService.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Segments");
+                });
+
+            modelBuilder.Entity("UserSegmentationService.Domain.Entities.SegmentDelta", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.PrimitiveCollection<Guid[]>("AddedUserIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.PrimitiveCollection<Guid[]>("RemovedUserIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.Property<Guid>("SegmentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("SegmentId");
+
+                    b.ToTable("SegmentDeltas");
                 });
 
             modelBuilder.Entity("UserSegmentationService.Domain.Entities.SegmentMembership", b =>
@@ -180,6 +209,15 @@ namespace UserSegmentationService.Infrastructure.Persistence.Migrations
                     b.HasIndex("ProcessedAt", "NextAttemptAt");
 
                     b.ToTable("InboxMessages");
+                });
+
+            modelBuilder.Entity("UserSegmentationService.Domain.Entities.SegmentDelta", b =>
+                {
+                    b.HasOne("UserSegmentationService.Domain.Entities.Segment", null)
+                        .WithMany()
+                        .HasForeignKey("SegmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("UserSegmentationService.Domain.Entities.SegmentMembership", b =>

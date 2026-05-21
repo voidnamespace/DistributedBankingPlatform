@@ -1,7 +1,7 @@
 using System.Text.Json;
 using MassTransit;
 using UserSegmentationService.Application.IntegrationEvents.Accounts;
-using UserSegmentationService.Application.Interfaces;
+using UserSegmentationService.Application.Interfaces.Messaging;
 
 namespace UserSegmentationService.Infrastructure.Messaging.Consumers.Accounts;
 

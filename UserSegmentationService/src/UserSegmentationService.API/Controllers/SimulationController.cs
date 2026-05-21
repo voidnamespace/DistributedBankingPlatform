@@ -55,8 +55,9 @@ public class SimulationController : ControllerBase
 
     [HttpPost("user-metrics/bulk-update")]
     public async Task<IActionResult> SimulateBulkUserMetricUpdates(
-        [FromQuery] int count = 500,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken,
+        [FromQuery] int count = 500
+        )
     {
         if (!SimulationEnabled)
             return NotFound();

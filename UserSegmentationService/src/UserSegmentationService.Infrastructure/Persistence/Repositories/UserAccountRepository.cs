@@ -16,7 +16,7 @@ internal class UserAccountRepository : IUserAccountRepository
 
     public Task<UserAccount?> GetByAccountNumberAsync(
         string accountNumber,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         return _dbContext.UserAccounts
             .FirstOrDefaultAsync(x => x.AccountNumber == accountNumber, cancellationToken);

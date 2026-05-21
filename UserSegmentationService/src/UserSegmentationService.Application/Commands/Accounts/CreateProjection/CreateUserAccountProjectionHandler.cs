@@ -2,7 +2,7 @@ using MediatR;
 using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Domain.Entities;
 
-namespace UserSegmentationService.Application.Commands.Accounts;
+namespace UserSegmentationService.Application.Commands.Accounts.CreateProjection;
 
 public class CreateUserAccountProjectionHandler
     : IRequestHandler<CreateUserAccountProjectionCommand>

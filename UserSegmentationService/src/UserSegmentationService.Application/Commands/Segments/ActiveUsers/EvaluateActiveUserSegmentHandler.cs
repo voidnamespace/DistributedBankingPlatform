@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Domain.Entities;
 using UserSegmentationService.Domain.Enums;
@@ -12,6 +13,7 @@ public class EvaluateActiveUserSegmentHandler
     private readonly ISegmentMembershipRepository _segmentMembershipRepository;
     private readonly ISegmentDeltaRepository _segmentDeltaRepository;
     private readonly IUserMetricRepository _userMetricRepository;
+    private readonly ILogger<EvaluateActiveUserSegmentHandler> _logger;
     private IUnitOfWork _unitOfWork;
 
     public EvaluateActiveUserSegmentHandler(
@@ -19,26 +21,37 @@ public class EvaluateActiveUserSegmentHandler
         ISegmentMembershipRepository segmentMembershipRepository,
         ISegmentDeltaRepository segmentDeltaRepository,
         IUserMetricRepository userMetricRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<EvaluateActiveUserSegmentHandler> logger)
     {
          _segmentCache = segmentCache;
         _segmentMembershipRepository = segmentMembershipRepository;
         _segmentDeltaRepository = segmentDeltaRepository;
         _userMetricRepository = userMetricRepository;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task Handle(
         EvaluateActiveUserSegmentCommand command,
         CancellationToken cancellationToken)
     {
+        _logger.LogInformation(
+            "EvaluateActiveUserSegmentCommand started");
+        
         var segment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.ActiveUsers,
             SegmentKind.Dynamic,
             cancellationToken);
 
         if (segment is null)
+        {
+            _logger.LogError(
+                "Active users segment evaluation failed because dynamic segment was not found. ActiveSince={ActiveSince}",
+                command.ActiveSince);
+
             throw new InvalidOperationException("Active users dynamic segment was not found.");
+        }
 
         var activeUserIds = await _userMetricRepository.GetActiveUserIdsAsync(
             command.ActiveSince,
@@ -74,5 +87,18 @@ public class EvaluateActiveUserSegmentHandler
             cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Active users segment evaluated. " +
+            "SegmentId={SegmentId}, ActiveSince={ActiveSince}, " +
+            "ActiveUsersCount={ActiveUsersCount}, PreviousMembersCount={PreviousMembersCount}, AddedUsersCount={AddedUsersCount}," +
+            " RemovedUsersCount={RemovedUsersCount}, DeltaCreated={DeltaCreated}",
+            segment.Id,
+            command.ActiveSince,
+            activeUserIds.Count,
+            currentUserIds.Count,
+            addedUserIds.Length,
+            removedUserIds.Length,
+            addedUserIds.Length > 0 || removedUserIds.Length > 0);
     }
 }

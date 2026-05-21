@@ -15,7 +15,7 @@ internal class InboxDispatcher
 
     public async Task DispatchAsync(
         InboxMessage message,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         switch (message.Type)
         {

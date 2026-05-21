@@ -37,12 +37,12 @@ public static class DependencyInjection
         
         services.AddInbox();
 
-        if (configuration["SegmentEvaluationBackgroundService:Enabled"] == "true")
+        if (bool.TryParse(configuration["SegmentEvaluationBackgroundService:Enabled"], out var segmentEvaluationEnabled) && segmentEvaluationEnabled)
         {
             services.AddBackgroundJobs(configuration);
         }
 
-        if (configuration["Messaging:Enabled"] == "true")
+        if (bool.TryParse(configuration["Messaging:Enabled"], out var messagingEnabled) && messagingEnabled)
         {
             services.AddMessaging(configuration);
         }

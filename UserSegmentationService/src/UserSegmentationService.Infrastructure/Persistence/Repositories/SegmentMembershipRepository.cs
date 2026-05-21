@@ -16,7 +16,7 @@ internal class SegmentMembershipRepository : ISegmentMembershipRepository
 
     public async Task<IReadOnlyList<Guid>> GetUserIdsBySegmentIdAsync(
         Guid segmentId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         return await _dbContext.SegmentMemberships
             .Where(x => x.SegmentId == segmentId)
@@ -28,7 +28,7 @@ internal class SegmentMembershipRepository : ISegmentMembershipRepository
         Guid segmentId,
         IReadOnlyCollection<Guid> userIds,
         DateTime joinedAt,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         var currentMembers = await _dbContext.SegmentMemberships
             .Where(x => x.SegmentId == segmentId)

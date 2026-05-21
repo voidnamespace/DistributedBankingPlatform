@@ -9,7 +9,7 @@ public static class SegmentsSeeder
 {
     public static async Task SeedAsync(
         SegmentationDbContext dbContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         if (await dbContext.Segments.AnyAsync(cancellationToken))
             return;

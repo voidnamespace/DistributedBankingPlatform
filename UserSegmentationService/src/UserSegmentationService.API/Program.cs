@@ -23,17 +23,20 @@ if (app.Environment.IsDevelopment())
     var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
     var dbContext = scope.ServiceProvider.GetRequiredService<SegmentationDbContext>();
 
-    await migrator.MigrateAsync();
+    await migrator.MigrateAsync(CancellationToken.None);
 
-    if (builder.Configuration["Seeding:Segments:Enabled"] == "true")
+    if (bool.TryParse(builder.Configuration["Seeding:Segments:Enabled"], out var segmentsSeedingEnabled)
+    && segmentsSeedingEnabled)
     {
-        await SegmentsSeeder.SeedAsync(dbContext);
+        await SegmentsSeeder.SeedAsync(dbContext, CancellationToken.None);
     }
-    if (builder.Configuration["Seeding:UserMetrics:Enabled"] == "true")
+
+    if (bool.TryParse(builder.Configuration["Seeding:UserMetrics:Enabled"], out var userMetricsSeedingEnabled)
+        && userMetricsSeedingEnabled)
     {
-        await UserMetricsSeeder.SeedAsync(dbContext);
+        await UserMetricsSeeder.SeedAsync(dbContext, CancellationToken.None);
     }
-    
+
 }
 
 app.Run();
