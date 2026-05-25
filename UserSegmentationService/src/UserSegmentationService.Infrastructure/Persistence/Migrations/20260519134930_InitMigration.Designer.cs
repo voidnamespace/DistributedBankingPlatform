@@ -12,8 +12,8 @@ using UserSegmentationService.Infrastructure.Persistence.Database;
 namespace UserSegmentationService.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(SegmentationDbContext))]
-    [Migration("20260505184027_SegmentDeltas")]
-    partial class SegmentDeltas
+    [Migration("20260519134930_InitMigration")]
+    partial class InitMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

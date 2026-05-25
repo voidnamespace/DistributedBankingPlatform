@@ -1,5 +1,5 @@
 using MediatR;
-using UserSegmentationService.Application.Commands.Accounts;
+using UserSegmentationService.Application.Commands.Accounts.CreateProjection;
 using UserSegmentationService.Application.IntegrationEvents.Accounts;
 
 namespace UserSegmentationService.Application.IntegrationEventHandlers.Accounts;

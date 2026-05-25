@@ -1,4 +1,5 @@
 ﻿using AccountService.Application.IntegrationEvents.Accounts;
+using AccountService.Application.IntegrationEvents.Segmentation;
 using AccountService.Application.IntegrationEvents.Transactions.Deposit;
 using AccountService.Application.IntegrationEvents.Transactions.Transfer;
 using AccountService.Application.IntegrationEvents.Transactions.Withdrawal;
@@ -32,6 +33,9 @@ internal static class IntegrationEventTypeMap
         { typeof(DepositCreatedIntegrationEvent), "deposit.created" },
         { typeof(DepositSuccessIntegrationEvent), "deposit.success" },
         { typeof(DepositFailedIntegrationEvent), "deposit.failed" },
+
+        {typeof(UserAccountsBackfillRequestedIntegrationEvent), "segment.backfill" },
+        {typeof(UserAccountsBackfillBatchProvidedIntegrationEvent), "account.backfill" }
     };
     
     private static readonly Dictionary<string, Type> NameToType =

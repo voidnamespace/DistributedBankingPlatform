@@ -18,7 +18,7 @@ internal class SegmentRepository : ISegmentRepository
     public Task<Segment?> GetByRuleTypeAndKindAsync(
         SegmentRuleType ruleType,
         SegmentKind kind,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         return _dbContext.Segments
             .FirstOrDefaultAsync(

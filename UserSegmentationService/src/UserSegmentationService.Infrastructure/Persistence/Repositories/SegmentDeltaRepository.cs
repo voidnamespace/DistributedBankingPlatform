@@ -13,12 +13,9 @@ internal class SegmentDeltaRepository : ISegmentDeltaRepository
         _dbContext = dbContext;
     }
 
-    public async Task AddAsync(
-        SegmentDelta delta,
-        CancellationToken cancellationToken = default)
+    public void Add(SegmentDelta delta)
     {
         _dbContext.SegmentDeltas.Add(delta);
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
     }
+
 }

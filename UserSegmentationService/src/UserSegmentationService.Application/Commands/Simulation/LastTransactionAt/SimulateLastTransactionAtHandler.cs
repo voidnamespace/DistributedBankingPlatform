@@ -3,13 +3,13 @@ using UserSegmentationService.Application.Interfaces;
 
 namespace UserSegmentationService.Application.Commands.Simulation.LastTransactionAt;
 
-public class SimulateLastTransactionAtCommandHandler
+public class SimulateLastTransactionAtHandler
     : IRequestHandler<SimulateLastTransactionAtCommand>
 {
     private readonly IUserMetricRepository _userMetricRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public SimulateLastTransactionAtCommandHandler(
+    public SimulateLastTransactionAtHandler(
         IUserMetricRepository userMetricRepository,
         IUnitOfWork unitOfWork)
     {

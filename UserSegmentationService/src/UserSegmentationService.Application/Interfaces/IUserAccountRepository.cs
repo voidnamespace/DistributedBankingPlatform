@@ -6,7 +6,7 @@ public interface IUserAccountRepository
 {
     Task<UserAccount?> GetByAccountNumberAsync(
         string accountNumber,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken);
 
     void Add(UserAccount userAccount);
 }

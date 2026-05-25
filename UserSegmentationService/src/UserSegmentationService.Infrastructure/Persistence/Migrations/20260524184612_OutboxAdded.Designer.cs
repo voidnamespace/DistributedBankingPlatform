@@ -12,8 +12,8 @@ using UserSegmentationService.Infrastructure.Persistence.Database;
 namespace UserSegmentationService.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(SegmentationDbContext))]
-    [Migration("20260504233435_AddSegments")]
-    partial class AddSegments
+    [Migration("20260524184612_OutboxAdded")]
+    partial class OutboxAdded
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,6 +45,35 @@ namespace UserSegmentationService.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Segments");
+                });
+
+            modelBuilder.Entity("UserSegmentationService.Domain.Entities.SegmentDelta", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.PrimitiveCollection<Guid[]>("AddedUserIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.PrimitiveCollection<Guid[]>("RemovedUserIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.Property<Guid>("SegmentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("SegmentId");
+
+                    b.ToTable("SegmentDeltas");
                 });
 
             modelBuilder.Entity("UserSegmentationService.Domain.Entities.SegmentMembership", b =>
@@ -180,6 +209,91 @@ namespace UserSegmentationService.Infrastructure.Persistence.Migrations
                     b.HasIndex("ProcessedAt", "NextAttemptAt");
 
                     b.ToTable("InboxMessages");
+                });
+
+            modelBuilder.Entity("UserSegmentationService.Infrastructure.Outbox.DeadLetterOutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Error")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime>("FailedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FailedAt");
+
+                    b.HasIndex("MessageId");
+
+                    b.ToTable("DeadLetterOutboxMessages");
+                });
+
+            modelBuilder.Entity("UserSegmentationService.Infrastructure.Outbox.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("MessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("MessageId");
+
+                    b.HasIndex("ProcessedAt", "NextAttemptAt");
+
+                    b.ToTable("OutboxMessages");
+                });
+
+            modelBuilder.Entity("UserSegmentationService.Domain.Entities.SegmentDelta", b =>
+                {
+                    b.HasOne("UserSegmentationService.Domain.Entities.Segment", null)
+                        .WithMany()
+                        .HasForeignKey("SegmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("UserSegmentationService.Domain.Entities.SegmentMembership", b =>

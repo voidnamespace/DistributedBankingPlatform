@@ -8,25 +8,28 @@ namespace UserSegmentationService.Application.Commands.Segments.VipAtRiskUsers;
 public class EvaluateVipAtRiskUserSegmentHandler
     : IRequestHandler<EvaluateVipAtRiskUserSegmentCommand>
 {
-    private readonly ISegmentRepository _segmentRepository;
+    private readonly ISegmentCache _segmentCache;
     private readonly ISegmentMembershipRepository _segmentMembershipRepository;
     private readonly ISegmentDeltaRepository _segmentDeltaRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public EvaluateVipAtRiskUserSegmentHandler (
-        ISegmentMembershipRepository segmentMembershipRepository, 
-        ISegmentRepository segmentRepository,
-        ISegmentDeltaRepository segmentDeltaRepository)
+        ISegmentMembershipRepository segmentMembershipRepository,
+        ISegmentCache segmentCache,
+        ISegmentDeltaRepository segmentDeltaRepository,
+        IUnitOfWork unitOfWork)
     {
         _segmentMembershipRepository = segmentMembershipRepository;
-        _segmentRepository = segmentRepository;
+        _segmentCache = segmentCache;
         _segmentDeltaRepository = segmentDeltaRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task Handle(
         EvaluateVipAtRiskUserSegmentCommand command,
         CancellationToken cancellationToken)
     {
-        var riskSegment = await _segmentRepository.GetByRuleTypeAndKindAsync(
+        var riskSegment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.RiskUsers,
             SegmentKind.Dynamic,
             cancellationToken);
@@ -37,7 +40,7 @@ public class EvaluateVipAtRiskUserSegmentHandler
 
         var riskUsers = await _segmentMembershipRepository.GetUserIdsBySegmentIdAsync(riskSegment.Id, cancellationToken);
 
-        var vipSegment = await _segmentRepository.GetByRuleTypeAndKindAsync(
+        var vipSegment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.VipUsers,
             SegmentKind.Dynamic,
             cancellationToken);
@@ -47,11 +50,11 @@ public class EvaluateVipAtRiskUserSegmentHandler
 
         var vipUsers = await _segmentMembershipRepository.GetUserIdsBySegmentIdAsync(vipSegment.Id, cancellationToken);
 
-        var vipAtRiskUsers = vipUsers
+        var newVipAtRiskUsers = vipUsers
              .Intersect(riskUsers)
              .ToArray();
 
-        var vipAtRiskSegment = await _segmentRepository.GetByRuleTypeAndKindAsync(
+        var vipAtRiskSegment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.VipAtRiskUsers,
             SegmentKind.Dynamic,
             cancellationToken);
@@ -59,35 +62,39 @@ public class EvaluateVipAtRiskUserSegmentHandler
         if (vipAtRiskSegment == null)
             throw new KeyNotFoundException("Vip at Risk users dynamic segment was not found.");
 
-        var currenctVipAtRiskUserIds = await _segmentMembershipRepository.GetUserIdsBySegmentIdAsync(
+        var currentVipAtRiskUserIds = await _segmentMembershipRepository.GetUserIdsBySegmentIdAsync(
             vipAtRiskSegment.Id,
             cancellationToken);
 
-        var addedUserIds = vipAtRiskUsers
-            .Except(currenctVipAtRiskUserIds) 
+        var addedUserIds = newVipAtRiskUsers
+            .Except(currentVipAtRiskUserIds) 
             .ToArray();
 
-        var removedUserIds = currenctVipAtRiskUserIds
-            .Except(vipAtRiskUsers)
+        var removedUserIds = currentVipAtRiskUserIds
+            .Except(newVipAtRiskUsers)
             .ToArray();
+
+        var now = DateTime.UtcNow;
 
         if (addedUserIds.Length > 0 || removedUserIds.Length > 0)
         {
-            await _segmentDeltaRepository.AddAsync(
-                new SegmentDelta(
-                    Guid.NewGuid(),
-                    vipAtRiskSegment.Id,
-                    addedUserIds,
-                    removedUserIds,
-                    DateTime.UtcNow),
-                cancellationToken);
+            _segmentDeltaRepository.Add(
+                 SegmentDelta.Create(
+                 Guid.NewGuid(),
+                 vipAtRiskSegment.Id,
+                 addedUserIds,
+                 removedUserIds,
+                 now));
+
         }
 
         await _segmentMembershipRepository.ReplaceSegmentMembersAsync(
               vipAtRiskSegment.Id,
-              vipAtRiskUsers,
-              DateTime.UtcNow,
+              newVipAtRiskUsers,
+              now,
               cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
     }
 

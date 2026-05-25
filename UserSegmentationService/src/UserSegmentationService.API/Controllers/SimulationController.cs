@@ -12,9 +12,16 @@ public class SimulationController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    public SimulationController(IMediator mediator)
+    private readonly IConfiguration _configuration;
+
+    private bool SimulationEnabled =>
+        _configuration.GetValue<bool>("Simulation:Enabled");
+
+    public SimulationController(IMediator mediator,
+        IConfiguration configuration)
     {
         _mediator = mediator;
+        _configuration = configuration;
     }
 
     [HttpPost("user-metrics/{userId:guid}/last-transaction-now")]
@@ -22,6 +29,9 @@ public class SimulationController : ControllerBase
         Guid userId,
         CancellationToken cancellationToken)
     {
+        if (!SimulationEnabled)
+            return NotFound();
+
         await _mediator.Send(
             new SimulateLastTransactionAtCommand(userId),
             cancellationToken);
@@ -33,6 +43,9 @@ public class SimulationController : ControllerBase
     public async Task<IActionResult> SimulateBulkUserMetricCreation(
         CancellationToken cancellationToken)
     {
+        if (!SimulationEnabled)
+            return NotFound();
+
         await _mediator.Send(
             new SimulateBulkUserMetricCreationCommand(),
             cancellationToken);
@@ -42,9 +55,13 @@ public class SimulationController : ControllerBase
 
     [HttpPost("user-metrics/bulk-update")]
     public async Task<IActionResult> SimulateBulkUserMetricUpdates(
-        [FromQuery] int count = 500,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken,
+        [FromQuery] int count = 500
+        )
     {
+        if (!SimulationEnabled)
+            return NotFound();
+
         await _mediator.Send(
             new SimulateBulkUserMetricUpdatesCommand(count),
             cancellationToken);

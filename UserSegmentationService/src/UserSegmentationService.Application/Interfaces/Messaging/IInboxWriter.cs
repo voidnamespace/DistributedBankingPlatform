@@ -1,4 +1,4 @@
-﻿namespace UserSegmentationService.Application.Interfaces;
+﻿namespace UserSegmentationService.Application.Interfaces.Messaging;
 
 public interface IInboxWriter
 {
@@ -6,5 +6,5 @@ public interface IInboxWriter
         Guid messageId,
         string type,
         string payload,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken);
 }

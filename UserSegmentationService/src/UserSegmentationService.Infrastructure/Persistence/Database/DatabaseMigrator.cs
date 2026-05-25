@@ -11,7 +11,7 @@ public class DatabaseMigrator
         _dbContext = dbContext;
     }
 
-    public Task MigrateAsync(CancellationToken cancellationToken = default)
+    public Task MigrateAsync(CancellationToken cancellationToken)
     {
         return _dbContext.Database.MigrateAsync(cancellationToken);
     }

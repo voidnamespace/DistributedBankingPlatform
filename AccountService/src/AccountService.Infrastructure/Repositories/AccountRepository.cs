@@ -54,4 +54,17 @@ public class AccountRepository : IAccountRepository
             .Where(a => a.UserId == userId)
             .ToListAsync(ct);
     }
+
+    public async Task<IReadOnlyList<Account>> GetBackfillBatchAsync(
+        int skip,
+        int take,
+        CancellationToken ct)
+    {
+        return await _context.Accounts
+            .AsNoTracking()
+            .OrderBy(x => x.Id)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync(ct);
+    }
 }

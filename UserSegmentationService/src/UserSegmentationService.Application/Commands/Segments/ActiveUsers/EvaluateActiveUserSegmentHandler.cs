@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Domain.Entities;
 using UserSegmentationService.Domain.Enums;
@@ -8,37 +9,52 @@ namespace UserSegmentationService.Application.Commands.Segments.ActiveUsers;
 public class EvaluateActiveUserSegmentHandler
     : IRequestHandler<EvaluateActiveUserSegmentCommand>
 {
-    private readonly ISegmentRepository _segmentRepository;
+    private readonly ISegmentCache _segmentCache;
     private readonly ISegmentMembershipRepository _segmentMembershipRepository;
     private readonly ISegmentDeltaRepository _segmentDeltaRepository;
     private readonly IUserMetricRepository _userMetricRepository;
+    private readonly ILogger<EvaluateActiveUserSegmentHandler> _logger;
+    private IUnitOfWork _unitOfWork;
 
     public EvaluateActiveUserSegmentHandler(
-        ISegmentRepository segmentRepository,
+        ISegmentCache segmentCache,
         ISegmentMembershipRepository segmentMembershipRepository,
         ISegmentDeltaRepository segmentDeltaRepository,
-        IUserMetricRepository userMetricRepository)
+        IUserMetricRepository userMetricRepository,
+        IUnitOfWork unitOfWork,
+        ILogger<EvaluateActiveUserSegmentHandler> logger)
     {
-        _segmentRepository = segmentRepository;
+         _segmentCache = segmentCache;
         _segmentMembershipRepository = segmentMembershipRepository;
         _segmentDeltaRepository = segmentDeltaRepository;
         _userMetricRepository = userMetricRepository;
+        _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task Handle(
-        EvaluateActiveUserSegmentCommand request,
+        EvaluateActiveUserSegmentCommand command,
         CancellationToken cancellationToken)
     {
-        var segment = await _segmentRepository.GetByRuleTypeAndKindAsync(
+        _logger.LogInformation(
+            "EvaluateActiveUserSegmentCommand started");
+        
+        var segment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.ActiveUsers,
             SegmentKind.Dynamic,
             cancellationToken);
 
         if (segment is null)
+        {
+            _logger.LogError(
+                "Active users segment evaluation failed because dynamic segment was not found. ActiveSince={ActiveSince}",
+                command.ActiveSince);
+
             throw new InvalidOperationException("Active users dynamic segment was not found.");
+        }
 
         var activeUserIds = await _userMetricRepository.GetActiveUserIdsAsync(
-            request.ActiveSince,
+            command.ActiveSince,
             cancellationToken);
 
         var currentUserIds = await _segmentMembershipRepository.GetUserIdsBySegmentIdAsync(
@@ -55,14 +71,13 @@ public class EvaluateActiveUserSegmentHandler
 
         if (addedUserIds.Length > 0 || removedUserIds.Length > 0)
         {
-            await _segmentDeltaRepository.AddAsync(
-                new SegmentDelta(
+              _segmentDeltaRepository.Add(
+                    SegmentDelta.Create(
                     Guid.NewGuid(),
                     segment.Id,
                     addedUserIds,
                     removedUserIds,
-                    DateTime.UtcNow),
-                cancellationToken);
+                    DateTime.UtcNow));        
         }
 
         await _segmentMembershipRepository.ReplaceSegmentMembersAsync(
@@ -70,5 +85,20 @@ public class EvaluateActiveUserSegmentHandler
             activeUserIds,
             DateTime.UtcNow,
             cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Active users segment evaluated. " +
+            "SegmentId={SegmentId}, ActiveSince={ActiveSince}, " +
+            "ActiveUsersCount={ActiveUsersCount}, PreviousMembersCount={PreviousMembersCount}, AddedUsersCount={AddedUsersCount}," +
+            " RemovedUsersCount={RemovedUsersCount}, DeltaCreated={DeltaCreated}",
+            segment.Id,
+            command.ActiveSince,
+            activeUserIds.Count,
+            currentUserIds.Count,
+            addedUserIds.Length,
+            removedUserIds.Length,
+            addedUserIds.Length > 0 || removedUserIds.Length > 0);
     }
 }

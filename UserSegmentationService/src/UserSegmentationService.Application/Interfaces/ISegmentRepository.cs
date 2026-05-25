@@ -8,5 +8,5 @@ public interface ISegmentRepository
     Task<Segment?> GetByRuleTypeAndKindAsync(
         SegmentRuleType ruleType,
         SegmentKind kind,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken);
 }

@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace UserSegmentationService.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddInboxTables : Migration
+    public partial class OutboxAdded : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "DeadLetterInboxMessages",
+                name: "DeadLetterOutboxMessages",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -25,17 +25,17 @@ namespace UserSegmentationService.Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DeadLetterInboxMessages", x => x.Id);
+                    table.PrimaryKey("PK_DeadLetterOutboxMessages", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "InboxMessages",
+                name: "OutboxMessages",
                 columns: table => new
                 {
                     MessageId = table.Column<Guid>(type: "uuid", nullable: false),
                     Type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Payload = table.Column<string>(type: "jsonb", nullable: false),
-                    ReceivedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OccurredAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ProcessedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     NextAttemptAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     AttemptCount = table.Column<int>(type: "integer", nullable: false),
@@ -43,22 +43,22 @@ namespace UserSegmentationService.Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_InboxMessages", x => x.MessageId);
+                    table.PrimaryKey("PK_OutboxMessages", x => x.MessageId);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_DeadLetterInboxMessages_FailedAt",
-                table: "DeadLetterInboxMessages",
+                name: "IX_DeadLetterOutboxMessages_FailedAt",
+                table: "DeadLetterOutboxMessages",
                 column: "FailedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DeadLetterInboxMessages_MessageId",
-                table: "DeadLetterInboxMessages",
+                name: "IX_DeadLetterOutboxMessages_MessageId",
+                table: "DeadLetterOutboxMessages",
                 column: "MessageId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_InboxMessages_ProcessedAt_NextAttemptAt",
-                table: "InboxMessages",
+                name: "IX_OutboxMessages_ProcessedAt_NextAttemptAt",
+                table: "OutboxMessages",
                 columns: new[] { "ProcessedAt", "NextAttemptAt" });
         }
 
@@ -66,10 +66,10 @@ namespace UserSegmentationService.Infrastructure.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "DeadLetterInboxMessages");
+                name: "DeadLetterOutboxMessages");
 
             migrationBuilder.DropTable(
-                name: "InboxMessages");
+                name: "OutboxMessages");
         }
     }
 }

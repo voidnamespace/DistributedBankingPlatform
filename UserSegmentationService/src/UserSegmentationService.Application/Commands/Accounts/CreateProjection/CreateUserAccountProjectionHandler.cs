@@ -2,25 +2,26 @@ using MediatR;
 using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Domain.Entities;
 
-namespace UserSegmentationService.Application.Commands.Accounts;
+namespace UserSegmentationService.Application.Commands.Accounts.CreateProjection;
 
-public class CreateUserAccountProjectionCommandHandler
+public class CreateUserAccountProjectionHandler
     : IRequestHandler<CreateUserAccountProjectionCommand>
 {
     private readonly IUserAccountRepository _userAccountRepository;
 
-    public CreateUserAccountProjectionCommandHandler(
+
+    public CreateUserAccountProjectionHandler(
         IUserAccountRepository userAccountRepository)
     {
         _userAccountRepository = userAccountRepository;
     }
 
     public async Task Handle(
-        CreateUserAccountProjectionCommand request,
+        CreateUserAccountProjectionCommand command,
         CancellationToken cancellationToken)
     {
         var alreadyExists = await _userAccountRepository.GetByAccountNumberAsync(
-            request.AccountNumber,
+            command.AccountNumber,
             cancellationToken);
 
         if (alreadyExists is not null)
@@ -28,8 +29,9 @@ public class CreateUserAccountProjectionCommandHandler
 
         _userAccountRepository.Add(
             new UserAccount(
-                request.AccountId,
-                request.UserId,
-                request.AccountNumber));
+                command.AccountId,
+                command.UserId,
+                command.AccountNumber));
+
     }
 }

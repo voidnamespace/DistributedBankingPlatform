@@ -16,7 +16,7 @@ internal class UserMetricRepository : IUserMetricRepository
 
     public Task<UserMetric?> GetByUserIdAsync(
         Guid userId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         return _dbContext.UserMetrics
             .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
@@ -24,7 +24,7 @@ internal class UserMetricRepository : IUserMetricRepository
 
     public Task<bool> ExistsAsync(
         Guid userId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         return _dbContext.UserMetrics
             .AnyAsync(x => x.UserId == userId, cancellationToken);
@@ -32,7 +32,7 @@ internal class UserMetricRepository : IUserMetricRepository
 
     public async Task<IReadOnlyList<Guid>> GetActiveUserIdsAsync(
         DateTime activeSince,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         return await _dbContext.UserMetrics
             .Where(x => x.LastTransactionAt != null)
@@ -43,7 +43,7 @@ internal class UserMetricRepository : IUserMetricRepository
 
     public async Task<IReadOnlyList<Guid>> GetVipUserIdsAsync(
         decimal minimumSpend,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         return await _dbContext.UserMetrics
             .Where(x => x.SpendLast60Days >= minimumSpend)
@@ -53,7 +53,7 @@ internal class UserMetricRepository : IUserMetricRepository
 
     public async Task<IReadOnlyList<Guid>> GetRiskUserIdsAsync(
         DateTime inactiveSince,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         return await _dbContext.UserMetrics
             .Where(x => x.LastTransactionAt == null || x.LastTransactionAt < inactiveSince)
@@ -63,7 +63,7 @@ internal class UserMetricRepository : IUserMetricRepository
 
     public async Task<IReadOnlyList<UserMetric>> GetRandomAsync(
         int count,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         return await _dbContext.UserMetrics
             .OrderBy(_ => Guid.NewGuid())

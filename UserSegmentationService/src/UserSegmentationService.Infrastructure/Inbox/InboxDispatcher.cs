@@ -15,7 +15,7 @@ internal class InboxDispatcher
 
     public async Task DispatchAsync(
         InboxMessage message,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         switch (message.Type)
         {
@@ -25,6 +25,10 @@ internal class InboxDispatcher
 
             case "transfer.success":
                 await HandleTransferSuccessAsync(message.Payload, cancellationToken);
+                return;
+
+            case "account.backfill":
+                await HandleAccountBackfillAsync(message.Payload, cancellationToken);
                 return;
 
             default:
@@ -49,6 +53,16 @@ internal class InboxDispatcher
     {
         var integrationEvent = JsonSerializer.Deserialize<TransferSuccessIntegrationEvent>(payload)
             ?? throw new InvalidOperationException("Transfer success payload is empty or invalid.");
+
+        await _mediator.Publish(integrationEvent, cancellationToken);
+    }
+
+    private async Task HandleAccountBackfillAsync(
+        string payload,
+        CancellationToken cancellationToken)
+    {
+        var integrationEvent = JsonSerializer.Deserialize<UserAccountsBackfillBatchProvidedIntegrationEvent>(payload)
+            ?? throw new InvalidOperationException("Backfill payload is empty or invalid,");
 
         await _mediator.Publish(integrationEvent, cancellationToken);
     }

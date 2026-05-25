@@ -8,28 +8,31 @@ namespace UserSegmentationService.Application.Commands.Segments.VipUsers;
 public class EvaluateVipUserSegmentHandler
     : IRequestHandler<EvaluateVipUserSegmentCommand>
 {
-    private readonly ISegmentRepository _segmentRepository;
+    private readonly ISegmentCache _segmentCache;
     private readonly ISegmentMembershipRepository _segmentMembershipRepository;
     private readonly ISegmentDeltaRepository _segmentDeltaRepository;
     private readonly IUserMetricRepository _userMetricRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public EvaluateVipUserSegmentHandler(
-        ISegmentRepository segmentRepository,
+        ISegmentCache segmentCache,
         ISegmentMembershipRepository segmentMembershipRepository,
         ISegmentDeltaRepository segmentDeltaRepository,
-        IUserMetricRepository userMetricRepository)
+        IUserMetricRepository userMetricRepository,
+        IUnitOfWork unitOfWork)
     {
-        _segmentRepository = segmentRepository;
+        _segmentCache = segmentCache;
         _segmentMembershipRepository = segmentMembershipRepository;
         _segmentDeltaRepository = segmentDeltaRepository;
         _userMetricRepository = userMetricRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task Handle(
-        EvaluateVipUserSegmentCommand request,
+        EvaluateVipUserSegmentCommand command,
         CancellationToken cancellationToken)
     {
-        var segment = await _segmentRepository.GetByRuleTypeAndKindAsync(
+        var segment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.VipUsers,
             SegmentKind.Dynamic,
             cancellationToken);
@@ -38,7 +41,7 @@ public class EvaluateVipUserSegmentHandler
             throw new InvalidOperationException("VIP users dynamic segment was not found.");
 
         var vipUserIds = await _userMetricRepository.GetVipUserIdsAsync(
-            request.MinimumSpend,
+            command.MinimumSpend,
             cancellationToken);
 
         var currentUserIds = await _segmentMembershipRepository.GetUserIdsBySegmentIdAsync(
@@ -55,14 +58,13 @@ public class EvaluateVipUserSegmentHandler
 
         if (addedUserIds.Length > 0 || removedUserIds.Length > 0)
         {
-            await _segmentDeltaRepository.AddAsync(
-                new SegmentDelta(
+                _segmentDeltaRepository.Add(
+                    SegmentDelta.Create(
                     Guid.NewGuid(),
                     segment.Id,
                     addedUserIds,
                     removedUserIds,
-                    DateTime.UtcNow),
-                cancellationToken);
+                    DateTime.UtcNow));
         }
 
         await _segmentMembershipRepository.ReplaceSegmentMembersAsync(
@@ -70,5 +72,7 @@ public class EvaluateVipUserSegmentHandler
             vipUserIds,
             DateTime.UtcNow,
             cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

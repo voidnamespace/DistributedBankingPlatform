@@ -4,11 +4,11 @@ public interface ISegmentMembershipRepository
 {
     Task<IReadOnlyList<Guid>> GetUserIdsBySegmentIdAsync(
         Guid segmentId,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken);
 
     Task ReplaceSegmentMembersAsync(
         Guid segmentId,
         IReadOnlyCollection<Guid> userIds,
         DateTime joinedAt,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken);
 }

@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using UserSegmentationService.Application.Interfaces;
+using UserSegmentationService.Application.Interfaces.Messaging;
 
 namespace UserSegmentationService.Infrastructure.Inbox;
 

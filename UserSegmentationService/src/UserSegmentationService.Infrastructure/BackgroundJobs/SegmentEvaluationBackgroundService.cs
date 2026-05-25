@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using UserSegmentationService.Application.Commands.Segments.ActiveUsers;
+using UserSegmentationService.Application.Commands.Segments.RiskUsers;
 using UserSegmentationService.Application.Commands.Segments.VipUsers;
 
 namespace UserSegmentationService.Infrastructure.BackgroundJobs;
@@ -56,16 +57,25 @@ internal class SegmentEvaluationBackgroundService : BackgroundService
         var activeWindow = TimeSpan.FromSeconds(
             GetConfigurationValue("Segments:ActiveUsersWindowSeconds", 2_592_000));
 
+        var riskWindow = TimeSpan.FromSeconds(
+            GetConfigurationValue("Segments:RiskUsersWindowSeconds", 7_776_000));
+
         await using var scope = _scopeFactory.CreateAsyncScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
+        var now = DateTime.UtcNow;
+
         await mediator.Send(
-            new EvaluateActiveUserSegmentCommand(DateTime.UtcNow.Subtract(activeWindow)),
+            new EvaluateActiveUserSegmentCommand(now.Subtract(activeWindow)),
             cancellationToken);
 
         await mediator.Send(
             new EvaluateVipUserSegmentCommand(
                 GetConfigurationValue("Segments:VipUsersMinimumSpend", 5_000)),
+            cancellationToken);
+
+        await mediator.Send(
+            new EvaluateRiskUserSegmentCommand(now.Subtract(riskWindow)),
             cancellationToken);
 
         _logger.LogInformation("Dynamic segments evaluated");

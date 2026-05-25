@@ -8,28 +8,31 @@ namespace UserSegmentationService.Application.Commands.Segments.RiskUsers;
 public class EvaluateRiskUserSegmentHandler
     : IRequestHandler<EvaluateRiskUserSegmentCommand>
 {
-    private readonly ISegmentRepository _segmentRepository;
+    private readonly ISegmentCache _segmentCache;
     private readonly ISegmentMembershipRepository _segmentMembershipRepository;
     private readonly ISegmentDeltaRepository _segmentDeltaRepository;
     private readonly IUserMetricRepository _userMetricRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public EvaluateRiskUserSegmentHandler(
-        ISegmentRepository segmentRepository,
+        ISegmentCache segmentCache,
         ISegmentMembershipRepository segmentMembershipRepository,
         ISegmentDeltaRepository segmentDeltaRepository,
-        IUserMetricRepository userMetricRepository)
+        IUserMetricRepository userMetricRepository,
+        IUnitOfWork unitOfWork)
     {
-        _segmentRepository = segmentRepository;
+        _segmentCache = segmentCache;
         _segmentMembershipRepository = segmentMembershipRepository;
         _segmentDeltaRepository = segmentDeltaRepository;
         _userMetricRepository = userMetricRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task Handle(
-        EvaluateRiskUserSegmentCommand request,
+        EvaluateRiskUserSegmentCommand command,
         CancellationToken cancellationToken)
     {
-        var segment = await _segmentRepository.GetByRuleTypeAndKindAsync(
+        var segment = await _segmentCache.GetByRuleTypeAndKindAsync(
             SegmentRuleType.RiskUsers,
             SegmentKind.Dynamic,
             cancellationToken);
@@ -38,7 +41,7 @@ public class EvaluateRiskUserSegmentHandler
             throw new InvalidOperationException("Risk users dynamic segment was not found.");
 
         var riskUserIds = await _userMetricRepository.GetRiskUserIdsAsync(
-            request.InactiveSince,
+            command.InactiveSince,
             cancellationToken);
 
         var currentUserIds = await _segmentMembershipRepository.GetUserIdsBySegmentIdAsync(
@@ -55,14 +58,13 @@ public class EvaluateRiskUserSegmentHandler
 
         if (addedUserIds.Length > 0 || removedUserIds.Length > 0)
         {
-            await _segmentDeltaRepository.AddAsync(
-                new SegmentDelta(
+                _segmentDeltaRepository.Add(
+                    SegmentDelta.Create(
                     Guid.NewGuid(),
                     segment.Id,
                     addedUserIds,
                     removedUserIds,
-                    DateTime.UtcNow),
-                cancellationToken);
+                    DateTime.UtcNow));
         }
 
         await _segmentMembershipRepository.ReplaceSegmentMembersAsync(
@@ -70,5 +72,8 @@ public class EvaluateRiskUserSegmentHandler
             riskUserIds,
             DateTime.UtcNow,
             cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
     }
 }

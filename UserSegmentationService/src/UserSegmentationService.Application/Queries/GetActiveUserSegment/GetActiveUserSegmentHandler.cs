@@ -14,11 +14,11 @@ public class GetActiveUserSegmentHandler
     }
 
     public Task<IReadOnlyList<Guid>> Handle(
-        GetActiveUserSegmentQuery request,
+        GetActiveUserSegmentQuery query,
         CancellationToken cancellationToken)
     {
         return _userMetricRepository.GetActiveUserIdsAsync(
-            request.ActiveSince,
+            query.ActiveSince,
             cancellationToken);
     }
 }

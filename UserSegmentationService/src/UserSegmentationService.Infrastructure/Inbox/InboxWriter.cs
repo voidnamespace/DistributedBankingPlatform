@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using UserSegmentationService.Application.Interfaces;
+using UserSegmentationService.Application.Interfaces.Messaging;
 using UserSegmentationService.Infrastructure.Persistence.Database;
 
 namespace UserSegmentationService.Infrastructure.Inbox;
@@ -17,7 +17,7 @@ internal class InboxWriter : IInboxWriter
         Guid messageId,
         string type,
         string payload,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         var alreadyExists = await _dbContext.InboxMessages
             .AnyAsync(x => x.MessageId == messageId, cancellationToken);
