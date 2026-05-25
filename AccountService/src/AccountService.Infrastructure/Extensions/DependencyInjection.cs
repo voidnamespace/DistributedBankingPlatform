@@ -1,4 +1,4 @@
-﻿using AccountService.Application.Interfaces;
+using AccountService.Application.Interfaces;
 using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Messaging.Consuming;
 using AccountService.Infrastructure.Messaging.Publishing;
@@ -27,6 +27,7 @@ public static class DI
 
         services.AddHostedService<AuthEventsConsumer>();
         services.AddHostedService<TransactionEventsConsumer>();
+        services.AddHostedService<SegmentationEventsConsumer>();
 
         services.AddScoped<IInboxWriter, InboxWriter>();
         services.AddScoped<IOutboxWriter, OutboxWriter>();
@@ -37,3 +38,4 @@ public static class DI
         return services;
     }
 }
+

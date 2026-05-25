@@ -1,0 +1,156 @@
+using AccountService.Application.Interfaces.Messaging;
+using AccountService.Infrastructure.Messaging.Options;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using System.Text;
+
+namespace AccountService.Infrastructure.Messaging.Consuming;
+
+public class SegmentationEventsConsumer : BackgroundService
+{
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly SegmentationEventsConsumerOptions _consumerOptions;
+    private readonly RabbitMqOptions _connectionOptions;
+    private readonly ILogger<SegmentationEventsConsumer> _logger;
+
+    private IConnection? _connection;
+    private IModel? _channel;
+
+    public SegmentationEventsConsumer(
+        IServiceScopeFactory scopeFactory,
+        IOptions<SegmentationEventsConsumerOptions> consumerOptions,
+        IOptions<RabbitMqOptions> connectionOptions,
+        ILogger<SegmentationEventsConsumer> logger)
+    {
+        _scopeFactory = scopeFactory;
+        _consumerOptions = consumerOptions.Value;
+        _connectionOptions = connectionOptions.Value;
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                var factory = new ConnectionFactory
+                {
+                    HostName = _connectionOptions.Host,
+                    UserName = _connectionOptions.Username,
+                    Password = _connectionOptions.Password,
+                    DispatchConsumersAsync = true
+                };
+
+                _connection = factory.CreateConnection();
+                _channel = _connection.CreateModel();
+
+                _channel.BasicQos(0, 1, false);
+
+                _logger.LogInformation("RabbitMQ connected");
+
+                break;
+            }
+            catch
+            {
+                _logger.LogInformation("Waiting RabbitMQ...");
+                await Task.Delay(3000, stoppingToken);
+            }
+        }
+        if (_channel is null)
+            return;
+
+        _channel.ExchangeDeclare(
+            exchange: _consumerOptions.Exchange,
+            type: ExchangeType.Topic,
+            durable: true);
+
+        _channel.QueueDeclare(
+            queue: _consumerOptions.Queue,
+            durable: true,
+            exclusive: false,
+            autoDelete: false);
+
+        _channel.QueueBind(
+            queue: _consumerOptions.Queue,
+            exchange: _consumerOptions.Exchange,
+            routingKey: "segment.*");
+
+        var consumer = new AsyncEventingBasicConsumer(_channel);
+
+        consumer.Received += async (_, ea) =>
+        {
+            try
+            {
+                var json = Encoding.UTF8.GetString(ea.Body.ToArray());
+
+                _logger.LogInformation(
+                    "RabbitMQ message received. RoutingKey: {RoutingKey}, Body: {Body}",
+                    ea.RoutingKey,
+                    json);
+
+                using var scope = _scopeFactory.CreateScope();
+
+                var inboxWriter = scope.ServiceProvider
+                    .GetRequiredService<IInboxWriter>();
+
+                if (string.IsNullOrEmpty(ea.BasicProperties.MessageId))
+                {
+                    _logger.LogWarning("Message without MessageId");
+                    _channel.BasicAck(ea.DeliveryTag, false);
+                    return;
+                }
+
+                if (!Guid.TryParse(ea.BasicProperties.MessageId, out var messageId))
+                {
+                    _logger.LogWarning("Invalid MessageId format");
+                    _channel.BasicAck(ea.DeliveryTag, false);
+                    return;
+                }
+
+                var eventType = ea.RoutingKey;
+
+                await inboxWriter.SaveAsync(
+                    messageId,
+                    eventType,
+                    json,
+                    stoppingToken);
+
+                _channel.BasicAck(ea.DeliveryTag, false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing message");
+
+                _channel.BasicNack(
+                    ea.DeliveryTag,
+                    false,
+                    true);
+            }
+        };
+
+        _channel.BasicConsume(
+            queue: _consumerOptions.Queue,
+            autoAck: false,
+            consumer: consumer);
+
+        _logger.LogInformation("SegmentationEventsConsumer started");
+
+        await Task.Delay(Timeout.Infinite, stoppingToken);
+    }
+
+    public override void Dispose()
+    {
+        _channel?.Dispose();
+        _connection?.Dispose();
+        base.Dispose();
+    }
+}
+
+
+
+

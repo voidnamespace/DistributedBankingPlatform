@@ -1,6 +1,4 @@
-﻿
-
-using AccountService.Application.Commands.DepositMoney;
+﻿using AccountService.Application.Commands.DepositMoney;
 using AccountService.Application.IntegrationEvents.Transactions.Deposit;
 using MediatR;
 
@@ -27,12 +25,6 @@ public class DepositCreatedIntegrationEventHandler : INotificationHandler<Deposi
 
         await _mediator.Send(command, ct);
 
-
-
-
-
     }
-
-
 
 }

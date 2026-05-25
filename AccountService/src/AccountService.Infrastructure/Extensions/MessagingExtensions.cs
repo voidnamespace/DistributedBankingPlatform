@@ -1,4 +1,4 @@
-﻿using AccountService.Infrastructure.Messaging.Options;
+using AccountService.Infrastructure.Messaging.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +16,9 @@ public static class MessagingExtensions
         services.Configure<TransactionEventsConsumerOptions>(
             configuration.GetSection("TransactionEventsConsumer"));
 
+        services.Configure<SegmentationEventsConsumerOptions>(
+            configuration.GetSection("SegmentationEventsConsumer"));
+
         services.Configure<RabbitMqOptions>(
             configuration.GetSection("RabbitMq"));
 
@@ -25,3 +28,4 @@ public static class MessagingExtensions
         return services;
     }
 }
+

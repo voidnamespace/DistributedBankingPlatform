@@ -27,6 +27,10 @@ internal class InboxDispatcher
                 await HandleTransferSuccessAsync(message.Payload, cancellationToken);
                 return;
 
+            case "account.backfill":
+                await HandleAccountBackfillAsync(message.Payload, cancellationToken);
+                return;
+
             default:
                 throw new InvalidOperationException(
                     $"Inbox message type '{message.Type}' is not supported.");
@@ -49,6 +53,16 @@ internal class InboxDispatcher
     {
         var integrationEvent = JsonSerializer.Deserialize<TransferSuccessIntegrationEvent>(payload)
             ?? throw new InvalidOperationException("Transfer success payload is empty or invalid.");
+
+        await _mediator.Publish(integrationEvent, cancellationToken);
+    }
+
+    private async Task HandleAccountBackfillAsync(
+        string payload,
+        CancellationToken cancellationToken)
+    {
+        var integrationEvent = JsonSerializer.Deserialize<UserAccountsBackfillBatchProvidedIntegrationEvent>(payload)
+            ?? throw new InvalidOperationException("Backfill payload is empty or invalid,");
 
         await _mediator.Publish(integrationEvent, cancellationToken);
     }

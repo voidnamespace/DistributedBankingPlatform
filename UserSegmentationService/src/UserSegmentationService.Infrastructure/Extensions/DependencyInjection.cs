@@ -7,6 +7,7 @@ using UserSegmentationService.Infrastructure.BackgroundJobs;
 using UserSegmentationService.Infrastructure.Caching;
 using UserSegmentationService.Infrastructure.Inbox;
 using UserSegmentationService.Infrastructure.Messaging;
+using UserSegmentationService.Infrastructure.Outbox;
 using UserSegmentationService.Infrastructure.Persistence;
 using UserSegmentationService.Infrastructure.Persistence.Database;
 using UserSegmentationService.Infrastructure.Persistence.Repositories;
@@ -36,6 +37,7 @@ public static class DependencyInjection
         services.AddCaching(configuration);
         
         services.AddInbox();
+        services.AddOutbox();
 
         if (bool.TryParse(configuration["SegmentEvaluationBackgroundService:Enabled"], out var segmentEvaluationEnabled) && segmentEvaluationEnabled)
         {
@@ -45,6 +47,7 @@ public static class DependencyInjection
         if (bool.TryParse(configuration["Messaging:Enabled"], out var messagingEnabled) && messagingEnabled)
         {
             services.AddMessaging(configuration);
+            services.AddOutboxProcessing();
         }
 
         return services;

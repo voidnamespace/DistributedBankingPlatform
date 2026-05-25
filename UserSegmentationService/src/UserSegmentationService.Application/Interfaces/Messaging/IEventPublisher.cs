@@ -2,8 +2,7 @@
 
 public interface IEventPublisher
 {
-    Task PublishAsync<T>(
-        T message,
+    Task PublishAsync(
+        object message,
         CancellationToken ct);
-
 }

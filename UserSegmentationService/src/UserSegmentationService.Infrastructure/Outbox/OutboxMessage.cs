@@ -50,4 +50,20 @@ public class OutboxMessage
         LastError = null;
         NextAttemptAt = null;
     }
+
+    public void MarkFailed(
+        string error,
+        DateTime failedAt)
+    {
+        AttemptCount++;
+        LastError = error;
+        NextAttemptAt = failedAt.AddSeconds(GetRetryDelaySeconds());
+    }
+
+    private int GetRetryDelaySeconds()
+    {
+        var delay = Math.Pow(2, AttemptCount) * 5;
+
+        return (int)Math.Min(delay, 300);
+    }
 }

@@ -1,7 +1,9 @@
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using UserSegmentationService.Application.Interfaces.Messaging;
 using UserSegmentationService.Infrastructure.Messaging.Consumers.Accounts;
+using UserSegmentationService.Infrastructure.Messaging.Publishers;
 
 namespace UserSegmentationService.Infrastructure.Messaging;
 
@@ -11,10 +13,13 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddScoped<IEventPublisher, EventPublisher>();
+
         services.AddMassTransit(x =>
         {
             x.AddConsumer<AccountCreatedConsumer>();
             x.AddConsumer<TransferSuccessConsumer>();
+            x.AddConsumer<UserAccountsBackfillConsumer>();
 
             x.UsingRabbitMq((context, cfg) =>
             {
@@ -48,6 +53,17 @@ public static class DependencyInjection
                     e.Bind("account.events", bind =>
                     {
                         bind.RoutingKey = "transfer.success";
+                        bind.ExchangeType = "topic";
+                    });
+                });
+
+                cfg.ReceiveEndpoint("segmentation.account.backfill", e =>
+                {
+                    e.ConfigureConsumer<UserAccountsBackfillConsumer>(context);
+
+                    e.Bind("account.events", bind =>
+                    {
+                        bind.RoutingKey = "account.backfill";
                         bind.ExchangeType = "topic";
                     });
                 });
