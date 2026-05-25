@@ -6,6 +6,13 @@
     <Project Path="AccountService/src/AccountService.Domain/AccountService.Domain.csproj" />
     <Project Path="AccountService/src/AccountService.Infrastructure/AccountService.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/AuditLogService/" />
+  <Folder Name="/AuditLogService/src/">
+    <Project Path="AuditLogService/src/AuditLogService.API/AuditLogService.API.csproj" />
+    <Project Path="AuditLogService/src/AuditLogService.Application/AuditLogService.Application.csproj" />
+    <Project Path="AuditLogService/src/AuditLogService.Domain/AuditLogService.Domain.csproj" />
+    <Project Path="AuditLogService/src/AuditLogService.Infrastructure/AuditLogService.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/AuthService/" />
   <Folder Name="/AuthService/src/">
     <Project Path="AuthService/src/AuthService.API/AuthService.API.csproj" />
@@ -13,19 +20,19 @@
     <Project Path="AuthService/src/AuthService.Domain/AuthService.Domain.csproj" />
     <Project Path="AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj" />
   </Folder>
-  <Folder Name="/BankCardService/" />
-  <Folder Name="/BankCardService/src/">
-    <Project Path="BankCardService/src/BankCardService.API/BankCardService.API.csproj" />
-    <Project Path="BankCardService/src/BankCardService.Application/BankCardService.Application.csproj" />
-    <Project Path="BankCardService/src/BankCardService.Domain/BankCardService.Domain.csproj" />
-    <Project Path="BankCardService/src/BankCardService.Infrastructure/BankCardService.Infrastructure.csproj" />
-  </Folder>
   <Folder Name="/TransactionService/" />
   <Folder Name="/TransactionService/src/">
     <Project Path="TransactionService/src/TransactionService.API/TransactionService.API.csproj" />
     <Project Path="TransactionService/src/TransactionService.Application/TransactionService.Application.csproj" />
     <Project Path="TransactionService/src/TransactionService.Domain/TransactionService.Domain.csproj" />
     <Project Path="TransactionService/src/TransactionService.Infrastructure/TransactionService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/UserSegmentationService/" />
+  <Folder Name="/UserSegmentationService/src/">
+    <Project Path="UserSegmentationService/src/UserSegmentationService.API/UserSegmentationService.API.csproj" />
+    <Project Path="UserSegmentationService/src/UserSegmentationService.Application/UserSegmentationService.Application.csproj" />
+    <Project Path="UserSegmentationService/src/UserSegmentationService.Domain/UserSegmentationService.Domain.csproj" />
+    <Project Path="UserSegmentationService/src/UserSegmentationService.Infrastructure/UserSegmentationService.Infrastructure.csproj" />
   </Folder>
   <Project Path="GatewayService/GatewayService.csproj" />
 </Solution>
