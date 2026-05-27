@@ -35,11 +35,13 @@ public static class DependencyInjection
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var connectionString =
-                configuration["Redis"]
-                ?? throw new InvalidOperationException("Redis connection string not configured");
+             configuration.GetConnectionString("Redis")
+             ?? throw new InvalidOperationException("Redis connection string not configured");
 
             return ConnectionMultiplexer.Connect(connectionString);
         });
+
+        services.AddJwtAuthentication(configuration);
 
         services.AddSingleton<IRedisService, RedisService>();
         services.AddSingleton<ITokenBlacklistStore, RedisTokenBlacklistStore>();
