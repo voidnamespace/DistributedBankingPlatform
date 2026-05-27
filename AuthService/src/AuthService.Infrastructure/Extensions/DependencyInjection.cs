@@ -42,6 +42,7 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<IRedisService, RedisService>();
+        services.AddSingleton<ITokenBlacklistStore, RedisTokenBlacklistStore>();
 
         services.Configure<RabbitMqOptions>(
             configuration.GetSection("RabbitMq"));

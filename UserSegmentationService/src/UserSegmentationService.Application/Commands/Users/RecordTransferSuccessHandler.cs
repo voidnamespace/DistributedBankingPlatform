@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using UserSegmentationService.Application.Interfaces;
 using UserSegmentationService.Domain.Entities;
+using UserSegmentationService.Domain.Enums;
 
 namespace UserSegmentationService.Application.Commands.Users;
 
@@ -59,7 +60,9 @@ public class RecordTransferSuccessHandler
             metricCreated = true;
         }
 
-        metric.RecordSpend(command.Amount, command.RecordedAt);
+        var amountInCopper = ConvertToCopper(command.Amount, command.Currency);
+
+        metric.RecordSpend(amountInCopper, command.RecordedAt);
 
         _logger.LogInformation(
             "Transfer success recorded for user metric. UserId={UserId}, Currency={Currency}, MetricCreated={MetricCreated}, RecordedAt={RecordedAt}",
@@ -80,4 +83,23 @@ public class RecordTransferSuccessHandler
             ? "****"
             : string.Concat("****", accountNumber.AsSpan(accountNumber.Length - visibleDigits));
     }
+
+    private static decimal ConvertToCopper(decimal amount, int currency)
+    {
+        if (!Enum.IsDefined(typeof(Currency), currency))
+            throw new InvalidOperationException(
+                $"Unsupported currency value '{currency}'.");
+
+        var parsedCurrency = (Currency)currency;
+
+        return parsedCurrency switch
+        {
+            Currency.Copper => amount,
+            Currency.Silver => amount * 100m,
+            Currency.Gold => amount * 10_000m,
+            _ => throw new InvalidOperationException(
+                $"Unsupported currency value '{currency}'.")
+        };
+    }
+
 }

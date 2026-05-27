@@ -1,10 +1,13 @@
-﻿namespace UserSegmentationService.Domain.Entities;
+﻿using UserSegmentationService.Domain.Enums;
+using UserSegmentationService.Domain.ValueObjects;
+
+namespace UserSegmentationService.Domain.Entities;
 
 public class UserMetric
 {
     public Guid UserId { get; private set; }
 
-    public decimal SpendLast60Days { get; private set; } // this is VALUe object
+    public MoneyVO SpendLast60Days { get; private set; } = default!;
 
     public DateTime? LastTransactionAt { get; private set; }
 
@@ -13,22 +16,18 @@ public class UserMetric
     public UserMetric(Guid userId)
     {
         UserId = userId;
+        SpendLast60Days = new MoneyVO(0, Currency.Copper);
     }
 
     public static UserMetric CreateSnapshot(
         Guid userId,
-        decimal spendLast60Days,
+        decimal spendLast60DaysInCopper,
         DateTime? lastTransactionAt)
     {
-        if (spendLast60Days < 0)
-            throw new ArgumentOutOfRangeException(
-                nameof(spendLast60Days),
-                "Spend last 60 days cannot be negative.");
-
         return new UserMetric
         {
             UserId = userId,
-            SpendLast60Days = spendLast60Days,
+            SpendLast60Days = new MoneyVO(spendLast60DaysInCopper, Currency.Copper),
             LastTransactionAt = lastTransactionAt
         };
     }
@@ -41,14 +40,16 @@ public class UserMetric
     }
 
     public void RecordSpend(
-    decimal amount,
-    DateTime occurredAt)
+        decimal amountInCopper,
+        DateTime occurredAt)
     {
-        if (amount <= 0)
+        if (amountInCopper <= 0)
             return;
 
-        SpendLast60Days += amount;
+        SpendLast60Days = new MoneyVO(
+            SpendLast60Days.Amount + amountInCopper,
+            Currency.Copper);
+
         RecordTransaction(occurredAt);
     }
-
 }
