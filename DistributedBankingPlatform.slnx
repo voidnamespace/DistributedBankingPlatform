@@ -35,4 +35,5 @@
     <Project Path="UserSegmentationService/src/UserSegmentationService.Infrastructure/UserSegmentationService.Infrastructure.csproj" />
   </Folder>
   <Project Path="GatewayService/GatewayService.csproj" />
+  <Project Path="tests/DistributedBankingPlatform.E2E.Tests/DistributedBankingPlatform.E2E.Tests.csproj" />
 </Solution>
