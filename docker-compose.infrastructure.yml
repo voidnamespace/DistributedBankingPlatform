@@ -139,6 +139,18 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
 
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+
 # =====================
 # VOLUMES
 # =====================
@@ -149,3 +161,4 @@ volumes:
   transaction_pgdata:
   segmentation_pgdata:
   auditlog_mongo_data:
+  tempo_data:
