@@ -15,4 +15,8 @@ public class OutboxMessage
 
     public string? Error { get; set; }
 
+    public string? TraceParent { get; set; }
+
+    public string? TraceState { get; set; }
+
 }

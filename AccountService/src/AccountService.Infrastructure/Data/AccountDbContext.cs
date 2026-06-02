@@ -44,6 +44,9 @@ public class AccountDbContext : DbContext
                 .IsRequired();
 
             b.HasIndex(x => x.ProcessedAt);
+
+            b.Property(x => x.TraceParent);
+            b.Property(x => x.TraceState);
         });
         modelBuilder.Entity<OutboxMessage>(b =>
         {
@@ -70,6 +73,9 @@ public class AccountDbContext : DbContext
 
             b.HasIndex(x => x.ProcessedOnUtc);
             b.HasIndex(x => x.OccurredOnUtc);
+
+            b.Property(x => x.TraceParent);
+            b.Property(x => x.TraceState);
         });
         modelBuilder.Entity<Account>(entity =>
         {

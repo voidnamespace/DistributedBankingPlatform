@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TransactionService.Infrastructure.Data;
@@ -11,9 +12,11 @@ using TransactionService.Infrastructure.Data;
 namespace TransactionService.Infrastructure.Migrations
 {
     [DbContext(typeof(TransactionDbContext))]
-    partial class TransactionDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260601053108_AddTracingContextToTransactionOutbox")]
+    partial class AddTracingContextToTransactionOutbox
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -69,12 +72,6 @@ namespace TransactionService.Infrastructure.Migrations
 
                     b.Property<DateTime>("ReceivedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("TraceParent")
-                        .HasColumnType("text");
-
-                    b.Property<string>("TraceState")
-                        .HasColumnType("text");
 
                     b.Property<string>("Type")
                         .IsRequired()

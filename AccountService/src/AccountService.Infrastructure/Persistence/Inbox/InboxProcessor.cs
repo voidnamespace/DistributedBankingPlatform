@@ -1,11 +1,13 @@
 ﻿using AccountService.Application.Interfaces;
 using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Routing;
+using AccountService.Infrastructure.Observability;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace AccountService.Infrastructure.Persistence.Inbox;
@@ -81,6 +83,21 @@ public class InboxProcessor : BackgroundService
             {
                 try
                 {
+                    var parentContext = default(ActivityContext);
+
+                    if (!string.IsNullOrWhiteSpace(message.TraceParent))
+                    {
+                        ActivityContext.TryParse(
+                            message.TraceParent,
+                            message.TraceState,
+                            out parentContext);
+                    }
+
+                    using var activity = MessagingTelemetry.ActivitySource.StartActivity(
+                        $"process inbox {message.Type}",
+                        ActivityKind.Internal,
+                        parentContext);
+
                     var type = IntegrationEventTypeMap.GetType(message.Type);
 
                     _logger.LogInformation(

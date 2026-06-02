@@ -2,6 +2,7 @@
 using AccountService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace AccountService.Infrastructure.Persistence.Inbox;
 
@@ -39,7 +40,9 @@ public class InboxWriter : IInboxWriter
             Payload = payload,
             ReceivedAt = DateTime.UtcNow,
             AttemptCount = 0,
-            Processed = false
+            Processed = false,
+            TraceParent = Activity.Current?.Id,
+            TraceState = Activity.Current?.TraceStateString
         };
         
         _context.InboxMessages.Add(message);

@@ -1,11 +1,13 @@
 ﻿using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Messaging.Options;
+using AccountService.Infrastructure.Observability;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Diagnostics;
 using System.Text;
 
 namespace AccountService.Infrastructure.Messaging.Consuming;
@@ -125,6 +127,24 @@ public class TransactionEventsConsumer : BackgroundService
 
                 var eventType = ea.RoutingKey;
 
+                var traceParent = GetHeader(ea.BasicProperties.Headers, "traceparent");
+                var traceState = GetHeader(ea.BasicProperties.Headers, "tracestate");
+
+                var parentContext = default(ActivityContext);
+
+                if (!string.IsNullOrWhiteSpace(traceParent))
+                {
+                    ActivityContext.TryParse(
+                        traceParent,
+                        traceState,
+                        out parentContext);
+                }
+
+                using var activity = MessagingTelemetry.ActivitySource.StartActivity(
+                    $"consume {eventType}",
+                    ActivityKind.Consumer,
+                    parentContext);
+
                 await inboxWriter.SaveAsync(
                     messageId,
                     eventType, 
@@ -152,6 +172,20 @@ public class TransactionEventsConsumer : BackgroundService
             consumer: consumer);
 
         await Task.Delay(Timeout.Infinite, stoppingToken);
+    }
+
+    private static string? GetHeader(
+        IDictionary<string, object>? headers,
+        string name)
+    {
+        if (headers is null ||
+            !headers.TryGetValue(name, out var value) ||
+            value is not byte[] bytes)
+        {
+            return null;
+        }
+
+        return Encoding.UTF8.GetString(bytes);
     }
 
     public override void Dispose()

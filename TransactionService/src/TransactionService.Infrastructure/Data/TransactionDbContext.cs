@@ -60,6 +60,9 @@ public class TransactionDbContext : DbContext
 
             b.HasIndex(x => x.ProcessedAt);
 
+            b.Property(x => x.TraceParent);
+            b.Property(x => x.TraceState);
+
         });
         modelBuilder.Entity<OutboxMessage>(b =>
         {
@@ -74,6 +77,9 @@ public class TransactionDbContext : DbContext
 
             b.HasIndex(x => x.ProcessedAt);
             b.HasIndex(x => x.CreatedAt);
+
+            b.Property(x => x.TraceParent);
+            b.Property(x => x.TraceState);
         });
     }
 }

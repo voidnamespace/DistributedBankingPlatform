@@ -10,6 +10,7 @@ using TransactionService.Application.Common.Behaviors;
 using TransactionService.Application.DomainEventHandlers;
 using TransactionService.Infrastructure.Data;
 using TransactionService.Infrastructure.Extensions;
+using TransactionService.Infrastructure.Observability;
 
 namespace TransactionService.API;
 
@@ -28,6 +29,7 @@ public class Startup
             .ConfigureResource(resource => resource
             .AddService("TransactionService"))
             .WithTracing(tracing => tracing
+            .AddSource(MessagingTelemetry.ActivitySourceName)
             .AddAspNetCoreInstrumentation()
             .AddEntityFrameworkCoreInstrumentation()
             .AddOtlpExporter(options =>

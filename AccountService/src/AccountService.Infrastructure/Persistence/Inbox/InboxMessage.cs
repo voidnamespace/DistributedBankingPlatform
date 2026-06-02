@@ -17,4 +17,8 @@ public class InboxMessage
     public int AttemptCount { get; set; }
 
     public string? Error { get; set; }
+
+    public string? TraceParent { get; set; }
+
+    public string? TraceState { get; set; }
 }

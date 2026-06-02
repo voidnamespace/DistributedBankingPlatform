@@ -4,10 +4,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Diagnostics;
 using System.Text;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Messaging.Options;
 using TransactionService.Infrastructure.Messaging.Routing;
+using TransactionService.Infrastructure.Observability;
 
 namespace TransactionService.Infrastructure.Messaging.Consuming;
 
@@ -129,6 +131,24 @@ public class AccountEventsConsumer : BackgroundService
 
                 var type = IntegrationEventMap.GetType(ea.RoutingKey);
 
+                var traceParent = GetHeader(ea.BasicProperties.Headers, "traceparent");
+                var traceState = GetHeader(ea.BasicProperties.Headers, "tracestate");
+
+                var parentContext = default(ActivityContext);
+
+                if (!string.IsNullOrWhiteSpace(traceParent))
+                {
+                    ActivityContext.TryParse(
+                        traceParent,
+                        traceState,
+                        out parentContext);
+                }
+
+                using var activity = MessagingTelemetry.ActivitySource.StartActivity(
+                    $"consume {typeName}",
+                    ActivityKind.Consumer,
+                    parentContext);
+
                 await inboxWriter.SaveAsync(messageId, typeName, json, stoppingToken);
 
                 _channel.BasicAck(ea.DeliveryTag, false);
@@ -153,6 +173,20 @@ public class AccountEventsConsumer : BackgroundService
         _logger.LogInformation("AccountEventsConsumer started");
 
         await Task.Delay(Timeout.Infinite, stoppingToken);
+    }
+
+    private static string? GetHeader(
+        IDictionary<string, object>? headers,
+        string name)
+    {
+        if (headers is null ||
+            !headers.TryGetValue(name, out var value) ||
+            value is not byte[] bytes)
+        {
+            return null;
+        }
+
+        return Encoding.UTF8.GetString(bytes);
     }
 
     public override void Dispose()
