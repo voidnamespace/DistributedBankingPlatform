@@ -64,7 +64,8 @@ public class InboxProcessor : BackgroundService
             var mediator = scope.ServiceProvider
                 .GetRequiredService<IMediator>();
 
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();    
+            var domainEventDispatcher = scope.ServiceProvider
+                .GetRequiredService<IDomainEventDispatcher>();
 
             var messages = await db.InboxMessages
                 .Where(x => x.ProcessedAt == null)
@@ -114,6 +115,7 @@ public class InboxProcessor : BackgroundService
                     if (integrationEvent is INotification notification)
                     {
                         await mediator.Publish(notification, stoppingToken);
+                        await domainEventDispatcher.DispatchAsync(stoppingToken);
                     }
 
                     message.ProcessedAt = DateTime.UtcNow;
@@ -136,7 +138,7 @@ public class InboxProcessor : BackgroundService
                 }
             }
 
-            await unitOfWork.SaveChangesAsync(stoppingToken);
+            await db.SaveChangesAsync(stoppingToken);
 
     }
 }
