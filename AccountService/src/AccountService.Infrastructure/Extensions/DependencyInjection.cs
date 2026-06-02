@@ -24,7 +24,7 @@ public static class DI
         services.AddMessaging(configuration);
 
         services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
-
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddHostedService<AuthEventsConsumer>();
         services.AddHostedService<TransactionEventsConsumer>();
         services.AddHostedService<SegmentationEventsConsumer>();

@@ -1,10 +1,12 @@
 ﻿using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Routing;
+using AccountService.Infrastructure.Observability;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace AccountService.Infrastructure.Persistence.Outbox;
@@ -63,6 +65,21 @@ public class OutboxProcessor : BackgroundService
                 {
                     try
                     {
+                        var parentContext = default(ActivityContext);
+
+                        if (!string.IsNullOrWhiteSpace(msg.TraceParent))
+                        {
+                            ActivityContext.TryParse(
+                                msg.TraceParent,
+                                msg.TraceState,
+                                out parentContext);
+                        }
+
+                        using var activity = MessagingTelemetry.ActivitySource.StartActivity(
+                            $"publish {msg.Type}",
+                            ActivityKind.Producer,
+                            parentContext);
+
                         var eventType = IntegrationEventTypeMap.GetType(msg.Type);
 
                         if (eventType == null)

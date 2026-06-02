@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace AuthService.Infrastructure.Authentication;
 
@@ -36,6 +37,8 @@ public static class JwtExtensions
                 {
                     OnTokenValidated = async ctx =>
                     {
+
+
                         var logger = ctx.HttpContext.RequestServices
                             .GetRequiredService<ILoggerFactory>()
                             .CreateLogger("JwtAuthentication");
@@ -45,6 +48,29 @@ public static class JwtExtensions
 
                         var userIdStr = ctx.Principal?
                             .FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                        var tokenBlacklistStore = ctx.HttpContext.RequestServices
+                            .GetRequiredService<ITokenBlacklistStore>();
+
+                        var tokenId = ctx.Principal?
+                            .FindFirst(JwtRegisteredClaimNames.Jti)?
+                            .Value;
+
+                        if (string.IsNullOrWhiteSpace(tokenId))
+                        {
+                            logger.LogWarning("JWT token validation failed: token id claim missing");
+                            ctx.Fail("Invalid token.");
+                            return;
+                        }
+
+                        if (await tokenBlacklistStore.IsBlacklistedAsync(
+                                tokenId,
+                                ctx.HttpContext.RequestAborted))
+                        {
+                            logger.LogWarning("JWT token rejected: token {TokenId} is blacklisted", tokenId);
+                            ctx.Fail("Token revoked.");
+                            return;
+                        }
 
                         if (!Guid.TryParse(userIdStr, out var userId))
                         {

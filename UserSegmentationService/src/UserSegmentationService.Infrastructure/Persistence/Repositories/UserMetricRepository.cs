@@ -46,7 +46,7 @@ internal class UserMetricRepository : IUserMetricRepository
         CancellationToken cancellationToken)
     {
         return await _dbContext.UserMetrics
-            .Where(x => x.SpendLast60Days >= minimumSpend)
+            .Where(x => x.SpendLast60Days.Amount >= minimumSpend)
             .Select(x => x.UserId)
             .ToListAsync(cancellationToken);
     }

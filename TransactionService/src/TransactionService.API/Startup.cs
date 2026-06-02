@@ -1,6 +1,8 @@
 ﻿using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using TransactionService.API.Extensions;
 using TransactionService.API.Middleware;
 using TransactionService.Application.Commands.CreateTransfer;
@@ -8,6 +10,7 @@ using TransactionService.Application.Common.Behaviors;
 using TransactionService.Application.DomainEventHandlers;
 using TransactionService.Infrastructure.Data;
 using TransactionService.Infrastructure.Extensions;
+using TransactionService.Infrastructure.Observability;
 
 namespace TransactionService.API;
 
@@ -22,6 +25,18 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
+        services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource
+            .AddService("TransactionService"))
+            .WithTracing(tracing => tracing
+            .AddSource(MessagingTelemetry.ActivitySourceName)
+            .AddAspNetCoreInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddOtlpExporter(options =>
+            {
+                options.Endpoint = new Uri("http://localhost:4317");
+                }));
+
         services.AddInfrastructure(Configuration);
         services.AddMediatR(cfg => 
         cfg.RegisterServicesFromAssemblies(

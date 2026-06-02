@@ -1,11 +1,13 @@
 ﻿using AccountService.Application.Interfaces;
 using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Routing;
+using AccountService.Infrastructure.Observability;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace AccountService.Infrastructure.Persistence.Inbox;
@@ -62,7 +64,8 @@ public class InboxProcessor : BackgroundService
             var mediator = scope.ServiceProvider
                 .GetRequiredService<IMediator>();
 
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();    
+            var domainEventDispatcher = scope.ServiceProvider
+                .GetRequiredService<IDomainEventDispatcher>();
 
             var messages = await db.InboxMessages
                 .Where(x => x.ProcessedAt == null)
@@ -81,6 +84,21 @@ public class InboxProcessor : BackgroundService
             {
                 try
                 {
+                    var parentContext = default(ActivityContext);
+
+                    if (!string.IsNullOrWhiteSpace(message.TraceParent))
+                    {
+                        ActivityContext.TryParse(
+                            message.TraceParent,
+                            message.TraceState,
+                            out parentContext);
+                    }
+
+                    using var activity = MessagingTelemetry.ActivitySource.StartActivity(
+                        $"process inbox {message.Type}",
+                        ActivityKind.Internal,
+                        parentContext);
+
                     var type = IntegrationEventTypeMap.GetType(message.Type);
 
                     _logger.LogInformation(
@@ -97,6 +115,7 @@ public class InboxProcessor : BackgroundService
                     if (integrationEvent is INotification notification)
                     {
                         await mediator.Publish(notification, stoppingToken);
+                        await domainEventDispatcher.DispatchAsync(stoppingToken);
                     }
 
                     message.ProcessedAt = DateTime.UtcNow;
@@ -119,7 +138,7 @@ public class InboxProcessor : BackgroundService
                 }
             }
 
-            await unitOfWork.SaveChangesAsync(stoppingToken);
+            await db.SaveChangesAsync(stoppingToken);
 
     }
 }

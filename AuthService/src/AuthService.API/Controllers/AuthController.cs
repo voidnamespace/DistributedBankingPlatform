@@ -12,6 +12,7 @@ using AuthService.Application.Queries.GetAllUsers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace AuthService.API.Controllers;
 
@@ -117,17 +118,25 @@ public class AuthController : ControllerBase
     {
         var userId = User.GetUserId();
 
-        _logger.LogInformation(
-            "Logout request started {UserId}",
-             userId);
+        var tokenId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+        var expiresAtUnix = User.FindFirst(JwtRegisteredClaimNames.Exp)?.Value;
 
-        var command = new LogoutUserCommand(userId);
+        if (string.IsNullOrWhiteSpace(tokenId) ||
+            !long.TryParse(expiresAtUnix, out var expiresAtSeconds))
+        {
+            return Unauthorized(new { message = "Invalid token claims" });
+        }
+
+        var expiresAt = DateTimeOffset
+            .FromUnixTimeSeconds(expiresAtSeconds)
+            .UtcDateTime;
+
+        var command = new LogoutUserCommand(
+            userId,
+            tokenId,
+            expiresAt);
 
         await _mediator.Send(command);
-
-        _logger.LogInformation(
-          "Logout request completed {UserId}",
-          userId);
 
         return Ok(new { message = "Logout successful" });
     }

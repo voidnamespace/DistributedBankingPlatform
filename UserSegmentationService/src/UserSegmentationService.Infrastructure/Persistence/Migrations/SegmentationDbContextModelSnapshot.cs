@@ -124,9 +124,6 @@ namespace UserSegmentationService.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("LastTransactionAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("SpendLast60Days")
-                        .HasColumnType("numeric");
-
                     b.HasKey("UserId");
 
                     b.ToTable("UserMetrics");
@@ -299,6 +296,33 @@ namespace UserSegmentationService.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("SegmentId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("UserSegmentationService.Domain.Entities.UserMetric", b =>
+                {
+                    b.OwnsOne("UserSegmentationService.Domain.ValueObjects.MoneyVO", "SpendLast60Days", b1 =>
+                        {
+                            b1.Property<Guid>("UserMetricUserId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("numeric")
+                                .HasColumnName("SpendLast60Days");
+
+                            b1.Property<int>("Currency")
+                                .HasColumnType("integer")
+                                .HasColumnName("SpendLast60DaysCurrency");
+
+                            b1.HasKey("UserMetricUserId");
+
+                            b1.ToTable("UserMetrics");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserMetricUserId");
+                        });
+
+                    b.Navigation("SpendLast60Days")
                         .IsRequired();
                 });
 #pragma warning restore 612, 618

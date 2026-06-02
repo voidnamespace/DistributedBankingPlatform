@@ -38,6 +38,18 @@ public class SegmentationDbContext : DbContext
         modelBuilder.Entity<UserMetric>(entity =>
         {
             entity.HasKey(x => x.UserId);
+
+            entity.OwnsOne(x => x.SpendLast60Days, money =>
+            {
+                money.Property(x => x.Amount)
+                    .HasColumnName("SpendLast60Days")
+                    .IsRequired();
+
+                money.Property(x => x.Currency)
+                    .HasColumnName("SpendLast60DaysCurrency")
+                    .HasConversion<int>()
+                    .IsRequired();
+            });
         });
 
         modelBuilder.Entity<UserAccount>(entity =>

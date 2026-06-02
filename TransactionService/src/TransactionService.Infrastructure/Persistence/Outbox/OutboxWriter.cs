@@ -3,6 +3,7 @@ using System.Text.Json;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Data;
 using TransactionService.Infrastructure.Messaging.Routing;
+using System.Diagnostics;
 
 namespace TransactionService.Infrastructure.Persistence.Outbox;
 
@@ -27,6 +28,8 @@ public class OutboxWriter : IOutboxWriter
             Payload = JsonSerializer.Serialize(integrationEvent),
             CreatedAt = DateTime.UtcNow,
             AttemptCount = 0,
+            TraceParent = Activity.Current?.Id,
+            TraceState = Activity.Current?.TraceStateString,
         };
 
         _context.OutboxMessages.Add(message);

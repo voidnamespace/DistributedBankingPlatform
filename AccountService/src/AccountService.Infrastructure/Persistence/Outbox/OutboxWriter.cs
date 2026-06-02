@@ -1,6 +1,7 @@
 ﻿using AccountService.Application.Interfaces.Messaging;
 using AccountService.Infrastructure.Data;
 using AccountService.Infrastructure.Messaging.Routing;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace AccountService.Infrastructure.Persistence.Outbox;
@@ -24,7 +25,9 @@ public class OutboxWriter : IOutboxWriter
             Type = IntegrationEventTypeMap.GetName(typeof(T)),
             Payload = JsonSerializer.Serialize(integrationEvent),
             OccurredOnUtc = DateTime.UtcNow,
-            AttemptCount = 0
+            AttemptCount = 0,
+            TraceParent = Activity.Current?.Id,
+            TraceState = Activity.Current?.TraceStateString
         };
 
         _context.OutboxMessages.Add(message);

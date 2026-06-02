@@ -10,7 +10,10 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using System.Text;
+using AccountService.Infrastructure.Observability;
 
 namespace AccountService.API;
 
@@ -35,7 +38,17 @@ public class Startup
             typeof(IPipelineBehavior<,>),
             typeof(ValidationBehavior<,>));
 
-
+        services.AddOpenTelemetry()
+        .ConfigureResource(resource => resource
+        .AddService("AccountService"))
+        .WithTracing(tracing => tracing
+        .AddSource(MessagingTelemetry.ActivitySourceName)
+        .AddAspNetCoreInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri("http://localhost:4317");
+        }));
 
         services.AddInfrastructure(Configuration);
 

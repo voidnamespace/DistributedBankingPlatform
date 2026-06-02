@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using TransactionService.Application.Interfaces.Messaging;
@@ -55,6 +56,22 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
         props.Persistent = true;
         props.MessageId = Guid.NewGuid().ToString();
         props.ContentType = "application/json";
+
+        var activity = Activity.Current;
+
+        if (activity?.Id is not null)
+        {
+            props.Headers ??= new Dictionary<string, object>();
+
+            props.Headers["traceparent"] =
+                Encoding.UTF8.GetBytes(activity.Id);
+
+            if (!string.IsNullOrWhiteSpace(activity.TraceStateString))
+            {
+                props.Headers["tracestate"] =
+                    Encoding.UTF8.GetBytes(activity.TraceStateString);
+            }
+        }
 
         _channel.BasicPublish(
             exchange: _publisherOptions.Exchange,

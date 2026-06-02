@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using TransactionService.Application.Interfaces.Messaging;
 using TransactionService.Infrastructure.Data;
 namespace TransactionService.Infrastructure.Persistence.Inbox;
@@ -40,6 +41,8 @@ public class InboxWriter : IInboxWriter
             Processed = false,
             AttemptCount = 0,
             ReceivedAt = DateTime.UtcNow,
+            TraceParent = Activity.Current?.Id,
+            TraceState = Activity.Current?.TraceStateString
         };
         
         _context.InboxMessages.Add(inboxMessage);
