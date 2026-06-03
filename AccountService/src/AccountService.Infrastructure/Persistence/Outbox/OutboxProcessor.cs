@@ -16,6 +16,9 @@ public class OutboxProcessor : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<OutboxProcessor> _logger;
 
+    private const int MaxAttempts = 5;
+    private const int MaxErrorLength = 4000;
+
     internal static class JsonDefaults
     {
         public static readonly JsonSerializerOptions Options = new()
@@ -135,6 +138,19 @@ public class OutboxProcessor : BackgroundService
                             "Outbox message publish failed. Id={Id} Attempt={Attempt}",
                             msg.Id,
                             msg.AttemptCount);
+
+                        if (msg.AttemptCount >= MaxAttempts)
+                        {
+                            var error = TruncateError(ex.Message);
+
+                            db.DeadLetterOutboxMessages.Add(
+                                DeadLetterOutboxMessage.From(
+                                    msg,
+                                    error,
+                                    DateTime.UtcNow));
+
+                            db.OutboxMessages.Remove(msg);
+                        }
                     }
                 }
 
@@ -158,5 +174,12 @@ public class OutboxProcessor : BackgroundService
         }
 
         _logger.LogInformation("OutboxProcessor stopped");
+    }
+
+    private static string TruncateError(string error)
+    {
+        return error.Length <= MaxErrorLength
+            ? error
+            : error[..MaxErrorLength];
     }
 }

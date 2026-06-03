@@ -12,9 +12,12 @@ public class AccountDbContext : DbContext
     : base(options)
     {
     }
-    public DbSet<Account> Accounts { get; set; }
+    public DbSet<Account> Accounts => Set<Account>();
     public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<DeadLetterInboxMessage> DeadLetterInboxMessages => Set<DeadLetterInboxMessage>();
+    public DbSet<DeadLetterOutboxMessage> DeadLetterOutboxMessages => Set<DeadLetterOutboxMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -114,6 +117,44 @@ public class AccountDbContext : DbContext
             entity.Property(a => a.RowVersion)
             .IsRowVersion();
 
+        });
+
+        modelBuilder.Entity<DeadLetterInboxMessage>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Type)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.Payload)
+                .HasColumnType("jsonb")
+                .IsRequired();
+
+            entity.Property(x => x.Error)
+                .IsRequired();
+
+            entity.HasIndex(x => x.MessageId);
+            entity.HasIndex(x => x.FailedAt);
+        });
+
+        modelBuilder.Entity<DeadLetterOutboxMessage>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Type)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.Payload)
+                .HasColumnType("jsonb")
+                .IsRequired();
+
+            entity.Property(x => x.Error)
+                .IsRequired();
+
+            entity.HasIndex(x => x.MessageId);
+            entity.HasIndex(x => x.FailedAt);
         });
     }
 }

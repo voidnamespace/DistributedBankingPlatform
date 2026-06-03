@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using System.Text;
 using AccountService.Infrastructure.Observability;
@@ -48,7 +49,13 @@ public class Startup
         .AddOtlpExporter(options =>
         {
             options.Endpoint = new Uri("http://localhost:4317");
-        }));
+        }))
+        .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddProcessInstrumentation()
+        .AddMeter("AccountService")
+        .AddPrometheusExporter());
 
         services.AddInfrastructure(Configuration);
 
@@ -87,6 +94,8 @@ public class Startup
 
     public void Configure(WebApplication app, IWebHostEnvironment env)
     {
+        app.UseMiddleware<ExceptionMiddleware>();
+
         app.UseHttpsRedirection();
 
         app.UseSwaggerConfiguration();
@@ -107,6 +116,7 @@ public class Startup
         app.MapControllers();
 
         app.MapHealthCheckEndpoints();
+        app.MapPrometheusScrapingEndpoint();
 
         using (var scope = app.Services.CreateScope())
         {
