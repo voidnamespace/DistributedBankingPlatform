@@ -8,11 +8,17 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.71.0" />
+    <PackageReference Include="Grpc.Core.Api" Version="2.71.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\FraudDetectionService.Application\FraudDetectionService.Application.csproj" />
     <ProjectReference Include="..\FraudDetectionService.Infrastructure\FraudDetectionService.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="Protos\fraud_check.proto" GrpcServices="Server" />
   </ItemGroup>
 
 </Project>
