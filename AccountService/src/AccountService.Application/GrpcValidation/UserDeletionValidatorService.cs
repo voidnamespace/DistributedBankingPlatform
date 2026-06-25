@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AccountService.Application.Maintenance
+namespace AccountService.Application.GrpcValidation
 {
-    internal class MaintenanceFeeProcessor
+    internal class UserDeletionValidatorService
     {
     }
 }

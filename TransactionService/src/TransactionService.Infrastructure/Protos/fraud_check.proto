@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option csharp_namespace = "TransactionService.Infrastructure.Grpc.FraudDetection";
+
+package fraud_detection;
+
+service FraudCheck {
+  rpc CheckTransfer (CheckTransferRequest) returns (CheckTransferResponse);
+}
+
+message CheckTransferRequest {
+  string transaction_id = 1;
+  string user_id = 2;
+  string from_account_number = 3;
+  string to_account_number = 4;
+  double amount = 5;
+  string currency = 6;
+}
+
+message CheckTransferResponse {
+  FraudDecision decision = 1;
+  int32 risk_score = 2;
+  repeated string reasons = 3;
+}
+
+enum FraudDecision {
+  FRAUD_DECISION_UNSPECIFIED = 0;
+  APPROVED = 1;
+  REVIEW = 2;
+  REJECTED = 3;
+}

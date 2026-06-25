@@ -1,7 +1,10 @@
 ﻿using AuthService.Application.Interfaces;
+using AuthService.Application.Interfaces.AccountServiceCalling;
 using AuthService.Application.Interfaces.Messaging;
 using AuthService.Infrastructure.Authentication;
 using AuthService.Infrastructure.Caching;
+using AuthService.Infrastructure.Grpc.AccountService;
+using AuthService.Infrastructure.GrpcCall.AccountService;
 using AuthService.Infrastructure.Messaging.Options;
 using AuthService.Infrastructure.Messaging.Publishing;
 using AuthService.Infrastructure.Persistence.Outbox;
@@ -31,6 +34,16 @@ public static class DependencyInjection
         services.AddScoped<IJwtService, JwtService>();
 
         services.AddScoped<AuthDbSeeder>();
+
+        services.AddScoped<IUserDeletionValidator, GrpcUserDeletionValidator>();
+
+        services.AddGrpcClient<UserLifecycleValidation.UserLifecycleValidationClient>(options =>
+        {
+            var address = configuration["UserLifecycleGrpc:Address"]
+                ?? throw new InvalidOperationException("UserLifecycleGrpc:Address is not configured.");
+
+            options.Address = new Uri(address);
+        });
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {

@@ -61,6 +61,43 @@ namespace AccountService.Infrastructure.Migrations
                     b.ToTable("Accounts");
                 });
 
+            modelBuilder.Entity("AccountService.Infrastructure.Persistence.Inbox.DeadLetterInboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Error")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("FailedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FailedAt");
+
+                    b.HasIndex("MessageId");
+
+                    b.ToTable("DeadLetterInboxMessages");
+                });
+
             modelBuilder.Entity("AccountService.Infrastructure.Persistence.Inbox.InboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -102,6 +139,43 @@ namespace AccountService.Infrastructure.Migrations
                     b.HasIndex("ProcessedAt");
 
                     b.ToTable("InboxMessages", (string)null);
+                });
+
+            modelBuilder.Entity("AccountService.Infrastructure.Persistence.Outbox.DeadLetterOutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Error")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("FailedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FailedAt");
+
+                    b.HasIndex("MessageId");
+
+                    b.ToTable("DeadLetterOutboxMessages");
                 });
 
             modelBuilder.Entity("AccountService.Infrastructure.Persistence.Outbox.OutboxMessage", b =>

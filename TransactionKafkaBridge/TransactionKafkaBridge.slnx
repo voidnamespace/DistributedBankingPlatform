@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TransactionKafkaBridge.Application/TransactionKafkaBridge.Application.csproj" />
+    <Project Path="src/TransactionKafkaBridge.Infrastructure/TransactionKafkaBridge.Infrastructure.csproj" />
+    <Project Path="src/TransactionKafkaBridge.Worker/TransactionKafkaBridge.Worker.csproj" />
+  </Folder>
+</Solution>

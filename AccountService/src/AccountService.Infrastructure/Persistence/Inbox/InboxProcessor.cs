@@ -17,6 +17,9 @@ public class InboxProcessor : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<InboxProcessor> _logger;
 
+    private const int MaxAttempts = 5;
+    private const int MaxErrorLength = 4000;
+
     internal static class JsonDefaults
     {
         public static readonly JsonSerializerOptions Options = new()
@@ -83,7 +86,7 @@ public class InboxProcessor : BackgroundService
             foreach (var message in messages)
             {
                 try
-                {
+                {   
                     var parentContext = default(ActivityContext);
 
                     if (!string.IsNullOrWhiteSpace(message.TraceParent))
@@ -135,10 +138,30 @@ public class InboxProcessor : BackgroundService
                         "Inbox message failed. Id={Id} Attempt={Attempt}",
                         message.Id,
                         message.AttemptCount);
+
+                if (message.AttemptCount >= MaxAttempts)
+                {
+                    var error = TruncateError(ex.Message);
+
+                    db.DeadLetterInboxMessages.Add(
+                        DeadLetterInboxMessage.From(
+                            message,
+                            error,
+                            DateTime.UtcNow));
+
+                    db.InboxMessages.Remove(message);
                 }
+            }
             }
 
             await db.SaveChangesAsync(stoppingToken);
 
+    }
+
+    private static string TruncateError(string error)
+    {
+        return error.Length <= MaxErrorLength
+            ? error
+            : error[..MaxErrorLength];
     }
 }

@@ -38,6 +38,7 @@ public class Startup
                 }));
 
         services.AddInfrastructure(Configuration);
+
         services.AddMediatR(cfg => 
         cfg.RegisterServicesFromAssemblies(
             typeof(CreateTransferCommand).Assembly,

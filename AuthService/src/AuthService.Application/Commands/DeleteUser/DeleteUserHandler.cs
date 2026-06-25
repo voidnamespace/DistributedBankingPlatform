@@ -1,6 +1,9 @@
 ﻿using AuthService.Application.Interfaces;
+using AuthService.Application.Interfaces.AccountServiceCalling;
+using AuthService.Application.Interfaces.AccountServiceCalling.Contracts;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel.DataAnnotations;
 
 namespace AuthService.Application.Commands.DeleteUser;
 
@@ -9,15 +12,18 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand>
     private readonly IUserRepository _userRepository;
     private readonly ILogger<DeleteUserHandler> _logger;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserDeletionValidator _userValidation;
 
     public DeleteUserHandler(
         IUserRepository userRepository,
         ILogger<DeleteUserHandler> logger,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IUserDeletionValidator userValidation)
     {
         _userRepository = userRepository;
         _logger = logger;
         _unitOfWork = unitOfWork;
+        _userValidation = userValidation;
     }
 
     public async Task Handle(DeleteUserCommand command, CancellationToken cancellationToken)
@@ -37,6 +43,16 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand>
                 command.UserId);
 
             throw new KeyNotFoundException($"User with ID {command.UserId} not found");
+        }
+
+        var message = new UserDeletionValidationRequest(
+            UserId: command.UserId);
+
+        var validation = await _userValidation.ValidateUserDeletion(message);
+
+        if (!validation.IsAllowed)
+        {
+            throw new Exception("User cannot be deleted while account deletion validation failed.");
         }
 
         user.Delete(); 
