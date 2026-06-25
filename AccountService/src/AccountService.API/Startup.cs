@@ -15,6 +15,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using System.Text;
 using AccountService.Infrastructure.Observability;
+using AccountService.API.Grpc;
 
 namespace AccountService.API;
 
@@ -66,6 +67,7 @@ public class Startup
         services.AddHealthChecksConfiguration(Configuration);
         services.AddRateLimitingConfiguration(Configuration);
 
+        services.AddGrpc();
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -114,6 +116,8 @@ public class Startup
         app.UseAuthorization();
 
         app.MapControllers();
+
+        app.MapGrpcService<UserLifecycleGrpcService>();
 
         app.MapHealthCheckEndpoints();
         app.MapPrometheusScrapingEndpoint();
