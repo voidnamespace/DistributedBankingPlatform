@@ -3,6 +3,8 @@ using AccountService.Infrastructure.Data;
 using AccountService.Domain.Entity;
 using Microsoft.EntityFrameworkCore;
 using AccountService.Domain.ValueObjects;
+using Npgsql;
+using NpgsqlTypes;
 
 namespace AccountService.Infrastructure.Repositories;
 
@@ -65,6 +67,50 @@ public class AccountRepository : IAccountRepository
             .OrderBy(x => x.Id)
             .Skip(skip)
             .Take(take)
+            .ToListAsync(ct);
+    }
+
+    public async Task<Account?> GetByAccountNumberForUpdateAsync(
+    AccountNumberVO accountNumber,
+    CancellationToken ct)
+    {
+        return await _context.Accounts
+            .FromSqlInterpolated($"""
+            SELECT * 
+            FROM "Accounts" 
+            WHERE "AccountNumber" = {accountNumber.Value} 
+            FOR UPDATE
+            """)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<Account>> GetByAccountNumbersForUpdateAsync(
+        IReadOnlyCollection<AccountNumberVO> accountNumbers,
+        CancellationToken ct)
+    {
+        var values = accountNumbers
+            .Select(x => x.Value)
+            .Distinct()
+            .ToArray();
+
+        if (values.Length == 0)
+        {
+            return Array.Empty<Account>();
+        }
+
+        var accountNumbersParameter = new NpgsqlParameter<string[]>("accountNumbers", values)
+        {
+            NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Text
+        };
+
+        return await _context.Accounts
+            .FromSqlRaw("""
+            SELECT * 
+            FROM "Accounts" 
+            WHERE "AccountNumber" = ANY(@accountNumbers) 
+            ORDER BY "AccountNumber" 
+            FOR UPDATE
+            """, accountNumbersParameter)
             .ToListAsync(ct);
     }
 }

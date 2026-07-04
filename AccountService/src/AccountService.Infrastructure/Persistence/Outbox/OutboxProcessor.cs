@@ -55,7 +55,7 @@ public class OutboxProcessor : BackgroundService
                     .Where(x => x.ProcessedOnUtc == null)
                     .OrderBy(x => x.OccurredOnUtc)
                     .Take(20)
-                    .ToListAsync(stoppingToken);
+                    .ToListAsync(stoppingToken);  // Нет защиты от второго процессора
 
                 if (batch.Count > 0)
                 {

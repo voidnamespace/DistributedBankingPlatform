@@ -81,8 +81,13 @@ public class TransferMoneyHandler : IRequestHandler<TransferMoneyCommand>
 
 
         var fromAccVO = new AccountNumberVO(command.FromAccountNumber);
+        var toAccVo = new AccountNumberVO(command.ToAccountNumber);
 
-        var fromAccount = await _accountRepository.GetByAccountNumberAsync(fromAccVO, ct);
+        var accounts = await _accountRepository.GetByAccountNumbersForUpdateAsync(
+            new[] { fromAccVO, toAccVo },
+            ct);
+
+        var fromAccount = accounts.FirstOrDefault(x => x.AccountNumber.Value == command.FromAccountNumber);
 
         if (fromAccount == null)
         {
@@ -108,9 +113,7 @@ public class TransferMoneyHandler : IRequestHandler<TransferMoneyCommand>
         }
 
 
-        var toAccVo = new AccountNumberVO(command.ToAccountNumber);
-
-        var toAccount = await _accountRepository.GetByAccountNumberAsync(toAccVo, ct);
+        var toAccount = accounts.FirstOrDefault(x => x.AccountNumber.Value == command.ToAccountNumber);
 
         if (toAccount == null)
         {

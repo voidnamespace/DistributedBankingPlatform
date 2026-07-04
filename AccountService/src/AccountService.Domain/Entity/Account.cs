@@ -19,7 +19,6 @@ public class Account : Entity
     public DateTime UpdatedAt { get; private set; }
 
     public bool IsActive { get; private set; }
-    public byte[] RowVersion { get; private set; } = default!; // PostgreSQL uses xmin as the concurrency token; SQL Server rowversion is byte[].
 
     private Account() { }
     public Account (Guid userId, AccountNumberVO accountNumberVO, Currency currency)

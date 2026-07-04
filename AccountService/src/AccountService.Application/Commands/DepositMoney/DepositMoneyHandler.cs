@@ -34,7 +34,7 @@ public class DepositMoneyHandler : IRequestHandler<DepositMoneyCommand>
 
         var accNum = new AccountNumberVO(command.ToAccountNumber);
 
-        var acc = await _accountRepository.GetByAccountNumberAsync(accNum, ct);
+        var acc = await _accountRepository.GetByAccountNumberForUpdateAsync(accNum, ct);
 
         if (acc == null)
         {
