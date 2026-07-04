@@ -59,85 +59,92 @@ public class InboxProcessor : BackgroundService
 
     private async Task ProcessMessagesAsync(CancellationToken stoppingToken)
     {
-            using var scope = _scopeFactory.CreateScope();
+        using var scope = _scopeFactory.CreateScope();
 
-            var db = scope.ServiceProvider
-                .GetRequiredService<AccountDbContext>();
+        var db = scope.ServiceProvider
+            .GetRequiredService<AccountDbContext>();
 
-            var mediator = scope.ServiceProvider
-                .GetRequiredService<IMediator>();
+        var mediator = scope.ServiceProvider
+            .GetRequiredService<IMediator>();
 
-            var domainEventDispatcher = scope.ServiceProvider
-                .GetRequiredService<IDomainEventDispatcher>();
+        var domainEventDispatcher = scope.ServiceProvider
+            .GetRequiredService<IDomainEventDispatcher>();
 
-            var messages = await db.InboxMessages
-                .Where(x => x.ProcessedAt == null)
-                .OrderBy(x => x.ReceivedAt)
-                .Take(20)
-                .ToListAsync(stoppingToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(stoppingToken);
 
-            if (messages.Count > 0)
+        var messages = await db.InboxMessages
+    .FromSqlRaw("""
+        SELECT *
+        FROM "InboxMessages"
+        WHERE "ProcessedAt" IS NULL
+        ORDER BY "ReceivedAt"
+        LIMIT 20
+        FOR UPDATE SKIP LOCKED
+        """)
+    .ToListAsync(stoppingToken);
+
+        if (messages.Count > 0)
+        {
+            _logger.LogInformation(
+                "Inbox batch fetched. Count={Count}",
+                messages.Count);
+        }
+
+        foreach (var message in messages)
+        {
+            try
             {
-                _logger.LogInformation(
-                    "Inbox batch fetched. Count={Count}",
-                    messages.Count);
-            }
+                var parentContext = default(ActivityContext);
 
-            foreach (var message in messages)
-            {
-                try
-                {   
-                    var parentContext = default(ActivityContext);
-
-                    if (!string.IsNullOrWhiteSpace(message.TraceParent))
-                    {
-                        ActivityContext.TryParse(
-                            message.TraceParent,
-                            message.TraceState,
-                            out parentContext);
-                    }
-
-                    using var activity = MessagingTelemetry.ActivitySource.StartActivity(
-                        $"process inbox {message.Type}",
-                        ActivityKind.Internal,
-                        parentContext);
-
-                    var type = IntegrationEventTypeMap.GetType(message.Type);
-
-                    _logger.LogInformation(
-                        "Resolved integration event CLR type = {Type}",
-                        type.AssemblyQualifiedName);
-
-                    var integrationEvent = JsonSerializer.Deserialize(
-                        message.Payload,
-                        type,
-                        JsonDefaults.Options);
-
-                    
-
-                    if (integrationEvent is INotification notification)
-                    {
-                        await mediator.Publish(notification, stoppingToken);
-                        await domainEventDispatcher.DispatchAsync(stoppingToken);
-                    }
-
-                    message.ProcessedAt = DateTime.UtcNow;
-
-                    _logger.LogInformation(
-                        "Inbox message processed. Id={Id} Type={Type}",
-                        message.Id,
-                        message.Type);
-                }
-                catch (Exception ex)
+                if (!string.IsNullOrWhiteSpace(message.TraceParent))
                 {
-                    message.AttemptCount++;
-                    message.Error = ex.Message;
+                    ActivityContext.TryParse(
+                        message.TraceParent,
+                        message.TraceState,
+                        out parentContext);
+                }
 
-                    _logger.LogError(
-                        ex,
-                        "Inbox message failed. Id={Id} Attempt={Attempt}",
-                        message.Id,
-                        message.AttemptCount);
+                using var activity = MessagingTelemetry.ActivitySource.StartActivity(
+                    $"process inbox {message.Type}",
+                    ActivityKind.Internal,
+                    parentContext);
+
+                var type = IntegrationEventTypeMap.GetType(message.Type);
+
+                _logger.LogInformation(
+                    "Resolved integration event CLR type = {Type}",
+                    type.AssemblyQualifiedName);
+
+                var integrationEvent = JsonSerializer.Deserialize(
+                    message.Payload,
+                    type,
+                    JsonDefaults.Options);
+
+
+
+                if (integrationEvent is INotification notification)
+                {
+                    await mediator.Publish(notification, stoppingToken);
+                    await domainEventDispatcher.DispatchAsync(stoppingToken);
+                }
+
+                message.ProcessedAt = DateTime.UtcNow;
+
+                _logger.LogInformation(
+                    "Inbox message processed. Id={Id} Type={Type}",
+                    message.Id,
+                    message.Type);
+            }
+            catch (Exception ex)
+            {
+                message.AttemptCount++;
+                message.Error = ex.Message;
+
+                _logger.LogError(
+                    ex,
+                    "Inbox message failed. Id={Id} Attempt={Attempt}",
+                    message.Id,
+                    message.AttemptCount);
 
                 if (message.AttemptCount >= MaxAttempts)
                 {
@@ -152,9 +159,10 @@ public class InboxProcessor : BackgroundService
                     db.InboxMessages.Remove(message);
                 }
             }
-            }
+        }
 
-            await db.SaveChangesAsync(stoppingToken);
+        await db.SaveChangesAsync(stoppingToken);
+        await transaction.CommitAsync(stoppingToken);
 
     }
 

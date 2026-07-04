@@ -18,6 +18,8 @@ namespace AccountService.API.Controllers;
 public class AccountController : ControllerBase
 {
 
+    // добавить идемпотетный ключ aka защита от дублирования отдного запроса по ключу уникальному в хедере запроса
+
     private readonly IMediator _mediator;
     private readonly ILogger<AccountController> _logger;
 

@@ -114,9 +114,6 @@ public class AccountDbContext : DbContext
             entity.Property(u => u.IsActive)
             .HasDefaultValue(true);
 
-            entity.Property(a => a.RowVersion)
-            .IsRowVersion();
-
         });
 
         modelBuilder.Entity<DeadLetterInboxMessage>(entity =>

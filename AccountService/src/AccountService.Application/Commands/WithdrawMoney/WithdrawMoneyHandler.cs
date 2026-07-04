@@ -59,7 +59,7 @@ public class WithdrawMoneyHandler : IRequestHandler<WithdrawMoneyCommand>
 
         var accNum = new AccountNumberVO(command.FromAccountNumber);
 
-        var acc = await _accountRepository.GetByAccountNumberAsync(accNum, ct);
+        var acc = await _accountRepository.GetByAccountNumberForUpdateAsync(accNum, ct);
 
 
         if (acc == null)

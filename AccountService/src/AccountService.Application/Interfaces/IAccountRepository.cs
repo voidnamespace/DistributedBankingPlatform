@@ -18,4 +18,12 @@ public interface IAccountRepository
     Task<IReadOnlyList<Account>> GetByUserIdAsync(Guid userId, CancellationToken ct);
     Task<IReadOnlyList<Account>> GetBackfillBatchAsync(int skip, int take, CancellationToken ct);
 
+    Task<Account?> GetByAccountNumberForUpdateAsync(
+    AccountNumberVO accountNumber,
+    CancellationToken ct);
+
+    Task<IReadOnlyList<Account>> GetByAccountNumbersForUpdateAsync(
+    IReadOnlyCollection<AccountNumberVO> accountNumbers,
+    CancellationToken ct);
+
 }
