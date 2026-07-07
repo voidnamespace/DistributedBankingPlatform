@@ -4,7 +4,7 @@ namespace AuthService.Application.Interfaces;
 
 public interface IRefreshTokenRepository
 {
-    Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken);
+    Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken);
 
     Task<RefreshToken> CreateAsync(RefreshToken refreshToken, CancellationToken cancellationToken);
 

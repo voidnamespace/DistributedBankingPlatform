@@ -11,6 +11,7 @@ public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenComma
     private readonly ILogger<RotateRefreshTokenHandler> _logger;
     private readonly IUserRepository _userRepository;
     private readonly IJwtService _jwtService;
+    private readonly IRefreshTokenHasher _refreshTokenHasher;
     private readonly IUnitOfWork _unitOfWork;
 
     public RotateRefreshTokenHandler(
@@ -18,12 +19,14 @@ public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenComma
         ILogger<RotateRefreshTokenHandler> logger,
         IUserRepository userRepository,
         IJwtService jwtService,
+        IRefreshTokenHasher refreshTokenHasher,
         IUnitOfWork unitOfWork)
     {
         _refreshTokenRepository = refreshTokenRepository;
         _logger = logger;
         _userRepository = userRepository;
         _jwtService = jwtService;
+        _refreshTokenHasher = refreshTokenHasher;
         _unitOfWork = unitOfWork;
     }
 
@@ -33,8 +36,10 @@ public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenComma
     {
         _logger.LogInformation("RefreshTokenCommand started");
 
-        var refreshToken = await _refreshTokenRepository.GetByTokenAsync(
-            command.RefreshToken,
+        var refreshTokenHash = _refreshTokenHasher.Hash(command.RefreshToken);
+
+        var refreshToken = await _refreshTokenRepository.GetByTokenHashAsync(
+            refreshTokenHash,
             cancellationToken);
 
         if (refreshToken == null)
@@ -87,9 +92,10 @@ public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenComma
             user.Id);
 
         var newRefreshTokenValue = _jwtService.GenerateRefreshToken();
+        var newRefreshTokenHash = _refreshTokenHasher.Hash(newRefreshTokenValue);
 
         var newRefreshToken = new RefreshToken(
-            newRefreshTokenValue,
+            newRefreshTokenHash,
             user.Id,
             DateTime.UtcNow.AddDays(7));
 
@@ -121,9 +127,9 @@ public class RotateRefreshTokenHandler : IRequestHandler<RotateRefreshTokenComma
 
         return new RotateRefreshTokenResult
         {
-            AccessToken = newAccessToken,
+            AccessToken = newAccessToken.Token,
             RefreshToken = newRefreshTokenValue,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(60)
+            ExpiresAt = newAccessToken.ExpiresAt
         };
     }
 

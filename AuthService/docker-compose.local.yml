@@ -8,7 +8,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__AuthDb: Host=postgres;Port=5432;Database=authdb;Username=postgres;Password=postgres
-      Redis__ConnectionString: redis:6379
+      ConnectionStrings__Redis: redis:6379
       RabbitMQ__Host: rabbitmq
       RabbitMQ__Username: guest
       RabbitMQ__Password: guest

@@ -5,8 +5,10 @@ namespace AuthService.Application.Interfaces;
 
 public interface IJwtService
 {
-    string GenerateAccessToken(User user);
+    AccessTokenResult GenerateAccessToken(User user);
     string GenerateRefreshToken();
     ClaimsPrincipal? ValidateToken(string token);
     Guid? GetUserIdFromToken(string token);
 }
+
+public sealed record AccessTokenResult(string Token, DateTime ExpiresAt);

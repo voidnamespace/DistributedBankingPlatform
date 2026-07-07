@@ -82,7 +82,7 @@ public class RedisService : IRedisService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Redis GetAsync failed. Key={Key}", key);
-            return default;
+            throw;
         }
     }
 

@@ -6,6 +6,7 @@ public class RefreshToken
 
     public Guid UserId { get; set; }
 
+    // Stores the refresh token hash, not the raw refresh token value.
     public string Token { get; set; } = string.Empty;
 
     public DateTime ExpiryDate { get; set; }
@@ -25,13 +26,13 @@ public class RefreshToken
 
     private RefreshToken() { }
 
-    public RefreshToken(string token, Guid userId, DateTime expiresAt)
+    public RefreshToken(string tokenHash, Guid userId, DateTime expiresAt)
     {
-        if (string.IsNullOrWhiteSpace(token))
-            throw new ArgumentException("Token cannot be null, empty, or whitespace.", nameof(token));
+        if (string.IsNullOrWhiteSpace(tokenHash))
+            throw new ArgumentException("Token hash cannot be null, empty, or whitespace.", nameof(tokenHash));
 
         Id = Guid.NewGuid();
-        Token = token;
+        Token = tokenHash;
         UserId = userId;
         CreatedAt = DateTime.UtcNow;
         ExpiresAt = expiresAt;

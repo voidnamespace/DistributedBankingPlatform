@@ -12,7 +12,7 @@ public static class HealthCheckExtensions
     {
         var healthChecks = services.AddHealthChecks();
 
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var connectionString = configuration.GetConnectionString("AuthDb");
 
         if (!string.IsNullOrWhiteSpace(connectionString))
         {

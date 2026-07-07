@@ -14,6 +14,7 @@ public class RotateRefreshTokenHandlerTests
     private readonly Mock<IRefreshTokenRepository> _refreshTokenRepositoryMock = new();
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
     private readonly Mock<IJwtService> _jwtServiceMock = new();
+    private readonly Mock<IRefreshTokenHasher> _refreshTokenHasherMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
 
     [Fact]
@@ -21,17 +22,26 @@ public class RotateRefreshTokenHandlerTests
     {
         // Arrange
         var user = CreateActiveUser();
+        const string oldRefreshToken = "old-refresh-token";
+        const string oldRefreshTokenHash = "old-refresh-token-hash";
+        const string newRefreshToken = "new-refresh-token";
+        const string newRefreshTokenHash = "new-refresh-token-hash";
         var existingRefreshToken = new RefreshToken(
-            "old-refresh-token",
+            oldRefreshTokenHash,
             user.Id,
             DateTime.UtcNow.AddMinutes(5));
-        var command = new RotateRefreshTokenCommand(existingRefreshToken.Token);
+        var command = new RotateRefreshTokenCommand(oldRefreshToken);
         var cancellationToken = CancellationToken.None;
         RefreshToken? createdRefreshToken = null;
         var startedAt = DateTime.UtcNow;
+        var accessTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
+
+        _refreshTokenHasherMock
+            .Setup(hasher => hasher.Hash(oldRefreshToken))
+            .Returns(oldRefreshTokenHash);
 
         _refreshTokenRepositoryMock
-            .Setup(repository => repository.GetByTokenAsync(command.RefreshToken, cancellationToken))
+            .Setup(repository => repository.GetByTokenHashAsync(oldRefreshTokenHash, cancellationToken))
             .ReturnsAsync(existingRefreshToken);
 
         _userRepositoryMock
@@ -44,11 +54,15 @@ public class RotateRefreshTokenHandlerTests
 
         _jwtServiceMock
             .Setup(service => service.GenerateAccessToken(user))
-            .Returns("new-access-token");
+            .Returns(new AccessTokenResult("new-access-token", accessTokenExpiresAt));
 
         _jwtServiceMock
             .Setup(service => service.GenerateRefreshToken())
-            .Returns("new-refresh-token");
+            .Returns(newRefreshToken);
+
+        _refreshTokenHasherMock
+            .Setup(hasher => hasher.Hash(newRefreshToken))
+            .Returns(newRefreshTokenHash);
 
         _refreshTokenRepositoryMock
             .Setup(repository => repository.CreateAsync(It.IsAny<RefreshToken>(), cancellationToken))
@@ -69,7 +83,7 @@ public class RotateRefreshTokenHandlerTests
         existingRefreshToken.RevokedAt.Should().NotBeNull();
 
         _refreshTokenRepositoryMock.Verify(
-            repository => repository.GetByTokenAsync(command.RefreshToken, cancellationToken),
+            repository => repository.GetByTokenHashAsync(oldRefreshTokenHash, cancellationToken),
             Times.Once);
         _userRepositoryMock.Verify(
             repository => repository.GetByIdAsync(user.Id, cancellationToken),
@@ -86,14 +100,13 @@ public class RotateRefreshTokenHandlerTests
 
         createdRefreshToken.Should().NotBeNull();
         createdRefreshToken!.UserId.Should().Be(user.Id);
-        createdRefreshToken.Token.Should().Be("new-refresh-token");
+        createdRefreshToken.Token.Should().Be(newRefreshTokenHash);
         createdRefreshToken.IsRevoked.Should().BeFalse();
         createdRefreshToken.ExpiryDate.Should().BeAfter(startedAt.AddDays(6));
 
         result.AccessToken.Should().Be("new-access-token");
-        result.RefreshToken.Should().Be("new-refresh-token");
-        result.ExpiresAt.Should().BeOnOrAfter(startedAt.AddMinutes(60));
-        result.ExpiresAt.Should().BeOnOrBefore(DateTime.UtcNow.AddMinutes(60));
+        result.RefreshToken.Should().Be(newRefreshToken);
+        result.ExpiresAt.Should().Be(accessTokenExpiresAt);
     }
 
     [Fact]
@@ -102,9 +115,14 @@ public class RotateRefreshTokenHandlerTests
         // Arrange
         var command = new RotateRefreshTokenCommand("missing-token");
         var cancellationToken = CancellationToken.None;
+        const string missingTokenHash = "missing-token-hash";
+
+        _refreshTokenHasherMock
+            .Setup(hasher => hasher.Hash(command.RefreshToken))
+            .Returns(missingTokenHash);
 
         _refreshTokenRepositoryMock
-            .Setup(repository => repository.GetByTokenAsync(command.RefreshToken, cancellationToken))
+            .Setup(repository => repository.GetByTokenHashAsync(missingTokenHash, cancellationToken))
             .ReturnsAsync((RefreshToken?)null);
 
         var handler = CreateHandler();
@@ -132,16 +150,22 @@ public class RotateRefreshTokenHandlerTests
     public async Task Handle_WithInactiveRefreshToken_ShouldThrowUnauthorizedAccessExceptionAndNotRotateToken()
     {
         // Arrange
+        const string revokedToken = "revoked-token";
+        const string revokedTokenHash = "revoked-token-hash";
         var refreshToken = new RefreshToken(
-            "revoked-token",
+            revokedTokenHash,
             Guid.NewGuid(),
             DateTime.UtcNow.AddMinutes(5));
         refreshToken.Revoke();
-        var command = new RotateRefreshTokenCommand(refreshToken.Token);
+        var command = new RotateRefreshTokenCommand(revokedToken);
         var cancellationToken = CancellationToken.None;
 
+        _refreshTokenHasherMock
+            .Setup(hasher => hasher.Hash(command.RefreshToken))
+            .Returns(revokedTokenHash);
+
         _refreshTokenRepositoryMock
-            .Setup(repository => repository.GetByTokenAsync(command.RefreshToken, cancellationToken))
+            .Setup(repository => repository.GetByTokenHashAsync(revokedTokenHash, cancellationToken))
             .ReturnsAsync(refreshToken);
 
         var handler = CreateHandler();
@@ -172,15 +196,21 @@ public class RotateRefreshTokenHandlerTests
     public async Task Handle_WithMissingUser_ShouldThrowUnauthorizedAccessExceptionAndNotRotateToken()
     {
         // Arrange
+        const string validRefreshToken = "valid-refresh-token";
+        const string validRefreshTokenHash = "valid-refresh-token-hash";
         var refreshToken = new RefreshToken(
-            "valid-refresh-token",
+            validRefreshTokenHash,
             Guid.NewGuid(),
             DateTime.UtcNow.AddMinutes(5));
-        var command = new RotateRefreshTokenCommand(refreshToken.Token);
+        var command = new RotateRefreshTokenCommand(validRefreshToken);
         var cancellationToken = CancellationToken.None;
 
+        _refreshTokenHasherMock
+            .Setup(hasher => hasher.Hash(command.RefreshToken))
+            .Returns(validRefreshTokenHash);
+
         _refreshTokenRepositoryMock
-            .Setup(repository => repository.GetByTokenAsync(command.RefreshToken, cancellationToken))
+            .Setup(repository => repository.GetByTokenHashAsync(validRefreshTokenHash, cancellationToken))
             .ReturnsAsync(refreshToken);
 
         _userRepositoryMock
@@ -213,15 +243,21 @@ public class RotateRefreshTokenHandlerTests
     {
         // Arrange
         var user = CreateInactiveUser();
+        const string validRefreshToken = "valid-refresh-token";
+        const string validRefreshTokenHash = "valid-refresh-token-hash";
         var refreshToken = new RefreshToken(
-            "valid-refresh-token",
+            validRefreshTokenHash,
             user.Id,
             DateTime.UtcNow.AddMinutes(5));
-        var command = new RotateRefreshTokenCommand(refreshToken.Token);
+        var command = new RotateRefreshTokenCommand(validRefreshToken);
         var cancellationToken = CancellationToken.None;
 
+        _refreshTokenHasherMock
+            .Setup(hasher => hasher.Hash(command.RefreshToken))
+            .Returns(validRefreshTokenHash);
+
         _refreshTokenRepositoryMock
-            .Setup(repository => repository.GetByTokenAsync(command.RefreshToken, cancellationToken))
+            .Setup(repository => repository.GetByTokenHashAsync(validRefreshTokenHash, cancellationToken))
             .ReturnsAsync(refreshToken);
 
         _userRepositoryMock
@@ -254,15 +290,23 @@ public class RotateRefreshTokenHandlerTests
     {
         // Arrange
         var user = CreateActiveUser();
+        const string validRefreshToken = "valid-refresh-token";
+        const string validRefreshTokenHash = "valid-refresh-token-hash";
+        const string newRefreshToken = "new-refresh-token";
+        const string newRefreshTokenHash = "new-refresh-token-hash";
         var refreshToken = new RefreshToken(
-            "valid-refresh-token",
+            validRefreshTokenHash,
             user.Id,
             DateTime.UtcNow.AddMinutes(5));
-        var command = new RotateRefreshTokenCommand(refreshToken.Token);
+        var command = new RotateRefreshTokenCommand(validRefreshToken);
         var cancellationToken = CancellationToken.None;
 
+        _refreshTokenHasherMock
+            .Setup(hasher => hasher.Hash(command.RefreshToken))
+            .Returns(validRefreshTokenHash);
+
         _refreshTokenRepositoryMock
-            .Setup(repository => repository.GetByTokenAsync(command.RefreshToken, cancellationToken))
+            .Setup(repository => repository.GetByTokenHashAsync(validRefreshTokenHash, cancellationToken))
             .ReturnsAsync(refreshToken);
 
         _userRepositoryMock
@@ -275,11 +319,15 @@ public class RotateRefreshTokenHandlerTests
 
         _jwtServiceMock
             .Setup(service => service.GenerateAccessToken(user))
-            .Returns("new-access-token");
+            .Returns(new AccessTokenResult("new-access-token", DateTime.UtcNow.AddMinutes(15)));
 
         _jwtServiceMock
             .Setup(service => service.GenerateRefreshToken())
-            .Returns("new-refresh-token");
+            .Returns(newRefreshToken);
+
+        _refreshTokenHasherMock
+            .Setup(hasher => hasher.Hash(newRefreshToken))
+            .Returns(newRefreshTokenHash);
 
         _refreshTokenRepositoryMock
             .Setup(repository => repository.CreateAsync(It.IsAny<RefreshToken>(), cancellationToken))
@@ -307,6 +355,7 @@ public class RotateRefreshTokenHandlerTests
             NullLogger<RotateRefreshTokenHandler>.Instance,
             _userRepositoryMock.Object,
             _jwtServiceMock.Object,
+            _refreshTokenHasherMock.Object,
             _unitOfWorkMock.Object);
     }
 
