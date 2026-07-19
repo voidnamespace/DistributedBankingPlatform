@@ -1,9 +1,9 @@
 ﻿using AuthService.Application.Interfaces;
 using AuthService.Application.Interfaces.AccountServiceCalling;
 using AuthService.Application.Interfaces.AccountServiceCalling.Contracts;
+using AuthService.Application.Common.Exceptions;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using System.ComponentModel.DataAnnotations;
 
 namespace AuthService.Application.Commands.DeleteUser;
 
@@ -52,10 +52,11 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand>
 
         if (!validation.IsAllowed)
         {
-            throw new Exception("User cannot be deleted while account deletion validation failed.");
+            throw new UserDeletionRejectedException(
+                "User cannot be deleted while account deletion validation failed.");
         }
 
-        user.Delete(); 
+        user.Delete();
 
         await _userRepository.DeleteAsync(
             user,

@@ -63,9 +63,25 @@ public static class JwtExtensions
                             return;
                         }
 
-                        if (await tokenBlacklistStore.IsBlacklistedAsync(
+                        bool isBlacklisted;
+
+                        try
+                        {
+                            isBlacklisted = await tokenBlacklistStore.IsBlacklistedAsync(
                                 tokenId,
-                                ctx.HttpContext.RequestAborted))
+                                ctx.HttpContext.RequestAborted);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(
+                                ex,
+                                "JWT token validation failed: token revocation check unavailable");
+
+                            ctx.Fail("Token revocation check unavailable.");
+                            return;
+                        }
+
+                        if (isBlacklisted)
                         {
                             logger.LogWarning("JWT token rejected: token {TokenId} is blacklisted", tokenId);
                             ctx.Fail("Token revoked.");

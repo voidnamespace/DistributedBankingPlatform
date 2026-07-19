@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using AuthService.Application.Common.Exceptions;
 using FluentValidation;
 
 namespace AuthService.Infrastructure.Middleware;
@@ -33,6 +34,7 @@ public class ExceptionMiddleware
         {
             KeyNotFoundException => (int)HttpStatusCode.NotFound,
             UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
+            UserDeletionRejectedException => (int)HttpStatusCode.Conflict,
             ValidationException => (int)HttpStatusCode.BadRequest,
             ArgumentException => (int)HttpStatusCode.BadRequest,
             _ => (int)HttpStatusCode.InternalServerError

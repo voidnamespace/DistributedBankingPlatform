@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         services.AddScoped<IJwtService, JwtService>();
+        services.AddSingleton<IRefreshTokenHasher, RefreshTokenHasher>();
 
         services.AddScoped<AuthDbSeeder>();
 

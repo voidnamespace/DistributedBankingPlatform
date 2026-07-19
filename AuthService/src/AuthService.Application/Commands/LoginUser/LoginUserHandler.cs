@@ -11,6 +11,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserResul
     private readonly IUserRepository _userRepository;
     private readonly IJwtService _jwtService;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
+    private readonly IRefreshTokenHasher _refreshTokenHasher;
     private readonly ILogger<LoginUserHandler> _logger;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -18,12 +19,14 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserResul
         IUserRepository userRepository,
         IJwtService jwtService,
         IRefreshTokenRepository refreshTokenRepository,
+        IRefreshTokenHasher refreshTokenHasher,
         ILogger<LoginUserHandler> logger,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _jwtService = jwtService;
         _refreshTokenRepository = refreshTokenRepository;
+        _refreshTokenHasher = refreshTokenHasher;
         _logger = logger;
         _unitOfWork = unitOfWork;
     }
@@ -71,9 +74,10 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserResul
 
         var accessToken = _jwtService.GenerateAccessToken(user);
         var refreshTokenValue = _jwtService.GenerateRefreshToken();
+        var refreshTokenHash = _refreshTokenHasher.Hash(refreshTokenValue);
 
         var refreshToken = new RefreshToken(
-            refreshTokenValue,
+            refreshTokenHash,
             user.Id,
             DateTime.UtcNow.AddDays(7));
 
@@ -93,9 +97,9 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserResul
 
         return new LoginUserResult
         {
-            AccessToken = accessToken,
+            AccessToken = accessToken.Token,
             RefreshToken = refreshTokenValue,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+            ExpiresAt = accessToken.ExpiresAt,
             UserId = user.Id,
             Email = user.Email.Value,
             Role = user.Role.ToString()

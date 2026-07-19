@@ -14,6 +14,7 @@ public class LoginUserHandlerTests
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
     private readonly Mock<IJwtService> _jwtServiceMock = new();
     private readonly Mock<IRefreshTokenRepository> _refreshTokenRepositoryMock = new();
+    private readonly Mock<IRefreshTokenHasher> _refreshTokenHasherMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
 
     [Fact]
@@ -24,6 +25,7 @@ public class LoginUserHandlerTests
         var command = new LoginUserCommand("alice@example.com", "SecurePassword123");
         var cancellationToken = CancellationToken.None;
         RefreshToken? createdRefreshToken = null;
+        var accessTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
 
         _userRepositoryMock
             .Setup(repository => repository.GetByEmailAsync(It.Is<EmailVO>(email => email.Value == command.Email), cancellationToken))
@@ -31,11 +33,15 @@ public class LoginUserHandlerTests
 
         _jwtServiceMock
             .Setup(service => service.GenerateAccessToken(user))
-            .Returns("access-token");
+            .Returns(new AccessTokenResult("access-token", accessTokenExpiresAt));
 
         _jwtServiceMock
             .Setup(service => service.GenerateRefreshToken())
             .Returns("refresh-token");
+
+        _refreshTokenHasherMock
+            .Setup(hasher => hasher.Hash("refresh-token"))
+            .Returns("refresh-token-hash");
 
         _refreshTokenRepositoryMock
             .Setup(repository => repository.CreateAsync(It.IsAny<RefreshToken>(), cancellationToken))
@@ -47,7 +53,6 @@ public class LoginUserHandlerTests
             .Returns(Task.CompletedTask);
 
         var handler = CreateHandler();
-        var startedAt = DateTime.UtcNow;
 
         // Act
         var result = await handler.Handle(command, cancellationToken);
@@ -65,7 +70,7 @@ public class LoginUserHandlerTests
 
         createdRefreshToken.Should().NotBeNull();
         createdRefreshToken!.UserId.Should().Be(user.Id);
-        createdRefreshToken.Token.Should().Be("refresh-token");
+        createdRefreshToken.Token.Should().Be("refresh-token-hash");
         createdRefreshToken.IsRevoked.Should().BeFalse();
 
         result.AccessToken.Should().Be("access-token");
@@ -73,8 +78,7 @@ public class LoginUserHandlerTests
         result.UserId.Should().Be(user.Id);
         result.Email.Should().Be(user.Email.Value);
         result.Role.Should().Be(user.Role.ToString());
-        result.ExpiresAt.Should().BeOnOrAfter(startedAt.AddMinutes(15));
-        result.ExpiresAt.Should().BeOnOrBefore(DateTime.UtcNow.AddMinutes(15));
+        result.ExpiresAt.Should().Be(accessTokenExpiresAt);
     }
 
     [Fact]
@@ -172,6 +176,7 @@ public class LoginUserHandlerTests
             _userRepositoryMock.Object,
             _jwtServiceMock.Object,
             _refreshTokenRepositoryMock.Object,
+            _refreshTokenHasherMock.Object,
             NullLogger<LoginUserHandler>.Instance,
             _unitOfWorkMock.Object);
     }

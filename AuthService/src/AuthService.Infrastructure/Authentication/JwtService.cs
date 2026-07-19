@@ -35,7 +35,7 @@ public class JwtService : IJwtService
                  60);
     }
 
-    public string GenerateAccessToken(User user)
+    public AccessTokenResult GenerateAccessToken(User user)
     {
         if (user == null)
         {
@@ -69,10 +69,12 @@ public class JwtService : IJwtService
             DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
     };
 
+        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtLifeTimeMinutes);
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(_jwtLifeTimeMinutes),
+            Expires = expiresAt,
             Issuer = _issuer,
             Audience = _audience,
             SigningCredentials = new SigningCredentials(
@@ -89,7 +91,9 @@ public class JwtService : IJwtService
 
         _logger.LogInformation("GenerateAccessToken complete {UserId}", user.Id);
 
-        return tokenHandler.WriteToken(token);
+        return new AccessTokenResult(
+            tokenHandler.WriteToken(token),
+            expiresAt);
     }
 
     public string GenerateRefreshToken()

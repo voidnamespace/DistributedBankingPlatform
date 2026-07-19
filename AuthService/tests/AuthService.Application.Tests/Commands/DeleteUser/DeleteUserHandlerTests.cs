@@ -1,5 +1,8 @@
 using AuthService.Application.Commands.DeleteUser;
+using AuthService.Application.Common.Exceptions;
 using AuthService.Application.Interfaces;
+using AuthService.Application.Interfaces.AccountServiceCalling;
+using AuthService.Application.Interfaces.AccountServiceCalling.Contracts;
 using AuthService.Domain.Entities;
 using AuthService.Domain.ValueObjects;
 using FluentAssertions;
@@ -13,9 +16,10 @@ public class DeleteUserHandlerTests
 {
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly Mock<IUserDeletionValidator> _userDeletionValidatorMock = new();
 
     [Fact]
-    public async Task Handle_WithExistingUser_ShouldDeleteUserAndSaveChanges()
+    public async Task Handle_WhenDeletionValidationSucceeds_ShouldDeleteUserAndSaveChanges()
     {
         // Arrange
         var user = CreateUser();
@@ -25,6 +29,11 @@ public class DeleteUserHandlerTests
         _userRepositoryMock
             .Setup(repository => repository.GetByIdAsync(user.Id, cancellationToken))
             .ReturnsAsync(user);
+
+        _userDeletionValidatorMock
+            .Setup(validator => validator.ValidateUserDeletion(
+                It.Is<UserDeletionValidationRequest>(request => request.UserId == user.Id)))
+            .ReturnsAsync(new UserDeletionValidationResponse(true));
 
         _userRepositoryMock
             .Setup(repository => repository.DeleteAsync(user, cancellationToken))
@@ -43,16 +52,23 @@ public class DeleteUserHandlerTests
         _userRepositoryMock.Verify(
             repository => repository.GetByIdAsync(user.Id, cancellationToken),
             Times.Once);
+
+        _userDeletionValidatorMock.Verify(
+            validator => validator.ValidateUserDeletion(
+                It.Is<UserDeletionValidationRequest>(request => request.UserId == user.Id)),
+            Times.Once);
+
         _userRepositoryMock.Verify(
             repository => repository.DeleteAsync(user, cancellationToken),
             Times.Once);
+
         _unitOfWorkMock.Verify(
             unitOfWork => unitOfWork.SaveChangesAsync(cancellationToken),
             Times.Once);
     }
 
     [Fact]
-    public async Task Handle_WithExistingUser_ShouldAddUserDeletedDomainEventBeforeDeleting()
+    public async Task Handle_WhenDeletionValidationSucceeds_ShouldAddUserDeletedDomainEvent()
     {
         // Arrange
         var user = CreateUser();
@@ -63,6 +79,11 @@ public class DeleteUserHandlerTests
         _userRepositoryMock
             .Setup(repository => repository.GetByIdAsync(user.Id, cancellationToken))
             .ReturnsAsync(user);
+
+        _userDeletionValidatorMock
+            .Setup(validator => validator.ValidateUserDeletion(
+                It.Is<UserDeletionValidationRequest>(request => request.UserId == user.Id)))
+            .ReturnsAsync(new UserDeletionValidationResponse(true));
 
         _userRepositoryMock
             .Setup(repository => repository.DeleteAsync(user, cancellationToken))
@@ -83,7 +104,7 @@ public class DeleteUserHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithUnknownUserId_ShouldThrowKeyNotFoundExceptionAndNotDeleteOrSave()
+    public async Task Handle_WhenUserDoesNotExist_ShouldThrowAndNotDeleteOrSave()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -107,9 +128,58 @@ public class DeleteUserHandlerTests
         _userRepositoryMock.Verify(
             repository => repository.GetByIdAsync(userId, cancellationToken),
             Times.Once);
+        _userDeletionValidatorMock.Verify(
+            validator => validator.ValidateUserDeletion(
+                It.IsAny<UserDeletionValidationRequest>()),
+            Times.Never);
         _userRepositoryMock.Verify(
             repository => repository.DeleteAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()),
             Times.Never);
+        _unitOfWorkMock.Verify(
+            unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WhenDeletionValidationFails_ShouldThrowAndNotDeleteOrSave()
+    {
+        // Arrange
+        var user = CreateUser();
+        var command = new DeleteUserCommand(user.Id);
+        var cancellationToken = CancellationToken.None;
+
+        _userRepositoryMock
+            .Setup(repository => repository.GetByIdAsync(user.Id, cancellationToken))
+            .ReturnsAsync(user);
+
+        _userDeletionValidatorMock
+            .Setup(validator => validator.ValidateUserDeletion(
+                It.Is<UserDeletionValidationRequest>(request => request.UserId == user.Id)))
+            .ReturnsAsync(new UserDeletionValidationResponse(false));
+
+        var handler = CreateHandler();
+
+        // Act
+        Func<Task> act = async () => await handler.Handle(command, cancellationToken);
+
+        // Assert
+        await act.Should()
+            .ThrowAsync<UserDeletionRejectedException>()
+            .WithMessage("User cannot be deleted while account deletion validation failed.");
+
+        _userRepositoryMock.Verify(
+            repository => repository.GetByIdAsync(user.Id, cancellationToken),
+            Times.Once);
+
+        _userDeletionValidatorMock.Verify(
+            validator => validator.ValidateUserDeletion(
+                It.Is<UserDeletionValidationRequest>(request => request.UserId == user.Id)),
+            Times.Once);
+
+        _userRepositoryMock.Verify(
+            repository => repository.DeleteAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
         _unitOfWorkMock.Verify(
             unitOfWork => unitOfWork.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Never);
@@ -120,7 +190,8 @@ public class DeleteUserHandlerTests
         return new DeleteUserHandler(
             _userRepositoryMock.Object,
             NullLogger<DeleteUserHandler>.Instance,
-            _unitOfWorkMock.Object);
+            _unitOfWorkMock.Object,
+            _userDeletionValidatorMock.Object);
     }
 
     private static User CreateUser()

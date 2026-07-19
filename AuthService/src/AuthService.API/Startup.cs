@@ -67,9 +67,6 @@ public class Startup
         app.UseMiddleware<AuthService.Infrastructure.Middleware.ExceptionMiddleware>();
         app.UseIpRateLimiting();
 
-        app.UseDefaultFiles();
-        app.UseStaticFiles();
-
         if (env.IsDevelopment())
         {
             app.UseSwagger();
