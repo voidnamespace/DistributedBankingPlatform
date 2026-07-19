@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Protos\validateDeletion.proto" GrpcServices="Client" />
+    <Protobuf Include="Grpc\Protos\validateDeletion.proto" GrpcServices="Client" />
   </ItemGroup>
 	
 </Project>

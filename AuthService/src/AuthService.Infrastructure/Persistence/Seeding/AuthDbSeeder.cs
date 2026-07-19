@@ -1,7 +1,7 @@
 ﻿using AuthService.Domain.Entities;
 using AuthService.Domain.Enums;
 using AuthService.Domain.ValueObjects;
-using AuthService.Infrastructure.Data;
+using AuthService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Infrastructure.Persistence.Seeding;

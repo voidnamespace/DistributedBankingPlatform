@@ -1,0 +1,109 @@
+using AuthService.Application.Abstractions.Authentication;
+using AuthService.Application.Abstractions.Persistence;
+using AuthService.Domain.Entities;
+using AuthService.Domain.ValueObjects;
+using MediatR;
+using Microsoft.Extensions.Logging;
+
+namespace AuthService.Application.Features.Authentication.Login;
+
+public class LoginUserHandler : IRequestHandler<LoginUserCommand, LoginUserResult>
+{
+    private readonly IUserRepository _userRepository;
+    private readonly IJwtService _jwtService;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
+    private readonly IRefreshTokenHasher _refreshTokenHasher;
+    private readonly ILogger<LoginUserHandler> _logger;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public LoginUserHandler(
+        IUserRepository userRepository,
+        IJwtService jwtService,
+        IRefreshTokenRepository refreshTokenRepository,
+        IRefreshTokenHasher refreshTokenHasher,
+        ILogger<LoginUserHandler> logger,
+        IUnitOfWork unitOfWork)
+    {
+        _userRepository = userRepository;
+        _jwtService = jwtService;
+        _refreshTokenRepository = refreshTokenRepository;
+        _refreshTokenHasher = refreshTokenHasher;
+        _logger = logger;
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<LoginUserResult> Handle(
+        LoginUserCommand command,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation(
+            "LoginUserCommand started {Email}",
+            command.Email);
+
+        var email = new EmailVO(command.Email);
+
+        var user = await _userRepository.GetByEmailAsync(
+            email,
+            cancellationToken);
+
+        if (user == null)
+        {
+            _logger.LogWarning(
+                "Login failed. User not found {Email}",
+                email.Value);
+
+            throw new UnauthorizedAccessException("Incorrect email or password");
+        }
+
+        if (!user.IsActive)
+        {
+            _logger.LogWarning(
+                "Login attempt for deactivated user {UserId}",
+                user.Id);
+
+            throw new UnauthorizedAccessException("User is deactivated");
+        }
+
+        if (!BCrypt.Net.BCrypt.Verify(command.Password, user.PasswordHash.Hash))
+        {
+            _logger.LogWarning(
+                "Login failed. Invalid password for {Email}",
+                email.Value);
+
+            throw new UnauthorizedAccessException("Incorrect email or password");
+        }
+
+        var accessToken = _jwtService.GenerateAccessToken(user);
+        var refreshTokenValue = _jwtService.GenerateRefreshToken();
+        var refreshTokenHash = _refreshTokenHasher.Hash(refreshTokenValue);
+
+        var refreshToken = new RefreshToken(
+            refreshTokenHash,
+            user.Id,
+            DateTime.UtcNow.AddDays(7));
+
+        _logger.LogInformation(
+             "Refresh token generated for {UserId}",
+             user.Id);
+
+        await _refreshTokenRepository.CreateAsync(
+            refreshToken,
+            cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "LoginUserCommand completed {UserId}",
+            user.Id);
+
+        return new LoginUserResult
+        {
+            AccessToken = accessToken.Token,
+            RefreshToken = refreshTokenValue,
+            ExpiresAt = accessToken.ExpiresAt,
+            UserId = user.Id,
+            Email = user.Email.Value,
+            Role = user.Role.ToString()
+        };
+    }
+}

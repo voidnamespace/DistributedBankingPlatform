@@ -1,14 +1,10 @@
 using AspNetCoreRateLimit;
-using AuthService.API.Contracts.Requests.Validators;
 using AuthService.API.Extensions;
-using AuthService.Application.Commands.RegisterUser;
-using AuthService.Application.DomainEventHandlers;
-using AuthService.Infrastructure.Data;
-using AuthService.Infrastructure.Extensions;
+using AuthService.API.Middleware;
+using AuthService.Application;
+using AuthService.Infrastructure;
+using AuthService.Infrastructure.Persistence;
 using AuthService.Infrastructure.Persistence.Seeding;
-using AuthService.Application.Common.Behaviors;
-using FluentValidation;
-using MediatR;
 using OpenTelemetry.Metrics;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,12 +21,6 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssemblies(
-        typeof(RegisterUserCommand).Assembly,
-        typeof(UserActivatedDomainEventHandler).Assembly
-    ));
-
         services.AddOpenTelemetry()
     .WithMetrics(metrics =>
     {
@@ -41,14 +31,7 @@ public class Startup
             .AddPrometheusExporter();
     });
 
-        services.AddValidatorsFromAssemblyContaining<RegisterUserCommandValidator>();
-        services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
-        services.AddTransient(
-            typeof(IPipelineBehavior<,>),
-            typeof(ValidationBehavior<,>));
-
-
-
+        services.AddApplication();
         services.AddApi(Configuration);
         services.AddInfrastructure(Configuration);
     }
@@ -64,7 +47,7 @@ public class Startup
             seeder.SeedAsync().GetAwaiter().GetResult();
         }
         app.MapPrometheusScrapingEndpoint();
-        app.UseMiddleware<AuthService.Infrastructure.Middleware.ExceptionMiddleware>();
+        app.UseMiddleware<ExceptionMiddleware>();
         app.UseIpRateLimiting();
 
         if (env.IsDevelopment())

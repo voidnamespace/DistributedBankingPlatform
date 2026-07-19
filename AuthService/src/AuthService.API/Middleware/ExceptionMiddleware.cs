@@ -3,7 +3,7 @@ using System.Text.Json;
 using AuthService.Application.Common.Exceptions;
 using FluentValidation;
 
-namespace AuthService.Infrastructure.Middleware;
+namespace AuthService.API.Middleware;
 
 public class ExceptionMiddleware
 {

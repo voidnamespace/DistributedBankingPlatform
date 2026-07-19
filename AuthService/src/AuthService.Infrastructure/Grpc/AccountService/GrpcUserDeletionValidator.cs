@@ -1,6 +1,6 @@
-﻿using AuthService.Application.Interfaces.AccountServiceCalling;
-using AuthService.Application.Interfaces.AccountServiceCalling.Contracts;
-using AuthService.Infrastructure.GrpcCall.AccountService;
+﻿using AuthService.Application.Abstractions.ExternalServices.Accounts;
+using AuthService.Application.Abstractions.ExternalServices.Accounts.Contracts;
+using AuthService.Infrastructure.Grpc.AccountService.Contracts;
 
 namespace AuthService.Infrastructure.Grpc.AccountService;
 

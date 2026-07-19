@@ -1,9 +1,10 @@
 using AuthService.Application.Common.Events;
+using AuthService.Application.Common.Exceptions;
 using AuthService.Domain.Entities;
 using AuthService.Domain.Events;
 using AuthService.Domain.ValueObjects;
-using AuthService.Infrastructure.Data;
-using AuthService.Infrastructure.Persistence.Outbox;
+using AuthService.Infrastructure.Messaging.Outbox;
+using AuthService.Infrastructure.Persistence;
 using FluentAssertions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using UnitOfWorkType = AuthService.Infrastructure.Persistence.UnitOfWork.UnitOfWork;
+using UnitOfWorkType = AuthService.Infrastructure.Persistence.UnitOfWork;
 
 namespace AuthService.Infrastructure.Tests.Persistence.UnitOfWork;
 
@@ -99,14 +100,49 @@ public class UnitOfWorkTests
         context.Users.AsNoTracking().Should().ContainSingle(savedUser => savedUser.Id == user.Id);
     }
 
+    [Fact]
+    public async Task SaveChangesAsync_WhenEfReportsConcurrencyConflict_ShouldTranslateExceptionAndPreserveCause()
+    {
+        // Arrange
+        await using var context = CreateConcurrencyFailingContext();
+        var mediatorMock = new Mock<IMediator>();
+        var loggerMock = new Mock<ILogger<UnitOfWorkType>>();
+        var unitOfWork = new UnitOfWorkType(
+            context,
+            mediatorMock.Object,
+            loggerMock.Object);
+
+        // Act
+        Func<Task> act = () => unitOfWork.SaveChangesAsync(CancellationToken.None);
+
+        // Assert
+        var assertion = await act.Should().ThrowAsync<ConcurrencyConflictException>();
+
+        assertion.Which.Message.Should().Be(
+            "The persisted state was modified by another operation.");
+        assertion.Which.InnerException.Should().BeOfType<DbUpdateConcurrencyException>();
+
+        mediatorMock.Verify(
+            mediator => mediator.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     private static RecordingAuthDbContext CreateContext()
     {
-        var options = new DbContextOptionsBuilder<AuthDbContext>()
+        return new RecordingAuthDbContext(CreateOptions());
+    }
+
+    private static ConcurrencyFailingAuthDbContext CreateConcurrencyFailingContext()
+    {
+        return new ConcurrencyFailingAuthDbContext(CreateOptions());
+    }
+
+    private static DbContextOptions<AuthDbContext> CreateOptions()
+    {
+        return new DbContextOptionsBuilder<AuthDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString("D"))
             .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
-
-        return new RecordingAuthDbContext(options);
     }
 
     private sealed class RecordingAuthDbContext : AuthDbContext
@@ -122,6 +158,20 @@ public class UnitOfWorkTests
         {
             SaveChangesCalls++;
             return base.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private sealed class ConcurrencyFailingAuthDbContext : AuthDbContext
+    {
+        public ConcurrencyFailingAuthDbContext(DbContextOptions<AuthDbContext> options)
+            : base(options)
+        {
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromException<int>(
+                new DbUpdateConcurrencyException("Simulated concurrency conflict."));
         }
     }
 }
