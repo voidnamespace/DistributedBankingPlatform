@@ -8,6 +8,7 @@ using AuthService.Application.Features.Registration.RegisterUser;
 using AuthService.Application.Features.Users.ActivateUser;
 using AuthService.Application.Features.Users.DeactivateUser;
 using AuthService.Application.Features.Users.DeleteUser;
+using AuthService.Application.Features.Users.EmailConfirm.SendEmailConfirmation;
 using AuthService.Application.Features.Users.GetAllUsers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -57,6 +58,34 @@ public class AuthController : ControllerBase
             request.Email);
 
         return Ok(response);
+    }
+
+    [HttpPost("sendEmail")]
+    [Authorize]
+    public async Task<IActionResult> SendEmailConfirmation() 
+    {
+        var userId = User.GetUserId();
+
+        var tokenId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+        var expiresAtUnix = User.FindFirst(JwtRegisteredClaimNames.Exp)?.Value;
+
+        if (string.IsNullOrWhiteSpace(tokenId) ||
+            !long.TryParse(expiresAtUnix, out var expiresAtSeconds))
+        {
+            return Unauthorized(new { message = "Invalid token claims" });
+        }
+
+        var command = new SendEmailConfirmationCommand(userId);
+        await _mediator.Send(command);
+
+        return Ok(new { message = "Email confirmation message sent" });
+
+    }
+
+    [HttpPost("emailConfirm")]
+    public async Task <IActionResult> ConfirmEmail() 
+    {
+
     }
 
     [HttpPost("login")]

@@ -12,6 +12,8 @@ public class User : Entity
 
     public PasswordVO PasswordHash { get; private set; } = null!;
 
+    public bool EmailConfirmed { get; private set; } = false;
+
     public Roles Role { get; private set; }
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
@@ -45,6 +47,18 @@ public class User : Entity
             CreatedAt = DateTime.UtcNow,
             IsActive = true
         };
+    }
+
+    public void ConfirmEmail()
+    {
+        if (EmailConfirmed)
+            return;
+
+        EmailConfirmed = true;
+        UpdatedAt = DateTime.UtcNow;
+
+        AddDomainEvent(
+            new EmailConfirmedDomainEvent(Id, Email));
     }
 
     public void ChangeEmail(EmailVO newEmail)
