@@ -1,4 +1,5 @@
 using AuthService.Infrastructure.Authentication;
+using AuthService.Infrastructure.EmailConfirmation;
 using AuthService.Infrastructure.Grpc;
 using AuthService.Infrastructure.Messaging;
 using AuthService.Infrastructure.Persistence;
@@ -15,6 +16,7 @@ public static class DependencyInjection
     {
         services.AddPersistence(configuration);
         services.AddAuthenticationInfrastructure(configuration);
+        services.AddEmailConfirmation(configuration);
         services.AddMessaging(configuration);
         services.AddGrpcClients(configuration);
 

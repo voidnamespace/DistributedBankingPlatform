@@ -1,4 +1,4 @@
-﻿namespace TransactionService.Application.DTOs;
+﻿namespace TransactionService.API.Contracts;
 
 public sealed record CreateWithdrawalRequest(
     string AccountNumber,

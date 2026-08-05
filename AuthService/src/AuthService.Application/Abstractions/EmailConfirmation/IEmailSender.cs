@@ -3,6 +3,8 @@
 public interface IEmailSender
 {
     Task SendAsync(
-    string recipientEmail,
-    CancellationToken cancellationToken);
+        string recipientEmail,
+        string subject,
+        string message,
+        CancellationToken cancellationToken);
 }

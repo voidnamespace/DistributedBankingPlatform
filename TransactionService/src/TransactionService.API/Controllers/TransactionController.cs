@@ -5,7 +5,7 @@ using System.Security.Claims;
 using TransactionService.Application.Commands.CreateDeposit;
 using TransactionService.Application.Commands.CreateTransfer;
 using TransactionService.Application.Commands.CreateWithdrawal;
-using TransactionService.Application.DTOs;
+using TransactionService.API.Contracts;
 using TransactionService.Application.Queries.CheckTransferStatus;
 
 namespace TransactionService.API.Controllers;
@@ -115,6 +115,14 @@ public class TransactionController : ControllerBase
             request.ToAccountNumber);
 
         return Accepted(new { transactionId });
+
+    }
+
+    [HttpPost("regular-payment")]
+    public async Task<IActionResult> RegularPayment(
+        [FromBody] CreateRegularPaymentRequest request, 
+        CancellationToken ct)
+    {
 
     }
 

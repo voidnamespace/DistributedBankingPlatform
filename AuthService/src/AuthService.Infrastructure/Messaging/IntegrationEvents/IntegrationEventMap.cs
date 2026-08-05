@@ -10,6 +10,7 @@ public static class IntegrationEventMap
         { typeof(UserActivatedIntegrationEvent), "user.activated" },
         { typeof(UserDeactivatedIntegrationEvent), "user.deactivated" },
         { typeof(UserDeletedIntegrationEvent), "user.deleted" },
+        { typeof(EmailConfirmedIntegrationEvent), "email.confirmed"  },
     };
 
     private static readonly Dictionary<string, Type> NameToType =

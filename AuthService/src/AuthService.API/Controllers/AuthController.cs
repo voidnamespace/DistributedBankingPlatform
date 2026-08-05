@@ -8,6 +8,7 @@ using AuthService.Application.Features.Registration.RegisterUser;
 using AuthService.Application.Features.Users.ActivateUser;
 using AuthService.Application.Features.Users.DeactivateUser;
 using AuthService.Application.Features.Users.DeleteUser;
+using AuthService.Application.Features.Users.EmailConfirm.ConfirmEmail;
 using AuthService.Application.Features.Users.EmailConfirm.SendEmailConfirmation;
 using AuthService.Application.Features.Users.GetAllUsers;
 using MediatR;
@@ -82,10 +83,13 @@ public class AuthController : ControllerBase
 
     }
 
-    [HttpPost("emailConfirm")]
-    public async Task <IActionResult> ConfirmEmail() 
+    [HttpGet("emailConfirm")]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string token)
     {
+        var command = new ConfirmEmailCommand(token);
+        await _mediator.Send(command);
 
+        return Ok(new { message = "Email confirmed" });
     }
 
     [HttpPost("login")]
